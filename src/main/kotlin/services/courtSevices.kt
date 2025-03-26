@@ -5,6 +5,7 @@ import storage.CourtsDataMem
 import java.util.UUID
 
 object CourtServices {
+
     fun addUser(name: String, email: String): User {
         val user = User(name = name, email = email)
         CourtsDataMem.users[user.uid] = user

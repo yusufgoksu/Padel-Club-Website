@@ -18,8 +18,10 @@ dependencies {
     implementation("org.http4k:http4k-server-jetty:4.41.1.0")
     implementation("org.http4k:http4k-format-kotlinx-serialization:4.41.1.0") // ✅ JSON için eksik bağımlılık eklendi
     implementation("ch.qos.logback:logback-classic:1.4.0")
+
     // JSON Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
 
     // PostgreSQL JDBC Driver
     implementation("org.postgresql:postgresql:42.6.0")

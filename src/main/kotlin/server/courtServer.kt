@@ -9,4 +9,5 @@ fun main() {
     val app = courtsWebApi()
     val server = app.asServer(Jetty(port)).start()
     println("Server running on port $port")
+
 }
