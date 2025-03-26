@@ -1,0 +1,15 @@
+package models
+
+import kotlinx.serialization.Serializable
+import java.util.UUID
+
+data class Court(
+    val crid: String = UUID.randomUUID().toString(),
+    val name: String,
+    val clubId: String
+) {
+    init {
+        require(name.isNotBlank()) { "Court name cannot be blank" }
+        require(clubId.isNotBlank()) { "Club ID cannot be blank" }
+    }
+}
