@@ -14,7 +14,7 @@ object CourtServices {
 
     fun getUsers(): List<User> = CourtsDataMem.users.values.toList()
 
-
+    fun getUserById(uid: String): User? = CourtsDataMem.users[uid]
 
     fun addClub(name: String, ownerUid: String): Club {
         require(CourtsDataMem.users.containsKey(ownerUid)) { "Owner UID not found" }
@@ -25,7 +25,7 @@ object CourtServices {
 
     fun getClubs(): List<Club> = CourtsDataMem.clubs.values.toList()
 
-
+    fun getClubById(cid: String): Club? = CourtsDataMem.clubs[cid]
 
     fun addCourt(name: String, clubId: String): Court {
         require(CourtsDataMem.clubs.containsKey(clubId)) { "Club ID not found" }
@@ -36,7 +36,7 @@ object CourtServices {
 
     fun getCourts(): List<Court> = CourtsDataMem.courts.values.toList()
 
-
+    fun getCourtById(crid: String): Court? = CourtsDataMem.courts[crid]
 
     fun addRental(clubId: String, courtId: String, userId: String, startTime: String, duration: Int): Rental {
         require(CourtsDataMem.clubs.containsKey(clubId)) { "Club ID not found" }
@@ -50,5 +50,5 @@ object CourtServices {
 
     fun getRentals(): List<Rental> = CourtsDataMem.rentals.values.toList()
 
-
+    fun getRentalById(rid: String): Rental? = CourtsDataMem.rentals[rid]
 }

@@ -11,23 +11,27 @@ repositories {
     mavenCentral()
     maven { url = uri("https://jitpack.io") }  // JitPack deposu eklendi ✅
 }
-
 dependencies {
+
     // HTTP4K - HTTP Server
     implementation("org.http4k:http4k-core:4.41.1.0")
     implementation("org.http4k:http4k-server-jetty:4.41.1.0")
-    implementation("org.http4k:http4k-format-kotlinx-serialization:4.41.1.0") // ✅ JSON için eksik bağımlılık eklendi
-    implementation("ch.qos.logback:logback-classic:1.4.0")
+    implementation("org.http4k:http4k-client-okhttp:4.41.1.0")
+    implementation("org.http4k:http4k-format-kotlinx-serialization:4.41.1.0") // JSON desteği
+
+    // OpenAPI ve Swagger UI için gerekli bağımlılıklar
+    implementation("org.http4k:http4k-contract:4.41.1.0") // OpenAPI desteği
+    implementation("org.http4k:http4k-contract-ui-swagger:4.41.1.0") // Swagger UI eklentisi
 
     // JSON Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
-
     // PostgreSQL JDBC Driver
     implementation("org.postgresql:postgresql:42.6.0")
 
-    // Logging (Java 8 Uyumlu)
+    // Logging
     implementation("org.slf4j:slf4j-simple:1.7.36")
+    implementation("ch.qos.logback:logback-classic:1.4.0")
 
     // Testing
     testImplementation(kotlin("test"))
@@ -35,6 +39,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 }
+
+
+
 
 tasks.test {
     useJUnitPlatform()
@@ -45,5 +52,5 @@ application {
 }
 
 kotlin {
-    jvmToolchain(8)  // ✅ Java 8 kullanacak şekilde ayarlandı
+    jvmToolchain(17)  // ✅ Java 8 kullanacak şekilde ayarlandı
 }

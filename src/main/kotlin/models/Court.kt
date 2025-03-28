@@ -3,6 +3,7 @@ package models
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
+@Serializable
 data class Court(
     val crid: String = UUID.randomUUID().toString(),
     val name: String,

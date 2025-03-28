@@ -5,7 +5,6 @@ import java.time.Instant
 import java.time.format.DateTimeParseException
 import java.util.UUID
 
-
 @Serializable
 data class Rental(
     val rid: String = UUID.randomUUID().toString(),
