@@ -1,21 +1,21 @@
 package server
 import storage.CourtsDataMem
 import api.courtsWebApi
+import api.rentalsWebApi
 import org.http4k.server.Jetty
 import org.http4k.server.asServer
 import storage.ClubsDataMem
 import storage.RentalsDataMem
 import storage.UsersDataMem
-import java.util.*
 
 fun main() {
     val port = 9000
-    val app = courtsWebApi()
+    val app = rentalsWebApi()
 
     val server = app.asServer(Jetty(port)).start()
     println("Server running on port $port")
     // Önce bir kullanıcı ve bir kulüp ekleyelim
-    val user = UsersDataMem.addUser(name = "Mert", email = "mert@example.com")
+    val user =  UsersDataMem.addUser(name = "Mert", email = "mert@example.com")
     val club = ClubsDataMem.addClub(name = "Club X", ownerId = user.uid)
 
     // Kulüp ve kort ekleyelim
