@@ -15,7 +15,7 @@ fun main() {
     val server = app.asServer(Jetty(port)).start()
     println("Server running on port $port")
     // Önce bir kullanıcı ve bir kulüp ekleyelim
-    val user =  UsersDataMem.addUser(name = "Mert", email = "mert@example.com")
+    val user =  UsersDataMem.addUser(name = "yusuf", email = "mert@example.com")
     val club = ClubsDataMem.addClub(name = "Club X", ownerId = user.uid)
 
     // Kulüp ve kort ekleyelim

@@ -49,7 +49,7 @@ class DomainModelTests {
     @Test
     fun `cannot create club with non-existent user`() {
         val exception = assertThrows<IllegalArgumentException> {
-            UsersServices.addClub("Phantom Club", "non-existent-uid")
+            ClubServices.addClub("Phantom Club", "non-existent-uid")
         }
 
         assertEquals("Owner UID not found", exception.message)
@@ -58,10 +58,10 @@ class DomainModelTests {
     @Test
     fun `create court for existing club`() {
         // Create user and club first
-        val user = UsersServices.addUser("Club Owner", "owner@example.com")
-        val club = UsersServices.addClub("Tennis Club", user.uid)
+        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.uid)
 
-        val court = UsersServices.addCourt("Court 1", club.cid)
+        val court = CourtServices.addCourt("Court 1", club.cid)
 
         assertNotNull(court.crid)
         assertEquals("Court 1", court.name)
@@ -71,7 +71,7 @@ class DomainModelTests {
     @Test
     fun `cannot create court for non-existent club`() {
         val exception = assertThrows<IllegalArgumentException> {
-            UsersServices.addCourt("Phantom Court", "non-existent-club-id")
+            CourtServices.addCourt("Phantom Court", "non-existent-club-id")
         }
 
         assertEquals("Club ID not found", exception.message)
@@ -80,11 +80,11 @@ class DomainModelTests {
     @Test
     fun `create rental with valid data`() {
         // Setup: create user, club, and court
-        val user = UsersServices.addUser("Renter", "renter@example.com")
-        val club = UsersServices.addClub("Tennis Club", user.uid)
-        val court = UsersServices.addCourt("Court 1", club.cid)
+        val user = UserServices.addUser("Renter", "renter@example.com")
+        val club =ClubServices.addClub("Tennis Club", user.uid)
+        val court = CourtServices.addCourt("Court 1", club.cid)
 
-        val rental = UsersServices.addRental(
+        val rental = RentalServices.addRental(
             clubId = club.cid,
             courtId = court.crid,
             userId = user.uid,
@@ -102,10 +102,10 @@ class DomainModelTests {
 
     @Test
     fun `cannot create rental with invalid club`() {
-        val user = UsersServices.addUser("Renter", "renter@example.com")
+        val user = UserServices.addUser("Renter", "renter@example.com")
 
         val exception = assertThrows<IllegalArgumentException> {
-            UsersServices.addRental(
+            RentalServices.addRental(
                 clubId = "non-existent-club",
                 courtId = "court-id",
                 userId = user.uid,
@@ -119,11 +119,11 @@ class DomainModelTests {
 
     @Test
     fun `cannot create rental with invalid court`() {
-        val user = UsersServices.addUser("Renter", "renter@example.com")
-        val club = UsersServices.addClub("Tennis Club", user.uid)
+        val user = UserServices.addUser("Renter", "renter@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.uid)
 
         val exception = assertThrows<IllegalArgumentException> {
-            UsersServices.addRental(
+            RentalServices.addRental(
                 clubId = club.cid,
                 courtId = "non-existent-court",
                 userId = user.uid,
@@ -137,12 +137,12 @@ class DomainModelTests {
 
     @Test
     fun `cannot create rental with invalid user`() {
-        val user = UsersServices.addUser("Owner", "owner@example.com")
-        val club = UsersServices.addClub("Tennis Club", user.uid)
-        val court = UsersServices.addCourt("Court 1", club.cid)
+        val user = UserServices.addUser("Owner", "owner@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.uid)
+        val court = CourtServices.addCourt("Court 1", club.cid)
 
         val exception = assertThrows<IllegalArgumentException> {
-            UsersServices.addRental(
+            RentalServices.addRental(
                 clubId = club.cid,
                 courtId = court.crid,
                 userId = "non-existent-user",
@@ -157,10 +157,10 @@ class DomainModelTests {
     @Test
     fun `retrieve entities by ID`() {
         // Create test data
-        val user = UsersServices.addUser("Test User", "test@example.com")
-        val club = UsersServices.addClub("Test Club", user.uid)
-        val court = UsersServices.addCourt("Test Court", club.cid)
-        val rental = UsersServices.addRental(
+        val user = UserServices.addUser("Test User", "test@example.com")
+        val club = ClubServices.addClub("Test Club", user.uid)
+        val court = CourtServices.addCourt("Test Court", club.cid)
+        val rental = RentalServices.addRental(
             clubId = club.cid,
             courtId = court.crid,
             userId = user.uid,
@@ -169,27 +169,27 @@ class DomainModelTests {
         )
 
         // Test retrievals
-        assertEquals(user, UsersServices.getUserById(user.uid))
-        assertEquals(club, UsersServices.getClubById(club.cid))
-        assertEquals(court, UsersServices.getCourtById(court.crid))
-        assertEquals(rental, UsersServices.getRentalById(rental.rid))
+        assertEquals(user, UserServices.getUserById(user.uid))
+        assertEquals(club, ClubServices.getClubById(club.cid))
+        assertEquals(court, CourtServices.getCourtById(court.crid))
+        assertEquals(rental, RentalServices.getRentalById(rental.rid))
     }
 
     @Test
     fun `list all entities`() {
         // Create multiple test entities
-        val user1 = UsersServices.addUser("User 1", "user1@example.com")
-        val user2 = UsersServices.addUser("User 2", "user2@example.com")
+        val user1 = UserServices.addUser("User 1", "user1@example.com")
+        val user2 = UserServices.addUser("User 2", "user2@example.com")
 
-        val club1 = UsersServices.addClub("Club 1", user1.uid)
-        val club2 = UsersServices.addClub("Club 2", user2.uid)
+        val club1 = ClubServices.addClub("Club 1", user1.uid)
+        val club2 = ClubServices.addClub("Club 2", user2.uid)
 
-        val court1 = UsersServices.addCourt("Court 1", club1.cid)
-        val court2 = UsersServices.addCourt("Court 2", club2.cid)
+        val court1 = CourtServices.addCourt("Court 1", club1.cid)
+        val court2 = CourtServices.addCourt("Court 2", club2.cid)
 
         // Test list methods
-        assertEquals(2, UsersServices.getUsers().size)
-        assertEquals(2, UsersServices.getClubs().size)
-        assertEquals(2, UsersServices.getCourts().size)
+        assertEquals(2, UserServices.getUsers().size)
+        assertEquals(2, ClubServices.getClubs().size)
+        assertEquals(2, CourtServices.getCourts().size)
     }
 }
