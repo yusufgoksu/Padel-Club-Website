@@ -2,6 +2,7 @@ package services
 
 import models.User
 import storage.UsersDataMem
+import java.util.*
 
 object UserServices {
 
@@ -24,8 +25,9 @@ object UserServices {
 
     fun getUserById(userID: String): User? = UsersDataMem.users[userID]
 
-    // Kullanıcıya ait bir token ile kullanıcıyı doğrulama
-    fun getUserByToken(token: String): User? {
-        return UsersDataMem.users.values.find { it.token == token }
+    fun generateUserToken(uid: String): Pair<String, String>? {
+        return UsersDataMem.generateUserToken(uid)
     }
+
+
 }

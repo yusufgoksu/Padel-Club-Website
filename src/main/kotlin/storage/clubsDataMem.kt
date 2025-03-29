@@ -21,4 +21,8 @@ object ClubsDataMem {
     // Optional: Add methods to list all entities
     fun getAllClubs(): List<Club> = clubs.values.toList()
 
+    fun getClubDetails(cid: String): Club? {
+        return ClubsDataMem.getClubById(cid)
+    }
+
 }
