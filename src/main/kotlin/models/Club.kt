@@ -5,7 +5,7 @@ import java.util.UUID
 
 @Serializable
 data class Club(
-    val cid: String = UUID.randomUUID().toString(),  // Club ID otomatik olarak oluşturulacak
+    val clubID: String = UUID.randomUUID().toString(),  // Club ID otomatik olarak oluşturulacak
     val name: String,  // Kulüp adı
     val ownerUid: String  // Sahip UID'si
 ) {

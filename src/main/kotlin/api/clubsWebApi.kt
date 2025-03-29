@@ -6,13 +6,12 @@ import org.http4k.core.*
 import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.routing.*
 
-fun clubsWebApi(): HttpHandler {
+fun clubsWebApi(): RoutingHttpHandler {
 
     val clubLens = Body.auto<Club>().toLens()
     val clubsLens = Body.auto<List<Club>>().toLens()
 
     return routes(
-
         "/clubs" bind Method.GET to {
             Response(Status.OK).with(clubsLens of ClubServices.getClubs())
         },
@@ -22,11 +21,9 @@ fun clubsWebApi(): HttpHandler {
             Response(Status.CREATED).with(clubLens of createdClub)
         },
         "/clubs/{cid}" bind Method.GET to { request ->
-            val cid = request.path("cid") ?: return@to Response(Status.BAD_REQUEST)
-            val club = ClubServices.getClubById(cid) ?: return@to Response(Status.NOT_FOUND)
+            val clubID = request.path("clubID") ?: return@to Response(Status.BAD_REQUEST)
+            val club = ClubServices.getClubById(clubID) ?: return@to Response(Status.NOT_FOUND)
             Response(Status.OK).with(clubLens of club)
-        },
-
-
+        }
     )
 }

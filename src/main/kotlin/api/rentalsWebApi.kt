@@ -6,13 +6,12 @@ import org.http4k.core.*
 import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.routing.*
 
-fun rentalsWebApi(): HttpHandler {
+fun rentalsWebApi(): RoutingHttpHandler {
 
     val rentalLens = Body.auto<Rental>().toLens()
     val rentalsLens = Body.auto<List<Rental>>().toLens()
 
     return routes(
-
         "/rentals" bind Method.GET to {
             Response(Status.OK).with(rentalsLens of RentalServices.getRentals())
         },
@@ -22,8 +21,8 @@ fun rentalsWebApi(): HttpHandler {
             Response(Status.CREATED).with(rentalLens of createdRental)
         },
         "/rentals/{rid}" bind Method.GET to { request ->
-            val rid = request.path("rid") ?: return@to Response(Status.BAD_REQUEST)
-            val rental = RentalServices.getRentalById(rid) ?: return@to Response(Status.NOT_FOUND)
+            val rentalID = request.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
+            val rental = RentalServices.getRentalById(rentalID) ?: return@to Response(Status.NOT_FOUND)
             Response(Status.OK).with(rentalLens of rental)
         }
     )

@@ -6,7 +6,8 @@ import org.http4k.core.*
 import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.routing.*
 
-fun usersWebApi(): HttpHandler {
+fun usersWebApi(): RoutingHttpHandler {
+
     val userLens = Body.auto<User>().toLens()
     val usersLens = Body.auto<List<User>>().toLens()
 
@@ -19,9 +20,9 @@ fun usersWebApi(): HttpHandler {
             val createdUser = UserServices.addUser(user.name, user.email)
             Response(Status.CREATED).with(userLens of createdUser)
         },
-        "/users/{uid}" bind Method.GET to { request ->
-            val uid = request.path("uid") ?: return@to Response(Status.BAD_REQUEST)
-            val user = UserServices.getUserById(uid) ?: return@to Response(Status.NOT_FOUND)
+        "/users/{userID}" bind Method.GET to { request ->
+            val userID = request.path("userID") ?: return@to Response(Status.BAD_REQUEST)
+            val user = UserServices.getUserById(userID) ?: return@to Response(Status.NOT_FOUND)
             Response(Status.OK).with(userLens of user)
         }
     )

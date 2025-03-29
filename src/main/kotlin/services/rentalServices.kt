@@ -5,7 +5,6 @@ import storage.ClubsDataMem
 import storage.CourtsDataMem
 import storage.RentalsDataMem
 import storage.UsersDataMem
-import java.util.UUID
 
 object RentalServices {
 
@@ -15,11 +14,11 @@ object RentalServices {
         require(UsersDataMem.users.containsKey(userId)) { "User ID not found" }
 
         val rental = Rental(clubId = clubId, courtId = courtId, userId = userId, startTime = startTime, duration = duration)
-        RentalsDataMem.rentals[rental.rid] = rental
+        RentalsDataMem.rentals[rental.rentalID] = rental
         return rental
     }
 
     fun getRentals(): List<Rental> = RentalsDataMem.rentals.values.toList()
 
-    fun getRentalById(rid: String): Rental? = RentalsDataMem.rentals[rid]
+    fun getRentalById(rentalID: String): Rental? = RentalsDataMem.rentals[rentalID]
 }

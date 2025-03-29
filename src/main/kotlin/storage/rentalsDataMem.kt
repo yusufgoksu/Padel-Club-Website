@@ -1,38 +1,38 @@
 package storage
-import storage.UsersDataMem
-import storage.ClubsDataMem
-import storage.CourtsDataMem
+
 import models.*
 import java.util.*
 
 object RentalsDataMem {
-    val users = mutableMapOf<String, User>()
 
+    val users = mutableMapOf<String, User>()
+    val clubs = mutableMapOf<String, Club>()
     val courts = mutableMapOf<String, Court>()
     val rentals = mutableMapOf<String, Rental>()
 
+    // Kiralama fonksiyonu
+    fun addRental(clubID:String,userId: String, courtId: String, startTime: String, duration: Int): Rental {
 
-    fun addRental(userId: String, courtId: String, startTime: String, duration: Int): Rental {
-        require(courts.containsKey(courtId)) { "Court ID not found" }
-        require(users.containsKey(userId)) { "User ID not found" }
 
+
+        // Rental nesnesini oluştur
         val rental = Rental(
-            rid = UUID.randomUUID().toString(),
-            clubId = courts[courtId]?.clubId ?: throw IllegalArgumentException("Court's club ID is missing"),
+            rentalID = UUID.randomUUID().toString(),
+            clubId = clubID,
             courtId = courtId,
             userId = userId,
             startTime = startTime,
             duration = duration
         )
-        rentals[rental.rid] = rental
+
+        // Rental verisini kiralamalar listesine ekle
+        rentals[rental.rentalID] = rental
         return rental
     }
 
-    // Optional: Add methods to retrieve entities
-
+    // Kiralama ID'sine göre kiralamayı almak
     fun getRentalById(rid: String): Rental? = rentals[rid]
 
-    // Optional: Add methods to list all entities
-
+    // Bütün kiralamaları listelemek
     fun getAllRentals(): List<Rental> = rentals.values.toList()
 }

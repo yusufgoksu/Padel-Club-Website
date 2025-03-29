@@ -9,8 +9,8 @@ object ClubsDataMem {
 
 
     fun addClub(name: String, ownerId: String): Club {
-        val club = Club(cid = UUID.randomUUID().toString(), name = name, ownerUid = ownerId)
-        clubs[club.cid] = club
+        val club = Club(clubID = UUID.randomUUID().toString(), name = name, ownerUid = ownerId)
+        clubs[club.clubID] = club
         return club
     }
 

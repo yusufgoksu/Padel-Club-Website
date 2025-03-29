@@ -7,7 +7,7 @@ import java.util.UUID
 
 @Serializable
 data class Rental(
-    val rid: String = UUID.randomUUID().toString(),
+    val rentalID: String = UUID.randomUUID().toString(),
     val clubId: String,
     val courtId: String,
     val userId: String,

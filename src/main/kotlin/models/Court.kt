@@ -5,7 +5,7 @@ import java.util.UUID
 
 @Serializable
 data class Court(
-    val crid: String = UUID.randomUUID().toString(),
+    val courtID: String = UUID.randomUUID().toString(),
     val name: String,
     val clubId: String
 ) {
