@@ -6,10 +6,19 @@ import storage.UsersDataMem
 object UserServices {
 
     fun addUser(name: String, email: String): User {
+        // E-posta adresinin daha önce var olup olmadığını kontrol et
+        if (UsersDataMem.users.values.any { it.email == email }) {
+            throw IllegalArgumentException("Email already exists") // Aynı e-posta engelleniyor
+        }
+
+        // Yeni kullanıcıyı oluştur
         val user = User(name = name, email = email)
+
+        // Kullanıcıyı veritabanına ekle
         UsersDataMem.users[user.userID] = user
         return user
     }
+
 
     fun getUsers(): List<User> = UsersDataMem.users.values.toList()
 

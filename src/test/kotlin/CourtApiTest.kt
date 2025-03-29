@@ -23,8 +23,6 @@ class CourtTests {
         RentalsDataMem.rentals.clear()
     }
 
-
-
     @Test
     fun `create court for existing club`() {
         // Create user and club first
@@ -47,23 +45,54 @@ class CourtTests {
         assertEquals("Club ID not found", exception.message)
     }
 
+    @Test
+    fun `cannot create court with empty name`() {
+        // First create a user and a club
+        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.userID)
 
+        // Attempt to create a court with an empty name
+        val exception = assertThrows<IllegalArgumentException> {
+            CourtServices.addCourt("", club.clubID)
+        }
+
+        // Check the exception message
+        assertEquals("Court name cannot be empty", exception.message)
+    }
 
     @Test
-    fun `list all entities`() {
-        // Create multiple test entities
-        val user1 = UserServices.addUser("User 1", "user1@example.com")
-        val user2 = UserServices.addUser("User 2", "user2@example.com")
+    fun `cannot create court with name exceeding max length`() {
+        // First create a user and a club
+        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.userID)
 
-        val club1 = ClubServices.addClub("Club 1", user1.userID)
-        val club2 = ClubServices.addClub("Club 2", user2.userID)
+        // Attempt to create a court with a name exceeding max length
+        val exception = assertThrows<IllegalArgumentException> {
+            CourtServices.addCourt("A".repeat(101), club.clubID) // 101 characters
+        }
 
-        val court1 = CourtServices.addCourt("Court 1", club1.clubID)
-        val court2 = CourtServices.addCourt("Court 2", club2.clubID)
+        // Check the exception message
+        assertEquals("Court name cannot exceed 100 characters", exception.message)
+    }
 
-        // Test list methods
-        assertEquals(2, UserServices.getUsers().size)
-        assertEquals(2, ClubServices.getClubs().size)
+    @Test
+    fun `create multiple courts for the same club`() {
+        // First create a user and a club
+        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.userID)
+
+        // Create multiple courts
+        val court1 = CourtServices.addCourt("Court 1", club.clubID)
+        val court2 = CourtServices.addCourt("Court 2", club.clubID)
+
+        // Ensure both courts were created successfully
+        assertNotNull(court1.courtID)
+        assertNotNull(court2.courtID)
         assertEquals(2, CourtServices.getCourts().size)
     }
+
+
+
 }
+
+

@@ -31,12 +31,14 @@ class RentalTests {
         val user = UserServices.addUser("Renter", "renter@example.com")
         val club =ClubServices.addClub("Tennis Club", user.userID)
         val court = CourtServices.addCourt("Court 1", club.clubID)
+        val validStartTime = "2024-07-01T10:00:00Z"  // ISO-8601 formatında
 
         val rental = RentalServices.addRental(
+
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
-            startTime = "2024-07-01T10:00:00",
+            startTime = validStartTime,
             duration = 60
         )
 

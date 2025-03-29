@@ -18,7 +18,23 @@ object RentalServices {
         return rental
     }
 
-    fun getRentals(): List<Rental> = RentalsDataMem.rentals.values.toList()
+    fun getRentalById(rentalID: String): Rental? {
+        return RentalsDataMem.getRentalById(rentalID)
+    }
 
-    fun getRentalById(rentalID: String): Rental? = RentalsDataMem.rentals[rentalID]
+    fun getRentals(): List<Rental> {
+        return RentalsDataMem.getAllRentals()
+    }
+
+    fun getRentalsForClubAndCourt(clubId: String, courtId: String, date: String? = null): List<Rental> {
+        return RentalsDataMem.getRentalsForClubAndCourt(clubId, courtId, date)
+    }
+
+    fun getRentalsForUser(userId: String): List<Rental> {
+        return RentalsDataMem.getRentalsForUser(userId)
+    }
+
+    fun getAvailableHours(clubId: String, courtId: String, date: String): List<Int> {
+        return RentalsDataMem.getAvailableHours(clubId, courtId, date)
+    }
 }
