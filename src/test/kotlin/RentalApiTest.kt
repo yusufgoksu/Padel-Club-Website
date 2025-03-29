@@ -1,7 +1,6 @@
 package tests
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -29,12 +28,11 @@ class RentalTests {
     fun `create rental with valid data`() {
         // Setup: create user, club, and court
         val user = UserServices.addUser("Renter", "renter@example.com")
-        val club =ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userID)
         val court = CourtServices.addCourt("Court 1", club.clubID)
         val validStartTime = "2024-07-01T10:00:00Z"  // ISO-8601 formatında
 
         val rental = RentalServices.addRental(
-
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
@@ -123,5 +121,81 @@ class RentalTests {
         assertEquals(club, ClubServices.getClubById(club.clubID))
         assertEquals(court, CourtServices.getCourtById(court.courtID))
         assertEquals(rental, RentalServices.getRentalById(rental.rentalID))
+    }
+
+    @Test
+    fun `get rentals for specific club and court`() {
+        // Create test data
+        val user = UserServices.addUser("Test User", "test@example.com")
+        val club = ClubServices.addClub("Test Club", user.userID)
+        val court = CourtServices.addCourt("Test Court", club.clubID)
+        val rental1 = RentalServices.addRental(
+            clubId = club.clubID,
+            courtId = court.courtID,
+            userId = user.userID,
+            startTime = "2024-07-01T10:00:00",
+            duration = 60
+        )
+        val rental2 = RentalServices.addRental(
+            clubId = club.clubID,
+            courtId = court.courtID,
+            userId = user.userID,
+            startTime = "2024-07-01T12:00:00",
+            duration = 60
+        )
+
+        // Test rentals retrieval by club and court
+        val rentals = RentalsDataMem.getRentalsForClubAndCourt(club.clubID, court.courtID, null)
+        assertEquals(2, rentals.size)
+        assertEquals(rental1.rentalID, rentals[0].rentalID)
+        assertEquals(rental2.rentalID, rentals[1].rentalID)
+    }
+
+    @Test
+    fun `get rentals for a specific user`() {
+        // Create test data
+        val user = UserServices.addUser("Test User", "test@example.com")
+        val club = ClubServices.addClub("Test Club", user.userID)
+        val court = CourtServices.addCourt("Test Court", club.clubID)
+        val rental1 = RentalServices.addRental(
+            clubId = club.clubID,
+            courtId = court.courtID,
+            userId = user.userID,
+            startTime = "2024-07-01T10:00:00",
+            duration = 60
+        )
+        val rental2 = RentalServices.addRental(
+            clubId = club.clubID,
+            courtId = court.courtID,
+            userId = user.userID,
+            startTime = "2024-07-01T12:00:00",
+            duration = 60
+        )
+
+        // Test rentals retrieval by user
+        val rentals = RentalsDataMem.getRentalsForUser(user.userID)
+        assertEquals(2, rentals.size)
+        assertEquals(rental1.rentalID, rentals[0].rentalID)
+        assertEquals(rental2.rentalID, rentals[1].rentalID)
+    }
+
+    @Test
+    fun `get available hours for court`() {
+        // Create test data
+        val user = UserServices.addUser("Test User", "test@example.com")
+        val club = ClubServices.addClub("Test Club", user.userID)
+        val court = CourtServices.addCourt("Test Court", club.clubID)
+        val rental1 = RentalServices.addRental(
+            clubId = club.clubID,
+            courtId = court.courtID,
+            userId = user.userID,
+            startTime = "2024-07-01T10:00:00",
+            duration = 60
+        )
+
+        // Test available hours after one rental
+        val availableHours = RentalsDataMem.getAvailableHours(club.clubID, court.courtID, "2024-07-01")
+        assertEquals(17, availableHours.size) // Assuming only one rental exists, it should remove the 10:00 hour
+        assertFalse(availableHours.contains(10)) // 10:00 should be unavailable
     }
 }
