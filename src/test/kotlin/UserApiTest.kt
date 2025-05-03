@@ -11,44 +11,44 @@ class UserTests {
 
     @BeforeEach
     fun setup() {
-        // Clear all in-memory storage before each test
+        // Her testten önce bellekteki kullanıcıları temizle
         UsersDataMem.users.clear()
     }
 
     @Test
-    fun `create user with valid data`() {
-        // Test creating a user with valid data
+    fun `should create user with valid data`() {
+        // Geçerli verilerle kullanıcı oluştur
         val user = UserServices.addUser("John Doe", "john.doe@example.com")
 
-        // Verify that the user was created successfully
+        // Kullanıcının başarıyla oluşturulduğunu doğrula
         assertNotNull(user.userID)
         assertEquals("John Doe", user.name)
         assertEquals("john.doe@example.com", user.email)
     }
 
     @Test
-    fun `cannot create user with duplicate email`() {
-        // Test creating the first user
+    fun `should not allow duplicate email`() {
+        // İlk kullanıcıyı oluştur
         UserServices.addUser("John Doe", "john.doe@example.com")
 
-        // Try to create a second user with the same email
+        // Aynı e-posta ile ikinci kullanıcı oluşturmaya çalış
         val exception = assertThrows<IllegalArgumentException> {
             UserServices.addUser("Jane Doe", "john.doe@example.com")
         }
 
-        // Verify that the exception is thrown due to duplicate email
+        // Doğru hata mesajı verildiğini kontrol et
         assertEquals("Email already exists", exception.message)
     }
 
     @Test
-    fun `get user by valid ID`() {
-        // Create a user
+    fun `should get user by valid ID`() {
+        // Bir kullanıcı oluştur
         val user = UserServices.addUser("John Doe", "john.doe@example.com")
 
-        // Try to retrieve the user by their ID
+        // Kullanıcıyı ID ile getir
         val retrievedUser = UserServices.getUserById(user.userID)
 
-        // Verify that the correct user is retrieved
+        // Doğru kullanıcıyı getirdiğini kontrol et
         assertNotNull(retrievedUser)
         assertEquals(user.userID, retrievedUser?.userID)
         assertEquals(user.name, retrievedUser?.name)
@@ -56,25 +56,68 @@ class UserTests {
     }
 
     @Test
-    fun `cannot get user by invalid ID`() {
-        // Try to get a user with an invalid ID
-        val invalidUserId = "non-existent-user-id"
-        val user = UserServices.getUserById(invalidUserId)
+    fun `should return null for invalid ID`() {
+        // Geçersiz ID ile kullanıcı getirilmeye çalışılıyor
+        val user = UserServices.getUserById("non-existent-id")
 
-        // Verify that the result is null for an invalid ID
+        // Sonucun null olduğunu kontrol et
         assertNull(user)
     }
 
     @Test
-    fun `list all users`() {
-        // Create multiple users
+    fun `should list all users`() {
+        // Birden fazla kullanıcı oluştur
         UserServices.addUser("User 1", "user1@example.com")
         UserServices.addUser("User 2", "user2@example.com")
 
-        // Retrieve all users and verify the list size
+        // Tüm kullanıcıları getir
         val users = UserServices.getAllUsers()
 
-        // Verify that the list contains 2 users
+        // Liste boyutunun doğru olduğunu kontrol et
         assertEquals(2, users.size)
+    }
+
+    @Test
+    fun `should get user by email`() {
+        // Kullanıcı oluştur
+        val user = UserServices.addUser("Alice", "alice@example.com")
+
+        // E-posta ile kullanıcıyı getir
+        val foundUser = UserServices.getUserByEmail("alice@example.com")
+
+        // Doğru kullanıcıyı getirdiğini doğrula
+        assertNotNull(foundUser)
+        assertEquals(user.userID, foundUser?.userID)
+    }
+
+    @Test
+    fun `should return null for invalid email`() {
+        // Geçersiz e-posta ile arama
+        val user = UserServices.getUserByEmail("notfound@example.com")
+
+        // Sonucun null olduğunu kontrol et
+        assertNull(user)
+    }
+
+    @Test
+    fun `should generate token for valid user`() {
+        // Kullanıcı oluştur
+        val user = UserServices.addUser("Bob", "bob@example.com")
+
+        // Token üret
+        val tokenPair = UserServices.generateUserToken(user.userID)
+
+        // Token'ın geçerli olduğunu kontrol et
+        assertNotNull(tokenPair)
+        assertEquals(user.userID, tokenPair?.second)
+    }
+
+    @Test
+    fun `should return null when generating token for invalid user`() {
+        // Geçersiz kullanıcı ID'si ile token üretme girişimi
+        val tokenPair = UserServices.generateUserToken("invalid-user-id")
+
+        // Sonucun null olduğunu doğrula
+        assertNull(tokenPair)
     }
 }
