@@ -7,6 +7,7 @@ import org.junit.jupiter.api.assertThrows
 import services.ClubServices
 import services.CourtServices
 import services.RentalServices
+import services.RentalServices.addRental
 import services.UserServices
 import storage.ClubsDataMem
 import storage.CourtsDataMem
@@ -32,7 +33,7 @@ class RentalTests {
         val court = CourtServices.addCourt("Court 1", club.clubID)
         val validStartTime = "2024-07-01T10:00:00Z"  // ISO-8601 formatında
 
-        val rental = RentalServices.addRental(
+        val rental = addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
@@ -53,7 +54,7 @@ class RentalTests {
         val user = UserServices.addUser("Renter", "renter@example.com")
 
         val exception = assertThrows<IllegalArgumentException> {
-            RentalServices.addRental(
+            addRental(
                 clubId = "non-existent-club",
                 courtId = "court-id",
                 userId = user.userID,
@@ -71,7 +72,7 @@ class RentalTests {
         val club = ClubServices.addClub("Tennis Club", user.userID)
 
         val exception = assertThrows<IllegalArgumentException> {
-            RentalServices.addRental(
+            addRental(
                 clubId = club.clubID,
                 courtId = "non-existent-court",
                 userId = user.userID,
@@ -90,7 +91,7 @@ class RentalTests {
         val court = CourtServices.addCourt("Court 1", club.clubID)
 
         val exception = assertThrows<IllegalArgumentException> {
-            RentalServices.addRental(
+            addRental(
                 clubId = club.clubID,
                 courtId = court.courtID,
                 userId = "non-existent-user",
@@ -108,7 +109,7 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental = RentalServices.addRental(
+        val rental = addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
@@ -129,14 +130,14 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental1 = RentalServices.addRental(
+        val rental1 = addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T10:00:00",
             duration = 60
         )
-        val rental2 = RentalServices.addRental(
+        val rental2 = addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
@@ -157,14 +158,14 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental1 = RentalServices.addRental(
+        val rental1 = addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T10:00:00",
             duration = 60
         )
-        val rental2 = RentalServices.addRental(
+        val rental2 = addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
@@ -185,7 +186,7 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental1 = RentalServices.addRental(
+        val rental1 = addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,

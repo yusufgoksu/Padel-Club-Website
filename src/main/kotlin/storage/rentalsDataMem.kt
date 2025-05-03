@@ -1,15 +1,15 @@
 package storage
 import java.time.LocalTime
 import models.*
+import storage.CourtsDataMem.courts
+import storage.UsersDataMem.users
 import java.util.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object RentalsDataMem {
 
-    val users = mutableMapOf<String, User>()
-    val clubs = mutableMapOf<String, Club>()
-    val courts = mutableMapOf<String, Court>()
+
     val rentals = mutableMapOf<String, Rental>()
 
     // Kiralama fonksiyonu
@@ -17,7 +17,6 @@ object RentalsDataMem {
         // Kullanıcı ve kortun varlığını kontrol et
         require(users.containsKey(userId)) { "User ID not found" }
         require(courts.containsKey(courtId)) { "Court ID not found" }
-
         // Kiralama süresi 0'dan küçük olamaz
         require(duration > 0) { "Rental duration must be greater than zero" }
 
@@ -67,8 +66,6 @@ object RentalsDataMem {
     fun getRentalsForUser(userId: String): List<Rental> {
         return rentals.values.filter { it.userId == userId }
     }
-
-
 
     fun getAvailableHours(cid: String, crid: String, date: String): List<Int> {
         val rentedHours = rentals.values
