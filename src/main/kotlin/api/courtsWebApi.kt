@@ -14,7 +14,7 @@ fun courtsWebApi(): RoutingHttpHandler {
     return routes(
         // Tüm kortları listele
         "/courts" bind Method.GET to {
-            Response(Status.OK).with(courtsLens of CourtServices.getCourts())
+            Response(Status.OK).with(courtsLens of CourtServices.getAllCourts())
         },
 
         // Yeni kort ekle

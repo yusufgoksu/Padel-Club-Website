@@ -5,9 +5,7 @@ import java.util.*
 
 object UsersDataMem {
     val users = mutableMapOf<String, User>()
-    val clubs = mutableMapOf<String, Club>()
-    val courts = mutableMapOf<String, Court>()
-    val rentals = mutableMapOf<String, Rental>()
+
 
     // Yeni bir kullanıcı ekleme
     fun addUser(name: String, email: String): User {

@@ -31,7 +31,7 @@ object ClubsDataMem {
     fun getAllClubs(): List<Club> = clubs.values.toList()
 
     // Kulüp bilgilerini almak (Detay)
-    fun getClubDetails(cid: String): Club? {
-        return getClubById(cid) // Bu fonksiyon zaten getClubById'yi çağırıyor
+    fun getClubDetails(clubID: String): Club? {
+        return getClubById(clubID) // Bu fonksiyon zaten getClubById'yi çağırıyor
     }
 }

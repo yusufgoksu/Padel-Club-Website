@@ -34,6 +34,6 @@ fun `list all entities`() {
     // Test list methods
     assertEquals(2, UserServices.getAllUsers().size)
     assertEquals(2, ClubServices.getClubs().size)
-    assertEquals(2, CourtServices.getCourts().size)
+    assertEquals(2, CourtServices.getAllCourts().size)
 }
 }

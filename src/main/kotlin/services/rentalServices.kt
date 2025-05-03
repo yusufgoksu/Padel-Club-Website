@@ -11,9 +11,10 @@ import java.time.ZoneOffset
 object RentalServices {
 
     fun addRental(clubId: String, courtId: String, userId: String, startTime: String, duration: Int): Rental {
-        require(CourtsDataMem.courts.containsKey(courtId)) { "Court ID $courtId' not found" }
-        require(ClubsDataMem.clubs.containsKey(clubId)) { "Club ID $clubId' not found" }
         require(UsersDataMem.users.containsKey(userId)) { "User ID $userId' not found" }
+        require(ClubsDataMem.clubs.containsKey(clubId)) { "Club ID $clubId' not found" }
+        require(CourtsDataMem.courts.containsKey(courtId)) { "Court ID $courtId' not found" }
+
 
         val rental = Rental(
             clubId = clubId,

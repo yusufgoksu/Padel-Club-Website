@@ -92,7 +92,7 @@ class CourtTests {
         // Ensure both courts were created successfully
         assertNotNull(court1.courtID)
         assertNotNull(court2.courtID)
-        assertEquals(2, CourtServices.getCourts().size)
+        assertEquals(2, CourtServices.getAllCourts().size)
     }
 
 

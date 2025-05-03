@@ -19,7 +19,7 @@ object UserServices {
         return user
     }
 
-    fun getAllUsers(): List<User> = UsersDataMem.users.values.toList()
+    fun getAllUsers(): List<User> = UsersDataMem.getAllUsers()
 
     fun getUserById(userID: String): User? = UsersDataMem.users[userID]
 

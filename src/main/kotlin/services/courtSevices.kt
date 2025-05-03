@@ -27,25 +27,23 @@ object CourtServices {
     }
 
     // Tüm kortları listeleme
-    fun getCourts(): List<Court> = CourtsDataMem.courts.values.toList()
+    fun getAllCourts(): List<Court> = CourtsDataMem.getAllCourts()
 
     // Kortu ID'ye göre getirme
     fun getCourtById(courtID: String): Court? {
         // Kortun var olup olmadığını kontrol et
-        return CourtsDataMem.courts[courtID] ?: throw IllegalArgumentException("Court ID '$courtID' not found")
+        return CourtsDataMem.getCourtById(courtID)
     }
 
     // Kulübe ait kortları listeleme
     fun getCourtsForClub(clubId: String): List<Court> {
-        // Kulüp ID'sinin geçerli olup olmadığını kontrol et
-        require(ClubsDataMem.clubs.containsKey(clubId)) { "Club ID '$clubId' not found" }
 
         // Kulübe ait kortları döndür
-        return CourtsDataMem.courts.values.filter { it.clubId == clubId }
+        return CourtsDataMem.getCourtsForClub(clubId)
     }
 
-    // Kortu isme göre arama
     fun getCourtByName(name: String): Court? {
-        return CourtsDataMem.courts.values.find { it.name.equals(name, ignoreCase = true) }
+        return CourtsDataMem.getCourtByName(name)
     }
+
 }
