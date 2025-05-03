@@ -7,7 +7,6 @@ import org.junit.jupiter.api.assertThrows
 import services.ClubServices
 import services.CourtServices
 import services.RentalServices
-import services.RentalServices.addRental
 import services.UserServices
 import storage.ClubsDataMem
 import storage.CourtsDataMem
@@ -33,12 +32,13 @@ class RentalTests {
         val court = CourtServices.addCourt("Court 1", club.clubID)
         val validStartTime = "2024-07-01T10:00:00Z"  // ISO-8601 formatında
 
-        val rental = addRental(
+        // Ensure the duration is in hours (between 1 and 24)
+        val rental = RentalServices.addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = validStartTime,
-            duration = 60
+            duration = 1  // duration is 1 hour here
         )
 
         assertNotNull(rental.rentalID)
@@ -46,7 +46,7 @@ class RentalTests {
         assertEquals(court.courtID, rental.courtId)
         assertEquals(user.userID, rental.userId)
         assertEquals("2024-07-01T10:00:00", rental.startTime)
-        assertEquals(60, rental.duration)
+        assertEquals(1, rental.duration)  // Check that duration is in hours
     }
 
     @Test
@@ -54,12 +54,12 @@ class RentalTests {
         val user = UserServices.addUser("Renter", "renter@example.com")
 
         val exception = assertThrows<IllegalArgumentException> {
-            addRental(
+            RentalServices.addRental(
                 clubId = "non-existent-club",
                 courtId = "court-id",
                 userId = user.userID,
                 startTime = "2024-07-01T10:00:00",
-                duration = 60
+                duration = 1  // duration is 1 hour
             )
         }
 
@@ -72,12 +72,12 @@ class RentalTests {
         val club = ClubServices.addClub("Tennis Club", user.userID)
 
         val exception = assertThrows<IllegalArgumentException> {
-            addRental(
+            RentalServices.addRental(
                 clubId = club.clubID,
                 courtId = "non-existent-court",
                 userId = user.userID,
                 startTime = "2024-07-01T10:00:00",
-                duration = 60
+                duration = 1  // duration is 1 hour
             )
         }
 
@@ -91,12 +91,12 @@ class RentalTests {
         val court = CourtServices.addCourt("Court 1", club.clubID)
 
         val exception = assertThrows<IllegalArgumentException> {
-            addRental(
+            RentalServices.addRental(
                 clubId = club.clubID,
                 courtId = court.courtID,
                 userId = "non-existent-user",
                 startTime = "2024-07-01T10:00:00",
-                duration = 60
+                duration = 1  // duration is 1 hour
             )
         }
 
@@ -109,12 +109,12 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental = addRental(
+        val rental = RentalServices.addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T10:00:00",
-            duration = 60
+            duration = 1  // duration is 1 hour
         )
 
         // Test retrievals
@@ -130,19 +130,19 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental1 = addRental(
+        val rental1 = RentalServices.addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T10:00:00",
-            duration = 60
+            duration = 1  // duration is 1 hour
         )
-        val rental2 = addRental(
+        val rental2 = RentalServices.addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T12:00:00",
-            duration = 60
+            duration = 1  // duration is 1 hour
         )
 
         // Test rentals retrieval by club and court
@@ -158,19 +158,19 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental1 = addRental(
+        val rental1 = RentalServices.addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T10:00:00",
-            duration = 60
+            duration = 1  // duration is 1 hour
         )
-        val rental2 = addRental(
+        val rental2 = RentalServices.addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T12:00:00",
-            duration = 60
+            duration = 1  // duration is 1 hour
         )
 
         // Test rentals retrieval by user
@@ -186,17 +186,63 @@ class RentalTests {
         val user = UserServices.addUser("Test User", "test@example.com")
         val club = ClubServices.addClub("Test Club", user.userID)
         val court = CourtServices.addCourt("Test Court", club.clubID)
-        val rental1 = addRental(
+        val rental1 = RentalServices.addRental(
             clubId = club.clubID,
             courtId = court.courtID,
             userId = user.userID,
             startTime = "2024-07-01T10:00:00",
-            duration = 60
+            duration = 1  // duration is 1 hour
         )
 
         // Test available hours after one rental
         val availableHours = RentalsDataMem.getAvailableHours(club.clubID, court.courtID, "2024-07-01")
         assertEquals(17, availableHours.size) // Assuming only one rental exists, it should remove the 10:00 hour
         assertFalse(availableHours.contains(10)) // 10:00 should be unavailable
+    }
+
+    @Test
+    fun `delete a rental`() {
+        val user = UserServices.addUser("Test User", "test@example.com")
+        val club = ClubServices.addClub("Test Club", user.userID)
+        val court = CourtServices.addCourt("Test Court", club.clubID)
+
+        val rental = RentalServices.addRental(
+            clubId = club.clubID,
+            courtId = court.courtID,
+            userId = user.userID,
+            startTime = "2025-04-11T10:00:00Z",
+            duration = 1  // duration is 1 hour
+        )
+
+        val deleted = RentalServices.deleteRental(rental.rentalID)
+        val fetched = RentalServices.getRentalById(rental.rentalID)
+
+        assertEquals(true, deleted)
+        assertNull(fetched)
+    }
+
+    @Test
+    fun `update a rental`() {
+        val user = UserServices.addUser("Test User", "test@example.com")
+        val club = ClubServices.addClub("Test Club", user.userID)
+        val court = CourtServices.addCourt("Test Court", club.clubID)
+
+        val rental = RentalServices.addRental(
+            clubId = club.clubID,
+            courtId = court.courtID,
+            userId = user.userID,
+            startTime = "2025-04-11T10:00:00Z",
+            duration = 1  // duration is 1 hour
+        )
+
+        val updatedRental = RentalServices.updateRental(
+            rentalID = rental.rentalID,
+            newStartTime = "2025-04-11T11:00:00Z",
+            newDuration = 2,  // duration updated to 2 hours
+            newCourtId = court.courtID
+        )
+
+        assertEquals("2025-04-11T11:00:00Z", updatedRental.startTime)
+        assertEquals(2, updatedRental.duration)  // Ensure the updated duration is 2 hours
     }
 }

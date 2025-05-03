@@ -34,7 +34,29 @@ object RentalServices {
         return RentalsDataMem.getRentalsForUser(userId)
     }
 
-    fun getAvailableHours(clubId: String, courtId: String, date: String): List<Int> {
-        return RentalsDataMem.getAvailableHours(clubId, courtId, date)
+    fun deleteRental(rentalID: String): Boolean {
+        return RentalsDataMem.rentals.remove(rentalID) != null
+    }
+
+    fun updateRental(
+        rentalID: String ,
+        newStartTime: String,
+        newDuration: Int,
+        newCourtId: String
+    ): Rental {
+        val rental = RentalsDataMem.getRentalById(rentalID)
+            ?: throw IllegalArgumentException("Rental with ID $rentalID not found")
+
+        // Court ID'yi doğrulamak için doğru storage'ı kullanıyoruz
+        require(CourtsDataMem.courts.containsKey(newCourtId)) { "Court ID not found" }
+
+        val updatedRental = rental.copy(
+            startTime = newStartTime,
+            duration = newDuration,
+            courtId = newCourtId
+        )
+
+        RentalsDataMem.rentals[rentalID] = updatedRental
+        return updatedRental
     }
 }

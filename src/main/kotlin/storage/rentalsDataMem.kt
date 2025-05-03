@@ -78,5 +78,39 @@ object RentalsDataMem {
         return allHours - rentedHours   // Rented olmayan saatleri filtrele
     }
 
+    fun deleteRental(rentalID: String): Boolean {
+        return rentals.remove(rentalID) != null
+    }
+    fun updateRental(
+        rid: String,
+        newStartTime: String,
+        newDuration: Int,
+        newCourtId: String
+    ): Rental {
+        val rental = getRentalById(rid)
+            ?: throw IllegalArgumentException("Rental with ID $rid not found")
+
+        require(courts.containsKey(newCourtId)) { "Court ID not found" }
+        require(newDuration > 0) { "Rental duration must be greater than zero" }
+
+        // Tarih formatı kontrolü
+        val formatter = DateTimeFormatter.ISO_DATE_TIME
+        try {
+            LocalDateTime.parse(newStartTime, formatter)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Invalid start time format")
+        }
+
+        val updatedRental = rental.copy(
+            startTime = newStartTime,
+            duration = newDuration,
+            courtId = newCourtId
+        )
+
+        rentals[rid] = updatedRental
+        return updatedRental
+    }
+
+
 }
 

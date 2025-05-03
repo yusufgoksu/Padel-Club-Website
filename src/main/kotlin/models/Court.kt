@@ -10,7 +10,7 @@ data class Court(
     val clubId: String
 ) {
     init {
-        require(name.isNotBlank()) { "Court name cannot be blank" }
-        require(clubId.isNotBlank()) { "Club ID cannot be blank" }
+        require(name.isNotBlank()) { "Court name cannot be empty" }
+        require(clubId.isNotBlank()) { "Club ID cannot be empty" }
     }
 }

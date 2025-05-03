@@ -1,24 +1,29 @@
 package tests
 
 import kotlinx.serialization.Serializable
-import org.http4k.client.OkHttp
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import services.ClubServices
 import services.UserServices
+import storage.ClubsDataMem
+import storage.UsersDataMem
 
 class ClubTest {
-    private val client = OkHttp()
-    private val baseUrl = "http://localhost:9000/users"
 
-    @Serializable
-    data class Club(val cid: String, val name: String, val ownerUid: String)
+    @BeforeEach
+    fun setup() {
+        // Belleği sıfırlama işlemi, her testten önce çağrılır
+        UsersDataMem.users.clear()
+        ClubsDataMem.clubs.clear()
+    }
 
     @Test
     fun `create club with valid user`() {
         // First create a user
-        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val user = UserServices.addUser("Club Owner", "yusufasar@example.com")
 
         // Create the club using the valid user's UID
         val club = ClubServices.addClub("Tennis Club", user.userID)
@@ -43,7 +48,7 @@ class ClubTest {
     @Test
     fun `create multiple clubs with the same user`() {
         // First create a user
-        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val user = UserServices.addUser("Club Owner", "owner1@example.com")
 
         // Create the first club
         val club1 = ClubServices.addClub("Tennis Club", user.userID)
@@ -58,13 +63,16 @@ class ClubTest {
         assertEquals(user.userID, club2.ownerUid)
 
         // Ensure both clubs were created successfully
-        assertEquals(2, ClubServices.getClubs().size)
+        val clubs = ClubServices.getClubs()
+        assertEquals(2, clubs.size)
+        assertTrue(clubs.any { it.name == "Tennis Club" })
+        assertTrue(clubs.any { it.name == "Football Club" })
     }
 
     @Test
     fun `cannot create club with empty name`() {
         // First create a user
-        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val user = UserServices.addUser("Club Owner", "owner2@example.com")
 
         // Attempt to create a club with an empty name
         val exception = assertThrows<IllegalArgumentException> {
@@ -78,9 +86,9 @@ class ClubTest {
     @Test
     fun `cannot create club with name exceeding max length`() {
         // First create a user
-        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val user = UserServices.addUser("Club Owner", "owner3@example.com")
 
-        // Attempt to create a club with a name exceeding max length
+        // Attempt to create a club with a name exceeding max length (101 characters)
         val exception = assertThrows<IllegalArgumentException> {
             ClubServices.addClub("A".repeat(101), user.userID) // 101 characters
         }
@@ -92,7 +100,7 @@ class ClubTest {
     @Test
     fun `list all clubs`() {
         // First create a user
-        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val user = UserServices.addUser("Club Owner", "owner4@example.com")
 
         // Create multiple clubs
         ClubServices.addClub("Tennis Club", user.userID)
@@ -108,12 +116,19 @@ class ClubTest {
     @Test
     fun `verify club owner`() {
         // First create a user
-        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val user = UserServices.addUser("Club Owner", "owner5@example.com")
 
         // Create a club
         val club = ClubServices.addClub("Tennis Club", user.userID)
 
         // Verify that the club's owner is correctly assigned
         assertEquals(user.userID, club.ownerUid)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        // Belleği sıfırlama işlemi, her testten sonra çağrılır
+        UsersDataMem.users.clear()
+        ClubsDataMem.clubs.clear()
     }
 }

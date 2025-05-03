@@ -11,9 +11,9 @@ data class Club(
 ) {
     init {
         // Club adı boş olamaz
-        require(name.isNotBlank()) { "Club name cannot be blank" }
+        require(name.isNotBlank()) { "Club name cannot be empty" }
 
         // Sahip UID'si boş olamaz
-        require(ownerUid.isNotBlank()) { "Owner ID cannot be blank" }
+        require(ownerUid.isNotBlank()) { "Owner ID cannot be empty" }
     }
 }
