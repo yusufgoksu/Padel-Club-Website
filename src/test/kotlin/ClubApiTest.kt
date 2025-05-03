@@ -125,10 +125,5 @@ class ClubTest {
         assertEquals(user.userID, club.ownerUid)
     }
 
-    @AfterEach
-    fun tearDown() {
-        // Belleği sıfırlama işlemi, her testten sonra çağrılır
-        UsersDataMem.users.clear()
-        ClubsDataMem.clubs.clear()
-    }
+
 }

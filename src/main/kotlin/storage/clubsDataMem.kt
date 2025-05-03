@@ -21,10 +21,10 @@ object ClubsDataMem {
     }
 
     // Kulübün detaylarını almak (ID ile)
-    fun getClubById(cid: String): Club? {
+    fun getClubById(clubID: String): Club? {
         // Kulübün varlığını kontrol et
-        require(clubs.containsKey(cid)) { "Club ID '$cid' not found" }
-        return clubs[cid]
+        require(clubs.containsKey(clubID)) { "Club ID '$clubID' not found" }
+        return clubs[clubID]
     }
 
     // Tüm kulüpleri listeleme

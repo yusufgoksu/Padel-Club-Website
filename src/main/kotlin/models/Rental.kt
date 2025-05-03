@@ -18,7 +18,7 @@ data class Rental(
         require(clubId.isNotBlank()) { "Club ID cannot be blank" }
         require(courtId.isNotBlank()) { "Court ID cannot be blank" }
         require(userId.isNotBlank()) { "User ID cannot be blank" }
-        require(duration in 1..24) { "Duration must be between 1-24 hours" }
+        require(duration in 1..10) { "Duration must be between 1-10 hours" }
 
         try {
             Instant.parse(startTime)
@@ -27,7 +27,6 @@ data class Rental(
         }
     }
 
-    // Helper property to get the end time
     val endTime: Instant
         get() = Instant.parse(startTime).plusSeconds(duration * 3600L)
 }

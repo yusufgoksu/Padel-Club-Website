@@ -5,6 +5,8 @@ import storage.ClubsDataMem
 import storage.CourtsDataMem
 import storage.RentalsDataMem
 import storage.UsersDataMem
+import java.time.Instant
+import java.time.ZoneOffset
 
 object RentalServices {
 
@@ -13,7 +15,13 @@ object RentalServices {
         require(CourtsDataMem.courts.containsKey(courtId)) { "Court ID not found" }
         require(UsersDataMem.users.containsKey(userId)) { "User ID not found" }
 
-        val rental = Rental(clubId = clubId, courtId = courtId, userId = userId, startTime = startTime, duration = duration)
+        val rental = Rental(
+            clubId = clubId,
+            courtId = courtId,
+            userId = userId,
+            startTime = startTime,
+            duration = duration
+        )
         RentalsDataMem.rentals[rental.rentalID] = rental
         return rental
     }
@@ -39,7 +47,7 @@ object RentalServices {
     }
 
     fun updateRental(
-        rentalID: String ,
+        rentalID: String,
         newStartTime: String,
         newDuration: Int,
         newCourtId: String
@@ -47,7 +55,6 @@ object RentalServices {
         val rental = RentalsDataMem.getRentalById(rentalID)
             ?: throw IllegalArgumentException("Rental with ID $rentalID not found")
 
-        // Court ID'yi doğrulamak için doğru storage'ı kullanıyoruz
         require(CourtsDataMem.courts.containsKey(newCourtId)) { "Court ID not found" }
 
         val updatedRental = rental.copy(
@@ -58,5 +65,19 @@ object RentalServices {
 
         RentalsDataMem.rentals[rentalID] = updatedRental
         return updatedRental
+    }
+
+    fun getAvailableHours(clubId: String, courtId: String, date: String): List<Int> {
+        val allHours = (8..17).toMutableList()
+
+        val reservedHours = RentalsDataMem.rentals.values
+            .filter { it.clubId == clubId && it.courtId == courtId && it.startTime.startsWith(date) }
+            .flatMap { rental ->
+                val startHour = Instant.parse(rental.startTime).atZone(ZoneOffset.UTC).hour
+                (startHour until (startHour + rental.duration)).toList()
+            }
+
+        allHours.removeAll(reservedHours.toSet())
+        return allHours
     }
 }

@@ -21,10 +21,10 @@ object CourtsDataMem {
     }
 
     //  Kortun detaylarını almak (ID ile)
-    fun getCourtById(crid: String): Court? {
+    fun getCourtById(courtID: String): Court? {
         // Kortun varlığını kontrol et
-        require(courts.containsKey(crid)) { "Court ID '$crid' not found" }
-        return courts[crid]
+        require(courts.containsKey(courtID)) { "Court ID '$courtID' not found" }
+        return courts[courtID]
     }
 
     //  Tüm kortları listeleme

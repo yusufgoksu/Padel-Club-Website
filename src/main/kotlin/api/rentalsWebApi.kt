@@ -39,7 +39,7 @@ fun rentalsWebApi(): RoutingHttpHandler {
             else Response(Status.NOT_FOUND).body("Kiralama bulunamadı")
         },
 
-        // 👇 BURADA EKSİK OLAN VİRGÜLÜ EKLEDİK
+
         "/rentals/{rid}" bind Method.PUT to { request ->
             val rentalID = request.path("rid") ?: return@to Response(Status.BAD_REQUEST)
             val rentalUpdate = rentalLens(request)
