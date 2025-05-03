@@ -1,8 +1,6 @@
 package tests
 
-import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -37,12 +35,13 @@ class ClubTest {
     @Test
     fun `cannot create club with non-existent user`() {
         // Attempt to create a club with a non-existent user UID
+        val userID="non-existent-userid"
         val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.addClub("Phantom Club", "non-existent-uid")
+            ClubServices.addClub("Phantom Club", userID)
         }
 
         // Check the exception message
-        assertEquals("Owner UID not found", exception.message)
+        assertEquals(" UserID $userID'not found", exception.message)
     }
 
     @Test

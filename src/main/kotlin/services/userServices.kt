@@ -2,7 +2,6 @@ package services
 
 import models.User
 import storage.UsersDataMem
-import java.util.*
 
 object UserServices {
 
@@ -20,14 +19,15 @@ object UserServices {
         return user
     }
 
-
-    fun getUsers(): List<User> = UsersDataMem.users.values.toList()
+    fun getAllUsers(): List<User> = UsersDataMem.users.values.toList()
 
     fun getUserById(userID: String): User? = UsersDataMem.users[userID]
+
+    fun getUserByEmail(email: String): User? =
+        UsersDataMem.getUserByEmail(email)
+
 
     fun generateUserToken(uid: String): Pair<String, String>? {
         return UsersDataMem.generateUserToken(uid)
     }
-
-
 }

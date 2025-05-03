@@ -72,7 +72,7 @@ class UserTests {
         UserServices.addUser("User 2", "user2@example.com")
 
         // Retrieve all users and verify the list size
-        val users = UserServices.getUsers()
+        val users = UserServices.getAllUsers()
 
         // Verify that the list contains 2 users
         assertEquals(2, users.size)

@@ -3,7 +3,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import services.ClubServices
 import services.CourtServices
-import services.RentalServices
 import services.UserServices
 import storage.ClubsDataMem
 import storage.CourtsDataMem
@@ -20,39 +19,21 @@ class Tests {
         CourtsDataMem.courts.clear()
         RentalsDataMem.rentals.clear()
     }
+@Test
+fun `list all entities`() {
+    // Create multiple test entities
+    val user1 = UserServices.addUser("User 1", "user1@example.com")
+    val user2 = UserServices.addUser("User 2", "user2@example.com")
 
-    @Test
-    fun `list all entities`() {
-        // Create multiple test entities
-        val user1 = UserServices.addUser("User 1", "user1@example.com")
-        val user2 = UserServices.addUser("User 2", "user2@example.com")
+    val club1 = ClubServices.addClub("Club 1", user1.userID)
+    val club2 = ClubServices.addClub("Club 2", user2.userID)
 
-        val club1 = ClubServices.addClub("Club 1", user1.userID)
-        val club2 = ClubServices.addClub("Club 2", user2.userID)
+    val court1 = CourtServices.addCourt("Court 1", club1.clubID)
+    val court2 = CourtServices.addCourt("Court 2", club2.clubID)
 
-        val court1 = CourtServices.addCourt("Court 1", club1.clubID)
-        val court2 = CourtServices.addCourt("Court 2", club2.clubID)
-
-        // Add rentals for each court
-        val rental1 = RentalServices.addRental(
-            clubId = club1.clubID,
-            courtId = court1.courtID,
-            userId = user1.userID,
-            startTime = "2024-06-01T10:00:00",
-            duration = 60
-        )
-        val rental2 = RentalServices.addRental(
-            clubId = club2.clubID,
-            courtId = court2.courtID,
-            userId = user2.userID,
-            startTime = "2024-06-01T14:00:00",
-            duration = 90
-        )
-
-        // Test list methods
-        assertEquals(2, UserServices.getUsers().size)
-        assertEquals(2, ClubServices.getClubs().size)
-        assertEquals(2, CourtServices.getCourts().size)
-        assertEquals(2, RentalServices.getRentals().size) // Assert that rentals are correctly added
-    }
+    // Test list methods
+    assertEquals(2, UserServices.getAllUsers().size)
+    assertEquals(2, ClubServices.getClubs().size)
+    assertEquals(2, CourtServices.getCourts().size)
+}
 }

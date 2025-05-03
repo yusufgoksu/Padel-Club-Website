@@ -17,7 +17,7 @@ object UsersDataMem {
     }
 
     // Kullanıcıyı ID'ye göre getirme
-    fun getUserById(uid: String): User? = users[uid]
+    fun getUserById(userID: String): User? = users[userID]
 
     // Tüm kullanıcıları listeleme
     fun getAllUsers(): List<User> = users.values.toList()

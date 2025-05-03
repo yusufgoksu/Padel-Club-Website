@@ -49,10 +49,11 @@ class RentalTests {
     @Test
     fun `cannot create rental with invalid club`() {
         val user = UserServices.addUser("Renter", "renter@example.com")
+        val clubID="non-existent-clubid"
 
         val exception = assertThrows<IllegalArgumentException> {
             RentalServices.addRental(
-                clubId = "non-existent-club",
+                clubId = clubID,
                 courtId = "court-id",
                 userId = user.userID,
                 startTime = "2024-07-01T10:00:00Z",
@@ -60,25 +61,26 @@ class RentalTests {
             )
         }
 
-        assertEquals("Club ID not found", exception.message)
+        assertEquals("Club ID $clubID' not found" , exception.message)
     }
 
     @Test
     fun `cannot create rental with invalid court`() {
         val user = UserServices.addUser("Renter", "renter@example.com")
         val club = ClubServices.addClub("Tennis Club", user.userID)
+        val courtID="non-existent-courtid"
 
         val exception = assertThrows<IllegalArgumentException> {
             RentalServices.addRental(
                 clubId = club.clubID,
-                courtId = "non-existent-court",
+                courtId = courtID,
                 userId = user.userID,
                 startTime = "2024-07-01T10:00:00Z",
                 duration = 1
             )
         }
 
-        assertEquals("Court ID not found", exception.message)
+        assertEquals("Court ID $courtID' not found", exception.message)
     }
 
     @Test

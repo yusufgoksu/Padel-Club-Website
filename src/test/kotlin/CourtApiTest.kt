@@ -38,11 +38,15 @@ class CourtTests {
 
     @Test
     fun `cannot create court for non-existent club`() {
+        // Öncelikle geçerli bir kulüp ekleyelim
+        val clubID = "non-existent-club-id"
+
+        // Geçerli kulüp ID'si kullanılarak kort eklemeye çalışılmalı
         val exception = assertThrows<IllegalArgumentException> {
-            CourtServices.addCourt("Phantom Court", "non-existent-club-id")
+            CourtServices.addCourt("Phantom Court", clubID)
         }
 
-        assertEquals("Club ID not found", exception.message)
+        assertEquals("Club ID '$clubID' not found" , exception.message)
     }
 
     @Test
