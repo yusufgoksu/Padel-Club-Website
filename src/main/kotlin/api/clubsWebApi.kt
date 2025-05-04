@@ -5,6 +5,7 @@ import services.ClubServices
 import org.http4k.core.*
 import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.routing.*
+import java.io.File
 
 fun clubsWebApi(): RoutingHttpHandler {
 
@@ -47,23 +48,37 @@ fun clubsWebApi(): RoutingHttpHandler {
             Response(Status.OK).with(clubsLens of ClubServices.getAllClubs())
         },
 
-        // 🔥 Kulüpleri HTML formatında listele (Yeni eklenen endpoint)
-        "/clubs/html" bind Method.GET to {
-            val clubs = ClubServices.getAllClubs()
+        return routes(
+            // Tüm kulüpleri listele (HTML formatında)
+            "/clubs" bind Method.GET to {
+                val clubs = ClubServices.getClubs()
 
-            val html = buildString {
-                append("<!DOCTYPE html><html><head><title>Clubs List</title></head><body>")
-                append("<h1>Clubs List</h1>")
-                append("<ul>")
-                for (club in clubs) {
-                    append("<li><a href=\"/clubs/details/${club.clubID}\">${club.name}</a></li>")
+                val clubsHtml = buildString {
+                    append("<!DOCTYPE html><html><head><title>Clubs List</title></head><body>")
+                    append("<h1>Clubs List</h1>")
+                    append("<ul>")
+                    for (club in clubs) {
+                        append("<li><a href=\"/clubs/details/${club.clubID}\">${club.name}</a></li>")
+                    }
+                    append("</ul>")
+                    append("<a href=\"/\">Back to Home</a>")
+                    append("</body></html>")
                 }
-                append("</ul>")
-                append("<a href=\"/\">Home</a>")
-                append("</body></html>")
-            }
 
-            Response(Status.OK).body(html).header("Content-Type", "text/html")
-        }
+                Response(Status.OK).body(clubsHtml).header("Content-Type", "text/html")
+            },
+
+            // Kulüp detayları (JSON formatında)
+            "/clubs/details/{clubID}" bind Method.GET to { request ->
+                val clubID = request.path("clubID") ?: return@to Response(Status.BAD_REQUEST)
+                val club = ClubServices.getClubById(clubID) ?: return@to Response(Status.NOT_FOUND)
+
+                val clubDetailsHtml = File("resources/views/club_details.html").readText()
+                    .replace("{{clubName}}", club.name)
+                    .replace("{{clubOwner}}", club.ownerUid)
+
+                Response(Status.OK).body(clubDetailsHtml).header("Content-Type", "text/html")
+            }
+        )
     )
 }
