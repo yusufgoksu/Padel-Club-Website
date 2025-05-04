@@ -1,7 +1,4 @@
-import api.clubsWebApi
-import api.courtsWebApi
-import api.rentalsWebApi
-import api.usersWebApi
+import api.*
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 import org.http4k.routing.routes
@@ -12,6 +9,7 @@ import storage.UsersDataMem
 
 fun main() {
     val app = routes(
+        homeWebApi(),
         clubsWebApi(),
         courtsWebApi(),
         rentalsWebApi(),
