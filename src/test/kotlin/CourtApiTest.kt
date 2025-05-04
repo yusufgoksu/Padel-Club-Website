@@ -95,6 +95,57 @@ class CourtTests {
         assertEquals(2, CourtServices.getAllCourts().size)
     }
 
+    @Test
+    fun `get court by name`() {
+        // First create a user and a club
+        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.userID)
+
+        // Create a court
+        val court = CourtServices.addCourt("Court 1", club.clubID)
+
+        // Get court by name
+        val retrievedCourt = CourtServices.getCourtByName("Court 1")
+
+        // Ensure the court was retrieved correctly
+        assertNotNull(retrievedCourt)
+        assertEquals("Court 1", retrievedCourt?.name)
+    }
+
+    @Test
+    fun `cannot get court by non-existent name`() {
+        // First create a user and a club
+        val user = UserServices.addUser("Club Owner", "owner@example.com")
+        val club = ClubServices.addClub("Tennis Club", user.userID)
+
+        // Try to retrieve a non-existent court by name
+        val retrievedCourt = CourtServices.getCourtByName("Non-existent Court")
+
+        // Ensure no court is returned
+        assertNull(retrievedCourt)
+    }
+    @Test
+    fun `get court by invalid id returns exception`() {
+        // Geçersiz ID ile kort arandı ve IllegalArgumentException fırlatılmalı
+        val exception = assertThrows<IllegalArgumentException> {
+            CourtServices.getCourtById("non-existent-id")
+        }
+
+        // İstediğimiz hatanın mesajını kontrol et
+        assertEquals("Court ID 'non-existent-id' not found", exception.message)
+    }
+
+    @Test
+    fun `get court details by invalid id returns exception`() {
+        // Geçersiz ID ile kort detayları için sorgulama yapılmalı ve IllegalArgumentException fırlatılmalı
+        val exception = assertThrows<IllegalArgumentException> {
+            CourtServices.getCourtById("non-existent-id")
+        }
+
+        // İstediğimiz hatanın mesajını kontrol et
+        assertEquals("Court ID 'non-existent-id' not found", exception.message)
+    }
+
 
 
 }
