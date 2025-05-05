@@ -8,7 +8,6 @@ import org.http4k.core.*
 import org.http4k.routing.*
 
 fun courtsWebApi(): RoutingHttpHandler {
-
     return routes(
         // Tüm kortları listele
         "/courts" bind Method.GET to {
@@ -46,6 +45,7 @@ fun courtsWebApi(): RoutingHttpHandler {
                     append("<p><b>Owner: ${club.ownerUid}</b></p>")
                     append("<h3>Booked Rentals:</h3>")
                     append("<p>$rentalTimes</p>")
+                    append("<br><a href='/rentals/court/${court.courtID}'>View Detailed Rentals</a><br>")
                     append("""
                         <br><a href='/courts/club/${club.clubID}'>Back to Courts in Club</a><br>
                         <a href='/clubs'>Back to Clubs List</a><br>
@@ -75,7 +75,6 @@ fun courtsWebApi(): RoutingHttpHandler {
                     """.trimIndent())
 
                     for (court in courtsForClub) {
-                        // Her kort için detay bağlantısı ekliyoruz
                         append("<li><a href='/courts/${court.courtID}'>${court.name}</a></li>")
                     }
 
@@ -102,6 +101,90 @@ fun courtsWebApi(): RoutingHttpHandler {
                 Response(Status.OK).body("<h1>Court: ${court.name}</h1>").header("Content-Type", "text/html")
             } else {
                 Response(Status.NOT_FOUND)
+            }
+        },
+
+        // CourtID'ye göre kiralama listesini göster (detaylı)
+        "/rentals/court/{courtId}" bind Method.GET to { request ->
+            val courtId = request.path("courtId") ?: return@to Response(Status.BAD_REQUEST)
+
+            try {
+                val court = CourtServices.getCourtById(courtId) ?: return@to Response(Status.NOT_FOUND)
+                val clubId = court.clubId
+
+                val rentals = RentalServices.getRentalsForClubAndCourt(clubId, courtId)
+
+                val html = buildString {
+                    append("""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Rentals for ${court.name}</title>
+                    <style>
+                        table {
+                            border-collapse: collapse;
+                            width: 80%;
+                            margin: 20px 0;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #f2f2f2;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f9f9f9;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>Rentals for Court: ${court.name}</h1>
+            """.trimIndent())
+
+                    if (rentals.isEmpty()) {
+                        append("<p>No rentals found for this court.</p>")
+                    } else {
+                        append("""
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Start Time</th>
+                                <th>Duration (hours)</th>
+                                <th>User ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                """.trimIndent())
+
+                        for (rental in rentals) {
+                            append("""
+                        <tr>
+                            <td>${rental.startTime}</td>
+                            <td>${rental.duration}</td>
+                            <td>${rental.userId}</td>
+                        </tr>
+                    """.trimIndent())
+                        }
+
+                        append("""
+                        </tbody>
+                    </table>
+                """.trimIndent())
+                    }
+
+                    append("""
+                    <br><a href='/courts/$courtId'>Back to Court</a><br>
+                    <a href='/'>Back to Home</a>
+                </body>
+                </html>
+            """.trimIndent())
+                }
+
+                Response(Status.OK).body(html).header("Content-Type", "text/html")
+            } catch (e: Exception) {
+                Response(Status.INTERNAL_SERVER_ERROR).body("Error loading rentals.").header("Content-Type", "text/html")
             }
         }
     )
