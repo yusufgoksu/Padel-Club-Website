@@ -2,6 +2,8 @@ package api
 
 import models.*
 import services.CourtServices
+import services.RentalServices
+import services.ClubServices
 import org.http4k.core.*
 import org.http4k.routing.*
 
@@ -23,8 +25,35 @@ fun courtsWebApi(): RoutingHttpHandler {
         "/courts/{courtID}" bind Method.GET to { request ->
             val courtID = request.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
             return@to try {
-                val court = CourtServices.getCourtById(courtID)
-                Response(Status.OK).body("<h1>Court: ${court?.name}</h1>").header("Content-Type", "text/html")
+                // Kortu al
+                val court = CourtServices.getCourtById(courtID) ?: return@to Response(Status.NOT_FOUND)
+
+                // Kortun ait olduğu kulübü al
+                val club = ClubServices.getClubById(court.clubId) ?: return@to Response(Status.NOT_FOUND)
+
+                // Bu kort ve kulüp için mevcut dolu kiralamaları al
+                val rentals = RentalServices.getRentalsForClubAndCourt(club.clubID, court.courtID)
+
+                // Dolu olan kiralama saatlerini listele
+                val rentalTimes = rentals.joinToString("<br>") {
+                    "Start: ${it.startTime}, Duration: ${it.duration} hours"
+                }
+
+                // HTML yanıtı oluştur
+                val html = buildString {
+                    append("<h1>Court: ${court.name}</h1>")
+                    append("<p><b>Club: ${club.name}</b></p>")
+                    append("<p><b>Owner: ${club.ownerUid}</b></p>")
+                    append("<h3>Booked Rentals:</h3>")
+                    append("<p>$rentalTimes</p>")
+                    append("""
+                        <br><a href='/courts/club/${club.clubID}'>Back to Courts in Club</a><br>
+                        <a href='/clubs'>Back to Clubs List</a><br>
+                        <a href='/'>Back to Home</a>
+                    """)
+                }
+
+                Response(Status.OK).body(html).header("Content-Type", "text/html")
             } catch (e: IllegalArgumentException) {
                 Response(Status.NOT_FOUND)
             }
@@ -46,7 +75,8 @@ fun courtsWebApi(): RoutingHttpHandler {
                     """.trimIndent())
 
                     for (court in courtsForClub) {
-                        append("<li>${court.name}</li>")
+                        // Her kort için detay bağlantısı ekliyoruz
+                        append("<li><a href='/courts/${court.courtID}'>${court.name}</a></li>")
                     }
 
                     append("""
