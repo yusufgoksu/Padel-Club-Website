@@ -34,4 +34,6 @@ object ClubsDataMem {
     fun getClubDetails(clubID: String): Club? {
         return getClubById(clubID) // Bu fonksiyon zaten getClubById'yi çağırıyor
     }
+
+
 }

@@ -25,11 +25,13 @@ object ClubServices {
         return club
     }
 
-    fun getClubs(): List<Club> = ClubsDataMem.getAllClubs()
+    fun getAllClubs(): List<Club> = ClubsDataMem.getAllClubs()
 
     fun getClubById(clubID: String): Club? = ClubsDataMem.getClubById(clubID)
 
-    fun getAllClubs(): List<Club> = ClubsDataMem.getAllClubs()
 
     fun getClubDetails(clubID: String): Club? = ClubsDataMem.getClubDetails(clubID)
+
+
+
 }

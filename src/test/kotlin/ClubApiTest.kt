@@ -45,7 +45,7 @@ class ClubTest {
         val club1 = ClubServices.addClub("Tennis Club", user.userID)
         val club2 = ClubServices.addClub("Football Club", user.userID)
 
-        val clubs = ClubServices.getClubs()
+        val clubs = ClubServices.getAllClubs()
         assertEquals(2, clubs.size)
         assertTrue(clubs.any { it.name == "Tennis Club" })
         assertTrue(clubs.any { it.name == "Football Club" })
@@ -78,7 +78,7 @@ class ClubTest {
         ClubServices.addClub("Tennis Club", user.userID)
         ClubServices.addClub("Football Club", user.userID)
 
-        val clubs = ClubServices.getClubs()
+        val clubs = ClubServices.getAllClubs()
         assertEquals(2, clubs.size)
         assertTrue(clubs.any { it.name == "Tennis Club" })
         assertTrue(clubs.any { it.name == "Football Club" })
@@ -161,7 +161,7 @@ class ClubTest {
     @Test
     fun `getClubs returns empty list when no clubs exist`() {
         // Hiç kulüp yoksa boş liste dönmeli
-        val clubs = ClubServices.getClubs()
+        val clubs = ClubServices.getAllClubs()
         assertTrue(clubs.isEmpty())
     }
 }

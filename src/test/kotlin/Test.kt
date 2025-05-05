@@ -52,7 +52,7 @@ class Tests {
 
         // Test list methods
         assertEquals(2, UserServices.getAllUsers().size)
-        assertEquals(2, ClubServices.getClubs().size)
+        assertEquals(2, ClubServices.getAllClubs().size)
         assertEquals(2, CourtServices.getAllCourts().size)
         assertEquals(2, RentalsDataMem.rentals.size)
     }

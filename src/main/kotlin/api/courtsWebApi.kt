@@ -3,25 +3,20 @@ package api
 import models.*
 import services.CourtServices
 import org.http4k.core.*
-import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.routing.*
 
 fun courtsWebApi(): RoutingHttpHandler {
 
-    val courtLens = Body.auto<Court>().toLens()
-    val courtsLens = Body.auto<List<Court>>().toLens()
-
     return routes(
         // Tüm kortları listele
         "/courts" bind Method.GET to {
-            Response(Status.OK).with(courtsLens of CourtServices.getAllCourts())
+            Response(Status.OK).body("<h1>All Courts</h1>").header("Content-Type", "text/html")
         },
 
         // Yeni kort ekle
         "/courts" bind Method.POST to { request ->
-            val court = courtLens(request)
-            val createdCourt = CourtServices.addCourt(court.name, court.clubId)
-            Response(Status.CREATED).with(courtLens of createdCourt)
+            val court = request.bodyString()
+            Response(Status.CREATED).body("Court Created: $court").header("Content-Type", "text/html")
         },
 
         // Kort ID'ye göre kortu getir
@@ -29,18 +24,41 @@ fun courtsWebApi(): RoutingHttpHandler {
             val courtID = request.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
             return@to try {
                 val court = CourtServices.getCourtById(courtID)
-                Response(Status.OK).with(courtLens of court!!)
+                Response(Status.OK).body("<h1>Court: ${court?.name}</h1>").header("Content-Type", "text/html")
             } catch (e: IllegalArgumentException) {
                 Response(Status.NOT_FOUND)
             }
         },
 
-        // Kulüp ID'sine göre kortları listele
+        // Kulüp ID'sine göre kortları listele (HTML)
         "/courts/club/{clubId}" bind Method.GET to { request ->
             val clubId = request.path("clubId") ?: return@to Response(Status.BAD_REQUEST)
             return@to try {
                 val courtsForClub = CourtServices.getCourtsForClub(clubId)
-                Response(Status.OK).with(courtsLens of courtsForClub)
+                val html = buildString {
+                    append("""
+                        <!DOCTYPE html>
+                        <html>
+                        <head><title>Courts for Club</title></head>
+                        <body>
+                            <h1>Courts for Club</h1>
+                            <ul>
+                    """.trimIndent())
+
+                    for (court in courtsForClub) {
+                        append("<li>${court.name}</li>")
+                    }
+
+                    append("""
+                            </ul>
+                            <a href='/clubs'>Back to Clubs List</a><br>
+                            <a href='/'>Back to Home</a>
+                        </body>
+                        </html>
+                    """.trimIndent())
+                }
+
+                Response(Status.OK).body(html).header("Content-Type", "text/html")
             } catch (e: IllegalArgumentException) {
                 Response(Status.NOT_FOUND)
             }
@@ -51,7 +69,7 @@ fun courtsWebApi(): RoutingHttpHandler {
             val courtName = request.path("courtName") ?: return@to Response(Status.BAD_REQUEST)
             val court = CourtServices.getCourtByName(courtName)
             return@to if (court != null) {
-                Response(Status.OK).with(courtLens of court)
+                Response(Status.OK).body("<h1>Court: ${court.name}</h1>").header("Content-Type", "text/html")
             } else {
                 Response(Status.NOT_FOUND)
             }
