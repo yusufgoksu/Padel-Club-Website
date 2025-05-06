@@ -11,127 +11,184 @@ import org.http4k.routing.*
 
 fun rentalsWebApi(): RoutingHttpHandler {
 
-    val rentalLens = Body.auto<Rental>().toLens()
+    val rentalLens  = Body.auto<Rental>().toLens()
     val rentalsLens = Body.auto<List<Rental>>().toLens()
 
     return routes(
+        // Tüm kiralamalar (JSON)
         "/rentals" bind Method.GET to {
             Response(Status.OK).with(rentalsLens of RentalServices.getRentals())
         },
 
-        "/rentals" bind Method.POST to { request ->
-            val rental = rentalLens(request)
-            val createdRental = RentalServices.addRental(
+        // Yeni kiralama oluştur (JSON)
+        "/rentals" bind Method.POST to { req ->
+            val rental = rentalLens(req)
+            val created = RentalServices.addRental(
                 rental.clubId, rental.courtId, rental.userId, rental.startTime, rental.duration
             )
-            Response(Status.CREATED).with(rentalLens of createdRental)
+            Response(Status.CREATED).with(rentalLens of created)
         },
 
-        "/rentals/{rentalID}" bind Method.GET to { request ->
-            val rentalID = request.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
-            val rental = RentalServices.getRentalById(rentalID)
+        // Tek bir kiralama detay (HTML)
+        "/rentals/{rentalID}" bind Method.GET to { req ->
+            val id = req.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
+            val r  = RentalServices.getRentalById(id)
                 ?: return@to Response(Status.NOT_FOUND)
 
-            val court = CourtServices.getCourtById(rental.courtId) ?: return@to Response(Status.NOT_FOUND)
-            val club = ClubServices.getClubById(court.clubId) ?: return@to Response(Status.NOT_FOUND)
-            val user = UserServices.getUserById(rental.userId) ?: return@to Response(Status.NOT_FOUND)
+            val court = CourtServices.getCourtById(r.courtId)
+                ?: return@to Response(Status.NOT_FOUND)
+            val club  = ClubServices.getClubById(court.clubId)
+                ?: return@to Response(Status.NOT_FOUND)
+            val user  = UserServices.getUserById(r.userId)
+                ?: return@to Response(Status.NOT_FOUND)
 
             val html = """
                 <html>
-                <head>
+                  <head>
                     <meta charset="UTF-8">
-                    <title>Rental Details for Rental ID: ${rental.rentalID}</title>
+                    <title>Rental Details: ${r.rentalID}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1 { color: #333; }
-                        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                        th { background-color: #f2f2f2; }
-                        tr:nth-child(even) { background-color: #f9f9f9; }
-                        a {
-                            text-decoration: none;
-                            color: #007bff;
-                            margin-right: 10px;
-                        }
-                        a:hover { text-decoration: underline; }
+                      body { font-family: Arial, sans-serif; padding: 20px; }
+                      table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                      th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                      th { background-color: #f2f2f2; }
+                      tr:nth-child(even) { background-color: #f9f9f9; }
+                      a { text-decoration: none; color: #007bff; margin-right: 10px; }
+                      a:hover { text-decoration: underline; }
                     </style>
-                </head>
-                <body>
-                    <h1>Rental Details for Rental ID: ${rental.rentalID}</h1>
+                  </head>
+                  <body>
+                    <h1>Rental Details for ID: ${r.rentalID}</h1>
                     <h2>Court: ${court.name}</h2>
                     <h3>Club: ${club.name}</h3>
-                    
+
                     <table>
-                        <tr><th>Rental ID</th><td>${rental.rentalID}</td></tr>
-                        <tr><th>User ID</th><td>${rental.userId}</td></tr>
-                        <tr><th>Start Time</th><td>${rental.startTime}</td></tr>
-                        <tr><th>Duration (hours)</th><td>${rental.duration}</td></tr>
-                        <tr><th>Club ID</th><td>${club.clubID}</td></tr>
-                        <tr><th>Court ID</th><td>${court.courtID}</td></tr>
+                      <tr><th>Rental ID</th><td>${r.rentalID}</td></tr>
+                      <tr><th>User ID</th><td>${r.userId}</td></tr>
+                      <tr><th>Start Time</th><td>${r.startTime}</td></tr>
+                      <tr><th>Duration (hrs)</th><td>${r.duration}</td></tr>
+                      <tr><th>Club ID</th><td>${club.clubID}</td></tr>
+                      <tr><th>Court ID</th><td>${court.courtID}</td></tr>
                     </table>
 
-                    <br>
-                    <!-- View User Details butonu eklendi -->
-                    <a href="/users/${user.userID}" class="btn btn-primary">View User Details</a><br>
-
-                    <a href="/courts/${court.courtID}/rentals">Back to Rentals List</a><br>
-                    <a href="/courts/${court.courtID}">Back to Court Details</a><br>
-                    <a href="/">Back to Home</a>
-                </body>
+                    <br/>
+                    <a href="/users/${user.userID}">View User Details</a><br/>
+                    <a href="/rentals/user/${user.userID}">Back to User Rentals</a><br/>
+                    <a href="/">Home</a>
+                  </body>
                 </html>
             """.trimIndent()
 
-            Response(Status.OK).body(html).header("Content-Type", "text/html")
+            Response(Status.OK)
+                .header("Content-Type", "text/html")
+                .body(html)
         },
 
-        "/rentals/available" bind Method.GET to { request ->
-            val clubId = request.query("clubId") ?: return@to Response(Status.BAD_REQUEST).body("Missing clubId")
-            val courtId = request.query("courtId") ?: return@to Response(Status.BAD_REQUEST).body("Missing courtId")
-            val date = request.query("date") ?: return@to Response(Status.BAD_REQUEST).body("Missing date")
+        // Kullanıcıya ait kiralamalar (JSON veya HTML)
+        "/rentals/user/{userId}" bind Method.GET to { req ->
+            val userId = req.path("userId")
+                ?: return@to Response(Status.BAD_REQUEST).body("Missing userId")
 
-            val availableHours = RentalServices.getAvailableHours(clubId, courtId, date)
-            Response(Status.OK).body(availableHours.joinToString(","))
-        },
-
-        "/rentals/club/{clubId}/court/{courtId}" bind Method.GET to { request ->
-            val clubId = request.path("clubId") ?: return@to Response(Status.BAD_REQUEST)
-            val courtId = request.path("courtId") ?: return@to Response(Status.BAD_REQUEST)
-            val date = request.query("date")
-
-            val rentals = RentalServices.getRentalsForClubAndCourt(clubId, courtId, date)
-            Response(Status.OK).with(rentalsLens of rentals)
-        },
-
-        "/rentals/user/{userId}" bind Method.GET to { request ->
-            val userId = request.path("userId") ?: return@to Response(Status.BAD_REQUEST)
             val rentals = RentalServices.getRentalsForUser(userId)
-            Response(Status.OK).with(rentalsLens of rentals)
+
+            // HTML tablo dön
+            val rows = rentals.joinToString("\n") { r ->
+                val court = CourtServices.getCourtById(r.courtId)
+                val club  = court?.let { ClubServices.getClubById(it.clubId) }
+                """
+                <tr>
+                  <td>${r.rentalID}</td>
+                  <td>${club?.name ?: r.clubId}</td>
+                  <td>${court?.name ?: r.courtId}</td>
+                  <td>${r.startTime}</td>
+                  <td>${r.duration}</td>
+                </tr>
+                """.trimIndent()
+            }
+
+            val html = """
+                <html>
+                  <head>
+                    <meta charset="UTF-8">
+                    <title>Rentals for User $userId</title>
+                    <style>
+                      body { font-family: Arial, sans-serif; padding: 20px; }
+                      table { border-collapse: collapse; width: 80%; margin-top: 20px; }
+                      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                      th { background-color: #f2f2f2; }
+                      tr:nth-child(even) { background-color: #f9f9f9; }
+                      a { text-decoration: none; color: #007bff; margin-right: 10px; }
+                      a:hover { text-decoration: underline; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1>Rentals for User: $userId</h1>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Rental ID</th>
+                          <th>Club</th>
+                          <th>Court</th>
+                          <th>Start Time</th>
+                          <th>Duration (hrs)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        $rows
+                      </tbody>
+                    </table>
+
+                    <br/>
+                    <a href="/users/$userId">← Back to User Details</a>
+                    <a href="/">Home</a>
+                  </body>
+                </html>
+            """.trimIndent()
+
+            Response(Status.OK)
+                .header("Content-Type", "text/html")
+                .body(html)
         },
 
-        "/rentals/{rentalID}" bind Method.DELETE to { request ->
-            val rentalID = request.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
-            val isDeleted = RentalServices.deleteRental(rentalID)
-            if (isDeleted) {
+        // Kiralama sil (JSON)
+        "/rentals/{rentalID}" bind Method.DELETE to { req ->
+            val id = req.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
+            return@to if (RentalServices.deleteRental(id)) {
                 Response(Status.NO_CONTENT)
             } else {
                 Response(Status.NOT_FOUND)
             }
         },
 
-        "/rentals/{rentalID}" bind Method.PUT to { request ->
-            val rentalID = request.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
-            val rental = rentalLens(request)
+        // Kiralama güncelle (JSON)
+        "/rentals/{rentalID}" bind Method.PUT to { req ->
+            val id     = req.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
+            val update = rentalLens(req)
             try {
-                val updatedRental = RentalServices.updateRental(
-                    rentalID,
-                    rental.startTime,
-                    rental.duration,
-                    rental.courtId
+                val updated = RentalServices.updateRental(
+                    id, update.startTime, update.duration, update.courtId
                 )
-                Response(Status.OK).with(rentalLens of updatedRental)
+                Response(Status.OK).with(rentalLens of updated)
             } catch (e: IllegalArgumentException) {
                 Response(Status.NOT_FOUND)
             }
+        },
+
+        // Diğer JSON-only endpoint’ler…
+        "/rentals/available" bind Method.GET to { req ->
+            val clubId  = req.query("clubId")  ?: return@to Response(Status.BAD_REQUEST).body("Missing clubId")
+            val courtId = req.query("courtId") ?: return@to Response(Status.BAD_REQUEST).body("Missing courtId")
+            val date    = req.query("date")    ?: return@to Response(Status.BAD_REQUEST).body("Missing date")
+            val hours   = RentalServices.getAvailableHours(clubId, courtId, date)
+            Response(Status.OK).body(hours.joinToString(","))
+        },
+
+        "/rentals/club/{clubId}/court/{courtId}" bind Method.GET to { req ->
+            val clubId  = req.path("clubId")  ?: return@to Response(Status.BAD_REQUEST)
+            val courtId = req.path("courtId") ?: return@to Response(Status.BAD_REQUEST)
+            val date    = req.query("date")
+            val list    = RentalServices.getRentalsForClubAndCourt(clubId, courtId, date)
+            Response(Status.OK).with(rentalsLens of list)
         }
     )
 }
