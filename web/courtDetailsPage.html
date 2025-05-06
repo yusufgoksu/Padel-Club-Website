@@ -1,69 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Court Details: Court A</title>
+    <title>Club Details</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        h1, h3 {
-            color: #333;
-        }
-        p {
-            line-height: 1.6;
-        }
-        .links a {
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        p { margin: 8px 0; }
+        a {
             display: inline-block;
-            margin-top: 10px;
-            margin-right: 10px;
-            text-decoration: none;
+            margin: 8px 0;
             color: #007bff;
-        }
-        .links a:hover {
-            text-decoration: underline;
-        }
-        .rentals {
-            background-color: #f9f9f9;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 5px;
-        }
-        .button-link {
-            display: inline-block;
-            padding: 8px 12px;
-            background-color: #007bff;
-            color: white;
             text-decoration: none;
-            border-radius: 4px;
-            margin-top: 10px;
         }
-        .button-link:hover {
-            background-color: #0056b3;
-        }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-
-<h1>Court: Court A</h1>
-<p><b>Club:</b> Example Club</p>
-<p><b>Owner:</b> user123</p>
-
-<div class="rentals">
-    <h3>Booked Rentals:</h3>
-    <p>
-        Start: 2025-05-05T13:00, Duration: 2 hours<br>
-        Start: 2025-05-06T15:00, Duration: 1 hours
-    </p>
-    <a class="button-link" href="/rentals/court/courtA">View Rental List</a>
-</div>
-
-<div class="links">
-    <a href="/courts/club/club123">Back to Courts in Club</a><br>
-    <a href="/clubs">Back to Clubs List</a><br>
-    <a href="/">Back to Home</a>
-</div>
-
+<h1>Club: Padel Club A</h1>
+<p><strong>Club ID:</strong> 442ad807-737a-4acf-94c4-523cfaffb65c</p>
+<p><strong>Owner UID:</strong> dde2cdf4-9ffc-4ee5-86f4-84d68da0392e</p>
+<br>
+<!-- Navigate to the club owner’s user page -->
+<a href="/users/dde2cdf4-9ffc-4ee5-86f4-84d68da0392e">View User Details</a><br>
+<!-- Back links -->
+<a href="/clubs">← Back to Clubs List</a><br>
+<a href="/">Home</a><br>
+<!-- View courts under this club -->
+<a href="/courts/club/442ad807-737a-4acf-94c4-523cfaffb65c">View Courts</a>
 </body>
 </html>
