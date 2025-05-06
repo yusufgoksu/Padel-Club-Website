@@ -1,70 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Rentals for Court: Court A</title>
+    <title>Rentals for Court A1</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        table {
-            border-collapse: collapse;
-            width: 80%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            margin-right: 10px;
-            text-decoration: none;
-            color: #007bff;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-<h1>Rentals for Court: Court A</h1>
-
+<h1>Rentals for Court: Court A1</h1>
 <table>
     <thead>
     <tr>
         <th>Start Time</th>
-        <th>Duration (hours)</th>
+        <th>Duration (hrs)</th>
         <th>User ID</th>
+        <th></th>
     </tr>
     </thead>
     <tbody>
+    <!-- EXAMPLES -->
     <tr>
-        <td>2025-05-05T13:00</td>
+        <td>2025-03-27T14:00:00Z</td>
         <td>2</td>
-        <td>user123</td>
+        <td>user1</td>
+        <td><a href="/rentals/abc123">Details</a></td>
     </tr>
     <tr>
-        <td>2025-05-06T15:00</td>
+        <td>2025-03-27T15:00:00Z</td>
         <td>1</td>
-        <td>user456</td>
+        <td>user2</td>
+        <td><a href="/rentals/def456">Details</a></td>
     </tr>
     </tbody>
 </table>
-
-<a href="/courts/courtA">Back to Court</a>
-<a href="/">Back to Home</a>
+<br>
+<a href="/courts/11111111-1111-1111-1111-111111111111">← Back to Court</a><br>
+<a href="/">Home</a>
 </body>
 </html>
