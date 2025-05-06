@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Details</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 60%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        a { color: #007bff; text-decoration: none; margin-right: 10px; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<h1>User Details</h1>
+<table>
+    <tr><th>User ID</th><td>${user.userID}</td></tr>
+    <tr><th>Name</th><td>${user.name}</td></tr>
+    <tr><th>Email</th><td>${user.email}</td></tr>
+    <tr><th>Token</th><td>${user.token}</td></tr>
+</table>
+<br>
+<a href="/users/${user.userID}/rentals">View Rentals</a>
+<a href="/users">Back to Users</a>
+<a href="/">Home</a>
+</body>
+</html>

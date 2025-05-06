@@ -1,176 +1,213 @@
 package api
 
-import models.*
-import services.*
+import models.Court
+import models.Rental
+import services.ClubServices
+import services.CourtServices
+import services.RentalServices
 import org.http4k.core.*
+import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.routing.*
 
 fun courtsWebApi(): RoutingHttpHandler {
+
+    val courtLens   = Body.auto<Court>().toLens()
+    val courtsLens  = Body.auto<List<Court>>().toLens()
+    val rentalsLens = Body.auto<List<Rental>>().toLens()
+
     return routes(
-        // Tüm kortları listele
+        // — JSON endpoints —
+
+        // Tüm kortları JSON formatında listele
+        "/courts/json" bind Method.GET to {
+            Response(Status.OK)
+                .with(courtsLens of CourtServices.getAllCourts())
+        },
+
+        // Tek bir kortu JSON olarak getir
+        "/courts/{courtID}/json" bind Method.GET to { req ->
+            val id = req.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
+            val court = CourtServices.getCourtById(id)
+                ?: return@to Response(Status.NOT_FOUND)
+            Response(Status.OK).with(courtLens of court)
+        },
+
+        // — HTML endpoints —
+
+        // Courts List — Clubs List stiliyle
         "/courts" bind Method.GET to {
             val courts = CourtServices.getAllCourts()
             val html = buildString {
                 append("""
-                    <html>
+                    <!DOCTYPE html>
+                    <html lang="en">
                     <head>
-                        <title>All Courts</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
-                            h1 { color: #333; }
-                            table { border-collapse: collapse; width: 80%; margin-top: 20px; }
-                            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                            th { background-color: #f2f2f2; }
-                            tr:nth-child(even) { background-color: #f9f9f9; }
-                            a { text-decoration: none; color: #007bff; }
-                            a:hover { text-decoration: underline; }
-                        </style>
+                      <meta charset="UTF-8">
+                      <title>Courts List</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        ul { list-style: none; padding: 0; }
+                        li { margin: 8px 0; }
+                        a { color: #007bff; text-decoration: none; }
+                        a:hover { text-decoration: underline; }
+                      </style>
                     </head>
                     <body>
-                        <h1>All Courts</h1>
-                        <table>
-                            <tr><th>Name</th><th>Club ID</th><th>Details</th></tr>
-                """)
-                courts.forEach {
-                    append("<tr><td>${it.name}</td><td>${it.clubId}</td><td><a href='/courts/${it.courtID}'>View</a></td></tr>")
+                      <h1>Courts List</h1>
+                      <ul>
+                """.trimIndent())
+                for (c in courts) {
+                    append("""<li><a href="/courts/${c.courtID}">${c.name}</a></li>""")
                 }
                 append("""
-                        </table>
-                        <br><a href='/'>Back to Home</a>
+                      </ul>
+                      <br>
+                      <a href="/">Back to Home</a>
                     </body>
                     </html>
-                """)
+                """.trimIndent())
             }
-            Response(Status.OK).body(html).header("Content-Type", "text/html")
+            Response(Status.OK)
+                .header("Content-Type", "text/html")
+                .body(html)
         },
 
-        // Belirli bir kortun detayları
-        "/courts/{courtID}" bind Method.GET to { request ->
-            val courtID = request.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
-            val court = CourtServices.getCourtById(courtID) ?: return@to Response(Status.NOT_FOUND)
-            val club = ClubServices.getClubById(court.clubId) ?: return@to Response(Status.NOT_FOUND)
+        // Court Details — Clubs Details stiliyle
+        "/courts/{courtID}" bind Method.GET to { req ->
+            val id = req.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
+            val court = CourtServices.getCourtById(id)
+                ?: return@to Response(Status.NOT_FOUND)
+            val club = ClubServices.getClubById(court.clubId)
+                ?: return@to Response(Status.NOT_FOUND)
 
             val html = """
-                <html>
+                <!DOCTYPE html>
+                <html lang="en">
                 <head>
-                    <title>Court Details</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1, h2 { color: #333; }
-                        a {
-                            display: inline-block;
-                            margin-top: 20px;
-                            margin-right: 10px;
-                            text-decoration: none;
-                            color: #007bff;
-                        }
-                        a:hover { text-decoration: underline; }
-                    </style>
+                  <meta charset="UTF-8">
+                  <title>Court Details</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    p { margin: 8px 0; }
+                    a { display: inline-block; margin: 8px 0; color: #007bff; text-decoration: none; }
+                    a:hover { text-decoration: underline; }
+                  </style>
                 </head>
                 <body>
-                    <h1>Court: ${court.name}</h1>
-                    <p><b>Club:</b> ${club.name}</p>
-                    <p><b>Club Owner:</b> ${club.ownerUid}</p>
-
-                    <a href="/courts/${courtID}/rentals">View Rentals</a><br>
-                    <a href="/courts/club/${club.clubID}">Back to Courts in Club</a>
-                    <a href="/">Back to Home</a>
+                  <h1>Court: ${court.name}</h1>
+                  <p><strong>Court ID:</strong> ${court.courtID}</p>
+                  <p><strong>Club:</strong> ${club.name}</p>
+                  <p><strong>Owner UID:</strong> ${club.ownerUid}</p>
+                  <br>
+                  <!-- Kiralamaları gör -->
+                  <a href="/courts/${court.courtID}/rentals">View Rentals</a><br>
+                  <!-- Geri linkler -->
+                  <a href="/courts">← Back to Courts List</a><br>
+                  <a href="/">Home</a><br>
                 </body>
                 </html>
             """.trimIndent()
 
-            Response(Status.OK).body(html).header("Content-Type", "text/html")
+            Response(Status.OK)
+                .header("Content-Type", "text/html")
+                .body(html)
         },
 
-        // Belirli bir kulübe ait tüm kortları listele
-        "/courts/club/{clubId}" bind Method.GET to { request ->
-            val clubId = request.path("clubId") ?: return@to Response(Status.BAD_REQUEST)
+        // Courts in Club — Clubs List stiliyle
+        "/courts/club/{clubId}" bind Method.GET to { req ->
+            val clubId = req.path("clubId") ?: return@to Response(Status.BAD_REQUEST)
+            val club   = ClubServices.getClubById(clubId)
+                ?: return@to Response(Status.NOT_FOUND)
             val courts = CourtServices.getCourtsForClub(clubId)
-            val html = buildString {
-                append("""
-                    <html>
-                    <head><title>Courts in Club</title></head>
-                    <body>
-                        <h1>Courts in Club</h1>
-                        <ul>
-                """)
-                courts.forEach {
-                    append("<li><a href='/courts/${it.courtID}'>${it.name}</a></li>")
-                }
-                append("""
-                        </ul>
-                        <a href='/clubs'>Back to Clubs</a>
-                        <a href='/'>Back to Home</a>
-                    </body>
-                    </html>
-                """)
-            }
-            Response(Status.OK).body(html).header("Content-Type", "text/html")
-        },
-
-        // Kiralamaları listele
-        "/courts/{courtID}/rentals" bind Method.GET to { request ->
-            val courtID = request.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
-            val court = CourtServices.getCourtById(courtID) ?: return@to Response(Status.NOT_FOUND)
-            val clubId = court.clubId
-            val rentals = RentalServices.getRentalsForClubAndCourt(clubId, courtID)
 
             val html = buildString {
                 append("""
-                    <html>
+                    <!DOCTYPE html>
+                    <html lang="en">
                     <head>
-                        <meta charset="UTF-8">
-                        <title>Rentals for Court: ${court.name}</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
-                            h1 { color: #333; }
-                            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-                            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                            th { background-color: #f2f2f2; }
-                            tr:nth-child(even) { background-color: #f9f9f9; }
-                            a {
-                                text-decoration: none;
-                                color: #007bff;
-                                margin-right: 10px;
-                            }
-                            a:hover { text-decoration: underline; }
-                        </style>
+                      <meta charset="UTF-8">
+                      <title>Courts in ${club.name}</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        ul { list-style: none; padding: 0; }
+                        li { margin: 8px 0; }
+                        a { color: #007bff; text-decoration: none; }
+                        a:hover { text-decoration: underline; }
+                      </style>
                     </head>
                     <body>
-                        <h1>Rentals for Court: ${court.name}</h1>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Start Time</th>
-                                    <th>Duration (hours)</th>
-                                    <th>User ID</th>
-                                    <th>Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                """)
-                rentals.forEach {
-                    append("""
-                        <tr>
-                            <td>${it.startTime}</td>
-                            <td>${it.duration}</td>
-                            <td>${it.userId}</td>
-                            <td><a href="/rentals/${it.rentalID}">Rental Details</a></td>
-                        </tr>
-                    """)
+                      <h1>Courts in ${club.name}</h1>
+                      <ul>
+                """.trimIndent())
+                for (c in courts) {
+                    append("""<li><a href="/courts/${c.courtID}">${c.name}</a></li>""")
                 }
                 append("""
-                            </tbody>
-                        </table>
-                        <br>
-                        <a href="/courts/${courtID}">Back to Court</a>
-                        <a href="/">Back to Home</a>
+                      </ul>
+                      <br>
+                      <a href="/clubs">← Back to Clubs</a>
+                      <a href="/">Back to Home</a>
                     </body>
                     </html>
-                """)
+                """.trimIndent())
             }
 
-            Response(Status.OK).body(html).header("Content-Type", "text/html")
+            Response(Status.OK)
+                .header("Content-Type", "text/html")
+                .body(html)
+        },
+
+        // Rentals for a Court
+        "/courts/{courtID}/rentals" bind Method.GET to { req ->
+            val courtID = req.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
+            val court   = CourtServices.getCourtById(courtID)
+                ?: return@to Response(Status.NOT_FOUND)
+            val rentals = RentalServices.getRentalsForClubAndCourt(court.clubId, courtID)
+
+            val html = buildString {
+                append("""
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                      <meta charset="UTF-8">
+                      <title>Rentals for ${court.name}</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background: #f2f2f2; }
+                        a { color: #007bff; text-decoration: none; }
+                        a:hover { text-decoration: underline; }
+                      </style>
+                    </head>
+                    <body>
+                      <h1>Rentals for ${court.name}</h1>
+                      <table>
+                        <tr><th>Start Time</th><th>Duration</th><th>User ID</th><th></th></tr>
+                """.trimIndent())
+                rentals.forEach { r ->
+                    append("""
+                        <tr>
+                          <td>${r.startTime}</td>
+                          <td>${r.duration}</td>
+                          <td>${r.userId}</td>
+                          <td><a href="/rentals/${r.rentalID}">Details</a></td>
+                        </tr>
+                    """.trimIndent())
+                }
+                append("""
+                      </table>
+                      <br>
+                      <a href="/courts/$courtID">← Back to Court</a><br>
+                      <a href="/">Home</a>
+                    </body>
+                    </html>
+                """.trimIndent())
+            }
+
+            Response(Status.OK)
+                .header("Content-Type", "text/html")
+                .body(html)
         }
     )
 }

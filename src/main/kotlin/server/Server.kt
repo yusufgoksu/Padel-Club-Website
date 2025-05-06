@@ -11,7 +11,7 @@ import storage.UsersDataMem
 fun main() {
     // Web API'leri tanımla
     val app = routes(
-        homePage(),
+        homeWebApi(),
         clubsWebApi(),
         courtsWebApi(),
         rentalsWebApi(),

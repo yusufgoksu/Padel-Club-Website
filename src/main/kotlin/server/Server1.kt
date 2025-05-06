@@ -10,50 +10,49 @@ import storage.ClubsDataMem
 import storage.CourtsDataMem
 import storage.RentalsDataMem
 import storage.UsersDataMem
+import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 
 fun main() {
-    // Router oluştur
-    val app = routes(
-        homePage(),        // Anasayfa (HTML)
-        clubsWebApi(),     // Kulüpler API (JSON)
-        courtsWebApi(),    // Kortlar API (JSON)
-        rentalsWebApi(),   // Kiralamalar API (JSON)
-        usersWebApi(),     // Kullanıcılar API (JSON)
-        clubPages(),       // Kulüp sayfaları (HTML)
-        courtPages(),      // Kort sayfaları (HTML)
-        rentalPages(),     // Kiralama sayfaları (HTML)
-        userPages()        // Kullanıcı sayfaları (HTML)
+
+
+    // 2) HTML sayfa rotaları (root altında)
+    val pageRoutes = routes(
+        homePage(),
+        userPages(),
+        clubPages(),
+        courtPages(),
+        rentalPages()
     )
 
-    // Sunucuyu 9000 portunda başlat
-    val server = app.asServer(SunHttp(9000)).start()
+    // 3) Hepsini birleştir ve sunucuyu başlat
+    val app = routes(pageRoutes)
+    app.asServer(SunHttp(9000)).start()
     println("Server running on http://localhost:9000")
 
-    // Test verisi ekleme
-    // 1. Kullanıcı, Kulüp ve Kortlar
+    // 4) Sunucu ayağa kalktıktan sonra test verilerini ekle
     val user1 = UsersDataMem.addUser(name = "Yusuf", email = "yusuf@example.com")
     val club1 = ClubsDataMem.addClub(name = "Padel Club A", ownerId = user1.userID)
     val court1A = CourtsDataMem.addCourt(name = "Court A1", clubId = club1.clubID)
     val court1B = CourtsDataMem.addCourt(name = "Court A2", clubId = club1.clubID)
     val court1C = CourtsDataMem.addCourt(name = "Court A3", clubId = club1.clubID)
-    val rental1A = RentalsDataMem.addRental(
+    RentalsDataMem.addRental(
         userId = user1.userID,
         courtId = court1A.courtID,
         startTime = "2025-03-27T14:00:00Z",
         duration = 2,
         clubID = club1.clubID
     )
-    val rental1B = RentalsDataMem.addRental(
+    RentalsDataMem.addRental(
         userId = user1.userID,
         courtId = court1B.courtID,
         startTime = "2025-03-27T15:00:00Z",
         duration = 2,
         clubID = club1.clubID
     )
-    val rental1C = RentalsDataMem.addRental(
+    RentalsDataMem.addRental(
         userId = user1.userID,
         courtId = court1C.courtID,
         startTime = "2025-03-27T16:00:00Z",
@@ -61,19 +60,18 @@ fun main() {
         clubID = club1.clubID
     )
 
-    // 2. Kullanıcı, Kulüp ve Kortlar
     val user2 = UsersDataMem.addUser(name = "Mert", email = "mert@example.com")
     val club2 = ClubsDataMem.addClub(name = "Padel Club B", ownerId = user2.userID)
     val court2A = CourtsDataMem.addCourt(name = "Court B1", clubId = club2.clubID)
     val court2B = CourtsDataMem.addCourt(name = "Court B2", clubId = club2.clubID)
-    val rental2A = RentalsDataMem.addRental(
+    RentalsDataMem.addRental(
         userId = user2.userID,
         courtId = court2A.courtID,
         startTime = "2025-03-27T14:00:00Z",
         duration = 2,
         clubID = club2.clubID
     )
-    val rental2B = RentalsDataMem.addRental(
+    RentalsDataMem.addRental(
         userId = user2.userID,
         courtId = court2B.courtID,
         startTime = "2025-03-27T15:00:00Z",
@@ -81,11 +79,10 @@ fun main() {
         clubID = club2.clubID
     )
 
-    // 3. Kullanıcı, Kulüp ve Kortlar
     val user3 = UsersDataMem.addUser(name = "Ali", email = "ali@example.com")
     val club3 = ClubsDataMem.addClub(name = "Padel Club C", ownerId = user3.userID)
     val court3A = CourtsDataMem.addCourt(name = "Court C1", clubId = club3.clubID)
-    val rental3A = RentalsDataMem.addRental(
+    RentalsDataMem.addRental(
         userId = user3.userID,
         courtId = court3A.courtID,
         startTime = "2025-03-27T14:00:00Z",
@@ -93,9 +90,8 @@ fun main() {
         clubID = club3.clubID
     )
 
-    // Ekleme sonrası konsola yazdırma
-    println("Data inserted successfully:")
-    println("User 1: $user1, Club 1: $club1, Courts: $court1A, $court1B, $court1C, Rentals: $rental1A, $rental1B, $rental1C")
-    println("User 2: $user2, Club 2: $club2, Courts: $court2A, $court2B, Rentals: $rental2A, $rental2B")
-    println("User 3: $user3, Club 3: $club3, Court: $court3A, Rental: $rental3A")
+    println("Test verisi başarıyla eklendi:")
+    println("User 1: $user1, Club 1: $club1, Courts: $court1A, $court1B, $court1C")
+    println("User 2: $user2, Club 2: $club2, Courts: $court2A, $court2B")
+    println("User 3: $user3, Club 3: $club3, Court: $court3A")
 }
