@@ -1,202 +1,176 @@
 package api
 
 import models.*
-import services.CourtServices
-import services.RentalServices
-import services.ClubServices
+import services.*
 import org.http4k.core.*
 import org.http4k.routing.*
 
 fun courtsWebApi(): RoutingHttpHandler {
     return routes(
+        // Tüm kortları listele
         "/courts" bind Method.GET to {
             val courts = CourtServices.getAllCourts()
             val html = buildString {
                 append("""
-                    <!DOCTYPE html>
                     <html>
-                    <head><meta charset="UTF-8"><title>All Courts</title>
-                    <style>
-                        body { font-family: Arial; padding: 20px; }
-                        ul { list-style-type: none; padding: 0; }
-                        li { margin: 8px 0; }
-                    </style>
+                    <head>
+                        <title>All Courts</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { color: #333; }
+                            table { border-collapse: collapse; width: 80%; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            tr:nth-child(even) { background-color: #f9f9f9; }
+                            a { text-decoration: none; color: #007bff; }
+                            a:hover { text-decoration: underline; }
+                        </style>
                     </head>
                     <body>
-                    <h1>All Courts</h1>
-                    <ul>
-                """.trimIndent())
-
-                for (court in courts) {
-                    append("<li><a href='/courts/${court.courtID}'>${court.name}</a></li>")
+                        <h1>All Courts</h1>
+                        <table>
+                            <tr><th>Name</th><th>Club ID</th><th>Details</th></tr>
+                """)
+                courts.forEach {
+                    append("<tr><td>${it.name}</td><td>${it.clubId}</td><td><a href='/courts/${it.courtID}'>View</a></td></tr>")
                 }
-
                 append("""
-                    </ul>
-                    <a href='/'>Back to Home</a>
-                    </body></html>
-                """.trimIndent())
+                        </table>
+                        <br><a href='/'>Back to Home</a>
+                    </body>
+                    </html>
+                """)
             }
             Response(Status.OK).body(html).header("Content-Type", "text/html")
         },
 
-        "/courts" bind Method.POST to { request ->
-            val court = request.bodyString()
-            Response(Status.CREATED).body("Court Created: $court").header("Content-Type", "text/html")
-        },
-
+        // Belirli bir kortun detayları
         "/courts/{courtID}" bind Method.GET to { request ->
             val courtID = request.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
-            return@to try {
-                val court = CourtServices.getCourtById(courtID) ?: return@to Response(Status.NOT_FOUND)
-                val club = ClubServices.getClubById(court.clubId) ?: return@to Response(Status.NOT_FOUND)
-                val rentals = RentalServices.getRentalsForClubAndCourt(club.clubID, court.courtID)
+            val court = CourtServices.getCourtById(courtID) ?: return@to Response(Status.NOT_FOUND)
+            val club = ClubServices.getClubById(court.clubId) ?: return@to Response(Status.NOT_FOUND)
 
-                val rentalRows = rentals.joinToString("\n") {
-                    "<tr><td>${it.startTime}</td><td>${it.duration} hour(s)</td></tr>"
-                }
+            val html = """
+                <html>
+                <head>
+                    <title>Court Details</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1, h2 { color: #333; }
+                        a {
+                            display: inline-block;
+                            margin-top: 20px;
+                            margin-right: 10px;
+                            text-decoration: none;
+                            color: #007bff;
+                        }
+                        a:hover { text-decoration: underline; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Court: ${court.name}</h1>
+                    <p><b>Club:</b> ${club.name}</p>
+                    <p><b>Club Owner:</b> ${club.ownerUid}</p>
 
-                val html = """
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>${court.name}</title>
-                        <style>
-                            body { font-family: Arial; padding: 20px; }
-                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                            th, td { border: 1px solid #ccc; padding: 8px; }
-                            th { background: #eee; }
-                            .buttons a {
-                                display: inline-block; margin: 10px 10px 0 0;
-                                background: #007bff; color: white; padding: 8px 12px;
-                                text-decoration: none; border-radius: 4px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>${court.name}</h1>
-                        <p><strong>Club:</strong> ${club.name}</p>
-                        <p><strong>Owner UID:</strong> ${club.ownerUid}</p>
-                        <h3>Booked Rentals</h3>
-                        <table>
-                            <thead><tr><th>Start</th><th>Duration</th></tr></thead>
-                            <tbody>$rentalRows</tbody>
-                        </table>
-                        <div class="buttons">
-                            <a href="/rentals/court/${court.courtID}">View Rental List</a>
-                            <a href="/courts/club/${club.clubID}">Back to Courts in Club</a>
-                            <a href="/clubs">Back to Clubs</a>
-                            <a href="/">Home</a>
-                        </div>
-                    </body>
-                    </html>
-                """.trimIndent()
+                    <a href="/courts/${courtID}/rentals">View Rentals</a><br>
+                    <a href="/courts/club/${club.clubID}">Back to Courts in Club</a>
+                    <a href="/">Back to Home</a>
+                </body>
+                </html>
+            """.trimIndent()
 
-                Response(Status.OK).body(html).header("Content-Type", "text/html")
-            } catch (e: IllegalArgumentException) {
-                Response(Status.NOT_FOUND)
-            }
+            Response(Status.OK).body(html).header("Content-Type", "text/html")
         },
 
+        // Belirli bir kulübe ait tüm kortları listele
         "/courts/club/{clubId}" bind Method.GET to { request ->
             val clubId = request.path("clubId") ?: return@to Response(Status.BAD_REQUEST)
-            return@to try {
-                val courts = CourtServices.getCourtsForClub(clubId)
-                val html = buildString {
-                    append("""
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <meta charset="UTF-8">
-                            <title>Courts for Club</title>
-                            <style>
-                                body { font-family: Arial; padding: 20px; }
-                                ul { list-style-type: none; padding: 0; }
-                                li { margin: 8px 0; }
-                            </style>
-                        </head>
-                        <body>
-                            <h1>Courts for Club</h1>
-                            <ul>
-                    """.trimIndent())
-
-                    for (court in courts) {
-                        append("<li><a href='/courts/${court.courtID}'>${court.name}</a></li>")
-                    }
-
-                    append("""
-                            </ul>
-                            <a href="/clubs">Back to Clubs List</a><br>
-                            <a href="/">Back to Home</a>
-                        </body>
-                        </html>
-                    """.trimIndent())
+            val courts = CourtServices.getCourtsForClub(clubId)
+            val html = buildString {
+                append("""
+                    <html>
+                    <head><title>Courts in Club</title></head>
+                    <body>
+                        <h1>Courts in Club</h1>
+                        <ul>
+                """)
+                courts.forEach {
+                    append("<li><a href='/courts/${it.courtID}'>${it.name}</a></li>")
                 }
-
-                Response(Status.OK).body(html).header("Content-Type", "text/html")
-            } catch (e: IllegalArgumentException) {
-                Response(Status.NOT_FOUND)
+                append("""
+                        </ul>
+                        <a href='/clubs'>Back to Clubs</a>
+                        <a href='/'>Back to Home</a>
+                    </body>
+                    </html>
+                """)
             }
+            Response(Status.OK).body(html).header("Content-Type", "text/html")
         },
 
-        "/courts/name/{courtName}" bind Method.GET to { request ->
-            val courtName = request.path("courtName") ?: return@to Response(Status.BAD_REQUEST)
-            val court = CourtServices.getCourtByName(courtName)
-            return@to if (court != null) {
-                Response(Status.OK).body("<h1>Court: ${court.name}</h1>").header("Content-Type", "text/html")
-            } else {
-                Response(Status.NOT_FOUND)
-            }
-        },
+        // Kiralamaları listele
+        "/courts/{courtID}/rentals" bind Method.GET to { request ->
+            val courtID = request.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
+            val court = CourtServices.getCourtById(courtID) ?: return@to Response(Status.NOT_FOUND)
+            val clubId = court.clubId
+            val rentals = RentalServices.getRentalsForClubAndCourt(clubId, courtID)
 
-        "/rentals/court/{courtId}" bind Method.GET to { request ->
-            val courtId = request.path("courtId") ?: return@to Response(Status.BAD_REQUEST)
-            return@to try {
-                val court = CourtServices.getCourtById(courtId) ?: return@to Response(Status.NOT_FOUND)
-                val club = ClubServices.getClubById(court.clubId) ?: return@to Response(Status.NOT_FOUND)
-                val rentals = RentalServices.getRentalsForClubAndCourt(club.clubID, court.courtID)
-
-                val rows = rentals.joinToString("\n") {
-                    "<tr><td>${it.startTime}</td><td>${it.duration}</td><td>${it.userId}</td></tr>"
-                }
-
-                val html = """
-                    <!DOCTYPE html>
+            val html = buildString {
+                append("""
                     <html>
                     <head>
                         <meta charset="UTF-8">
-                        <title>Rentals for ${court.name}</title>
+                        <title>Rentals for Court: ${court.name}</title>
                         <style>
-                            body { font-family: Arial; padding: 20px; }
-                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                            th, td { border: 1px solid #ccc; padding: 8px; }
-                            th { background: #eee; }
-                            .buttons a {
-                                display: inline-block; margin: 10px 10px 0 0;
-                                background: #007bff; color: white; padding: 8px 12px;
-                                text-decoration: none; border-radius: 4px;
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { color: #333; }
+                            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            tr:nth-child(even) { background-color: #f9f9f9; }
+                            a {
+                                text-decoration: none;
+                                color: #007bff;
+                                margin-right: 10px;
                             }
+                            a:hover { text-decoration: underline; }
                         </style>
                     </head>
                     <body>
-                        <h1>Rentals for ${court.name}</h1>
+                        <h1>Rentals for Court: ${court.name}</h1>
                         <table>
-                            <thead><tr><th>Start Time</th><th>Duration</th><th>User</th></tr></thead>
-                            <tbody>$rows</tbody>
+                            <thead>
+                                <tr>
+                                    <th>Start Time</th>
+                                    <th>Duration (hours)</th>
+                                    <th>User ID</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                """)
+                rentals.forEach {
+                    append("""
+                        <tr>
+                            <td>${it.startTime}</td>
+                            <td>${it.duration}</td>
+                            <td>${it.userId}</td>
+                            <td><a href="/rentals/${it.rentalID}">Rental Details</a></td>
+                        </tr>
+                    """)
+                }
+                append("""
+                            </tbody>
                         </table>
-                        <div class="buttons">
-                            <a href="/courts/${court.courtID}">Back to Court</a>
-                            <a href="/">Home</a>
-                        </div>
+                        <br>
+                        <a href="/courts/${courtID}">Back to Court</a>
+                        <a href="/">Back to Home</a>
                     </body>
                     </html>
-                """.trimIndent()
-
-                Response(Status.OK).body(html).header("Content-Type", "text/html")
-            } catch (e: IllegalArgumentException) {
-                Response(Status.NOT_FOUND)
+                """)
             }
+
+            Response(Status.OK).body(html).header("Content-Type", "text/html")
         }
     )
 }

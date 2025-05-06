@@ -2,6 +2,7 @@ package api
 
 import models.*
 import services.ClubServices
+import services.UserServices
 import org.http4k.core.*
 import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.routing.*
@@ -73,8 +74,13 @@ fun clubsWebApi(): RoutingHttpHandler {
                     <h1>Club Details</h1>
                     <p><strong>Name:</strong> ${club.name}</p>
                     <p><strong>Owner UID:</strong> ${club.ownerUid}</p>
+                    
+                    <!-- Kulüp sahibine ait detaylara yönlendiren buton -->
+                    <a href="/users/${club.ownerUid}" class="btn btn-primary">View User Details</a><br>
+                    
                     <a href="/clubs">Back to Clubs List</a><br>
                     <a href="/">Back to Home</a><br>
+                    
                     <!-- Kortlar sayfasına yönlendiren buton -->
                     <a href="/courts/club/${club.clubID}">View Courts</a>
                 </body>

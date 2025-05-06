@@ -28,11 +28,61 @@ fun usersWebApi(): RoutingHttpHandler {
             }
         },
 
-        // ID ile kullanıcı getir
+        // ID ile kullanıcı getir (HTML Detay Sayfası)
         "/users/{userID}" bind Method.GET to { request ->
             val userID = request.path("userID") ?: return@to Response(Status.BAD_REQUEST)
             val user = UserServices.getUserById(userID) ?: return@to Response(Status.NOT_FOUND)
-            Response(Status.OK).with(userLens of user)
+
+            val html = """
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>User Details</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #333; }
+                        table {
+                            border-collapse: collapse;
+                            width: 60%;
+                            margin-top: 20px;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 10px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #f2f2f2;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f9f9f9;
+                        }
+                        a {
+                            text-decoration: none;
+                            color: #007bff;
+                            margin-right: 10px;
+                        }
+                        a:hover {
+                            text-decoration: underline;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>User Details</h1>
+                    <table>
+                        <tr><th>User ID</th><td>${user.userID}</td></tr>
+                        <tr><th>First Name</th><td>${user.name}</td></tr>
+                        <tr><th>Last Name</th><td>${user.email}</td></tr>
+                        <tr><th>Email</th><td>${user.token}</td></tr>
+                    </table>
+                    <br>
+                    <a href="/clubs">Back to Clubs</a>
+                    <a href="/">Back to Home</a>
+                </body>
+                </html>
+            """.trimIndent()
+
+            Response(Status.OK).body(html).header("Content-Type", "text/html")
         },
 
         // E-posta ile kullanıcı getir
