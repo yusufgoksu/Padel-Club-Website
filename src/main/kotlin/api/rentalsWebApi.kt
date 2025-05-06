@@ -22,25 +22,21 @@ fun rentalsWebApi(): RoutingHttpHandler {
 
         // Yeni kiralama oluştur (JSON)
         "/rentals" bind Method.POST to { req ->
-            val rental = rentalLens(req)
+            val rental  = rentalLens(req)
             val created = RentalServices.addRental(
-                rental.clubId, rental.courtId, rental.userId, rental.startTime, rental.duration
+                rental.clubId, rental.courtId, rental.userId,
+                rental.startTime, rental.duration
             )
             Response(Status.CREATED).with(rentalLens of created)
         },
 
         // Tek bir kiralama detay (HTML)
         "/rentals/{rentalID}" bind Method.GET to { req ->
-            val id = req.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
-            val r  = RentalServices.getRentalById(id)
-                ?: return@to Response(Status.NOT_FOUND)
-
-            val court = CourtServices.getCourtById(r.courtId)
-                ?: return@to Response(Status.NOT_FOUND)
-            val club  = ClubServices.getClubById(court.clubId)
-                ?: return@to Response(Status.NOT_FOUND)
-            val user  = UserServices.getUserById(r.userId)
-                ?: return@to Response(Status.NOT_FOUND)
+            val id    = req.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
+            val r     = RentalServices.getRentalById(id) ?: return@to Response(Status.NOT_FOUND)
+            val court = CourtServices.getCourtById(r.courtId) ?: return@to Response(Status.NOT_FOUND)
+            val club  = ClubServices.getClubById(court.clubId) ?: return@to Response(Status.NOT_FOUND)
+            val user  = UserServices.getUserById(r.userId) ?: return@to Response(Status.NOT_FOUND)
 
             val html = """
                 <html>
@@ -84,15 +80,15 @@ fun rentalsWebApi(): RoutingHttpHandler {
                 .body(html)
         },
 
-        // Kullanıcıya ait kiralamalar (JSON veya HTML)
+        // Kullanıcıya ait kiralamalar (HTML)
         "/rentals/user/{userId}" bind Method.GET to { req ->
-            val userId = req.path("userId")
-                ?: return@to Response(Status.BAD_REQUEST).body("Missing userId")
+            val userId = req.path("userId") ?:
+            return@to Response(Status.BAD_REQUEST).body("Missing userId")
 
             val rentals = RentalServices.getRentalsForUser(userId)
 
-            // HTML tablo dön
-            val rows = rentals.joinToString("\n") { r ->
+            // Tablo satırlarını oluştur, sondaki hücrede "Rental Details" link'i
+            val rowsHtml = rentals.joinToString("\n") { r ->
                 val court = CourtServices.getCourtById(r.courtId)
                 val club  = court?.let { ClubServices.getClubById(it.clubId) }
                 """
@@ -102,6 +98,7 @@ fun rentalsWebApi(): RoutingHttpHandler {
                   <td>${court?.name ?: r.courtId}</td>
                   <td>${r.startTime}</td>
                   <td>${r.duration}</td>
+                  <td><a href="/rentals/${r.rentalID}">Rental Details</a></td>
                 </tr>
                 """.trimIndent()
             }
@@ -117,7 +114,7 @@ fun rentalsWebApi(): RoutingHttpHandler {
                       th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                       th { background-color: #f2f2f2; }
                       tr:nth-child(even) { background-color: #f9f9f9; }
-                      a { text-decoration: none; color: #007bff; margin-right: 10px; }
+                      a { text-decoration: none; color: #007bff; }
                       a:hover { text-decoration: underline; }
                     </style>
                   </head>
@@ -131,10 +128,11 @@ fun rentalsWebApi(): RoutingHttpHandler {
                           <th>Court</th>
                           <th>Start Time</th>
                           <th>Duration (hrs)</th>
+                          <th>Details</th>
                         </tr>
                       </thead>
                       <tbody>
-                        $rows
+                        $rowsHtml
                       </tbody>
                     </table>
 
@@ -153,11 +151,8 @@ fun rentalsWebApi(): RoutingHttpHandler {
         // Kiralama sil (JSON)
         "/rentals/{rentalID}" bind Method.DELETE to { req ->
             val id = req.path("rentalID") ?: return@to Response(Status.BAD_REQUEST)
-            return@to if (RentalServices.deleteRental(id)) {
-                Response(Status.NO_CONTENT)
-            } else {
-                Response(Status.NOT_FOUND)
-            }
+            if (RentalServices.deleteRental(id)) Response(Status.NO_CONTENT)
+            else Response(Status.NOT_FOUND)
         },
 
         // Kiralama güncelle (JSON)

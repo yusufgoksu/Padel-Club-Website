@@ -84,7 +84,7 @@ fun usersWebApi(): RoutingHttpHandler {
 
             val rentals = RentalServices.getRentalsForUser(userID)
 
-            // Tablo satırlarını oluştur
+            // Satırları hazırla, son sütunda Details
             val rowsHtml = rentals.joinToString("\n") { r ->
                 val court = CourtServices.getCourtById(r.courtId)
                 val club  = court?.let { ClubServices.getClubById(it.clubId) }
@@ -95,6 +95,7 @@ fun usersWebApi(): RoutingHttpHandler {
                   <td>${court?.name ?: r.courtId}</td>
                   <td>${r.startTime}</td>
                   <td>${r.duration}</td>
+                  <td><a href="/rentals/${r.rentalID}">Rental Details</a></td>
                 </tr>
                 """.trimIndent()
             }
@@ -111,7 +112,7 @@ fun usersWebApi(): RoutingHttpHandler {
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                         th { background-color: #f2f2f2; }
                         tr:nth-child(even) { background-color: #f9f9f9; }
-                        a { text-decoration: none; color: #007bff; margin-right: 10px; }
+                        a { text-decoration: none; color: #007bff; }
                         a:hover { text-decoration: underline; }
                     </style>
                 </head>
@@ -125,6 +126,7 @@ fun usersWebApi(): RoutingHttpHandler {
                             <th>Court</th>
                             <th>Start Time</th>
                             <th>Duration (hrs)</th>
+                            <th>Details</th>
                           </tr>
                         </thead>
                         <tbody>
