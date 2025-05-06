@@ -71,9 +71,9 @@ fun usersWebApi(): RoutingHttpHandler {
                     <h1>User Details</h1>
                     <table>
                         <tr><th>User ID</th><td>${user.userID}</td></tr>
-                        <tr><th>First Name</th><td>${user.name}</td></tr>
-                        <tr><th>Last Name</th><td>${user.email}</td></tr>
-                        <tr><th>Email</th><td>${user.token}</td></tr>
+                        <tr><th> Name</th><td>${user.name}</td></tr>
+                        <tr><th> Email</th><td>${user.email}</td></tr>
+                        <tr><th>Token</th><td>${user.token}</td></tr>
                     </table>
                     <br>
                     <a href="/clubs">Back to Clubs</a>
