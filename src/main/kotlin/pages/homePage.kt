@@ -1,11 +1,11 @@
-package api
+package pages
 
 import org.http4k.core.*
 import org.http4k.routing.*
 import org.http4k.core.Response
 import org.http4k.core.Status
 
-fun homeWebApi(): RoutingHttpHandler = routes(
+fun homePage(): RoutingHttpHandler = routes(
     "/" bind Method.GET to { _: Request ->
         Response(Status.OK).body("""
             <!DOCTYPE html>
