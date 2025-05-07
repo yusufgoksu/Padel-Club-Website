@@ -1,0 +1,470 @@
+openapi: 3.0.0
+info:
+  description: "API for managing users, clubs, courts, and rentals in a padel club\
+    \ booking system."
+  title: Padel Club Booking API
+  version: 1.0.0
+servers:
+- url: http://localhost:9000/api
+paths:
+  /clubs/json:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Club'
+                type: array
+          description: A JSON array of clubs
+      summary: List all clubs
+      x-accepts:
+      - application/json
+  /clubs:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClubCreate'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Club'
+          description: Created club
+      summary: Create a new club
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /clubs/{clubID}/json:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: clubID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Club'
+          description: Club details
+        "404":
+          description: Club not found
+      summary: Get a club by ID
+      x-accepts:
+      - application/json
+  /courts/json:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Court'
+                type: array
+          description: A JSON array of courts
+      summary: List all courts
+      x-accepts:
+      - application/json
+  /courts/{courtID}/json:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: courtID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Court'
+          description: Court details
+        "404":
+          description: Court not found
+      summary: Get a court by ID
+      x-accepts:
+      - application/json
+  /rentals:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Rental'
+                type: array
+          description: A JSON array of rentals
+      summary: List all rentals
+      x-accepts:
+      - application/json
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RentalCreate'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rental'
+          description: Created rental
+      summary: Create a new rental
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /rentals/available:
+    get:
+      parameters:
+      - explode: true
+        in: query
+        name: clubId
+        required: true
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: courtId
+        required: true
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: date
+        required: true
+        schema:
+          format: date
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Comma-separated available hours
+      summary: Get available hours for a court
+      x-accepts:
+      - text/plain
+  /rentals/club/{clubId}/court/{courtId}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: clubId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: courtId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: date
+        required: false
+        schema:
+          format: date
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Rental'
+                type: array
+          description: A JSON array of rentals
+      summary: Get rentals for a specific club and court
+      x-accepts:
+      - application/json
+  /users:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/User'
+                type: array
+          description: A JSON array of users
+      summary: List all users
+      x-accepts:
+      - application/json
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Created user
+      summary: Create a new user
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+  /users/{userID}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: userID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: User details
+        "404":
+          description: User not found
+      summary: Get a user by ID
+      x-accepts:
+      - application/json
+  /users/{userID}/rentals:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: userID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Rental'
+                type: array
+          description: A JSON array of rentals for the user
+      summary: List rentals for a user
+      x-accepts:
+      - application/json
+  /users/by-email:
+    get:
+      parameters:
+      - explode: true
+        in: query
+        name: email
+        required: true
+        schema:
+          format: email
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: User details
+        "404":
+          description: User not found
+      summary: Get a user by email
+      x-accepts:
+      - application/json
+  /users/{userID}/token:
+    post:
+      parameters:
+      - explode: false
+        in: path
+        name: userID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_users__userID__token_post_200_response'
+          description: Generated token
+      summary: Generate a token for a user
+      x-accepts:
+      - application/json
+components:
+  schemas:
+    Club:
+      example:
+        name: name
+        clubID: clubID
+        ownerUid: ownerUid
+      properties:
+        clubID:
+          type: string
+        name:
+          type: string
+        ownerUid:
+          type: string
+      required:
+      - name
+      - ownerUid
+      type: object
+    ClubCreate:
+      example:
+        name: name
+        ownerUid: ownerUid
+      properties:
+        name:
+          type: string
+        ownerUid:
+          type: string
+      required:
+      - name
+      - ownerUid
+      type: object
+    Court:
+      example:
+        name: name
+        clubId: clubId
+        courtID: courtID
+      properties:
+        courtID:
+          type: string
+        name:
+          type: string
+        clubId:
+          type: string
+      required:
+      - clubId
+      - name
+      type: object
+    Rental:
+      example:
+        duration: 0
+        clubId: clubId
+        startTime: 2000-01-23T04:56:07.000+00:00
+        userId: userId
+        rentalID: rentalID
+        courtId: courtId
+      properties:
+        rentalID:
+          type: string
+        userId:
+          type: string
+        clubId:
+          type: string
+        courtId:
+          type: string
+        startTime:
+          format: date-time
+          type: string
+        duration:
+          type: integer
+      required:
+      - clubId
+      - courtId
+      - duration
+      - startTime
+      - userId
+      type: object
+    RentalCreate:
+      example:
+        duration: 0
+        clubId: clubId
+        startTime: 2000-01-23T04:56:07.000+00:00
+        userId: userId
+        courtId: courtId
+      properties:
+        userId:
+          type: string
+        clubId:
+          type: string
+        courtId:
+          type: string
+        startTime:
+          format: date-time
+          type: string
+        duration:
+          type: integer
+      required:
+      - clubId
+      - courtId
+      - duration
+      - startTime
+      - userId
+      type: object
+    User:
+      example:
+        name: name
+        userID: userID
+        email: email
+        token: token
+      properties:
+        userID:
+          type: string
+        name:
+          type: string
+        email:
+          format: email
+          type: string
+        token:
+          type: string
+      required:
+      - email
+      - name
+      type: object
+    UserCreate:
+      example:
+        name: name
+        email: email
+      properties:
+        name:
+          type: string
+        email:
+          format: email
+          type: string
+      required:
+      - email
+      - name
+      type: object
+    _users__userID__token_post_200_response:
+      example:
+        userID: userID
+        token: token
+      properties:
+        token:
+          type: string
+        userID:
+          type: string
+      type: object
+
