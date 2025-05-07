@@ -10,7 +10,6 @@ import storage.ClubsDataMem
 import storage.CourtsDataMem
 import storage.RentalsDataMem
 import storage.UsersDataMem
-import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
@@ -20,11 +19,11 @@ fun main() {
 
     // 2) HTML sayfa rotaları (root altında)
     val pageRoutes = routes(
-        homePage(),
-        userPages(),
-        clubPages(),
-        courtPages(),
-        rentalPages()
+        homeWebApi(),
+        clubsWebApi(),
+        courtsWebApi(),
+        rentalsWebApi(),
+        usersWebApi()
     )
 
     // 3) Hepsini birleştir ve sunucuyu başlat
@@ -34,26 +33,26 @@ fun main() {
 
     // 4) Sunucu ayağa kalktıktan sonra test verilerini ekle
     val user1 = UsersDataMem.addUser(name = "Yusuf", email = "yusuf@example.com")
-    val club1 = ClubsDataMem.addClub(name = "Padel Club A", ownerId = user1.userID)
+    val club1 = ClubsDataMem.addClub(name = "Padel Club A", ownerId = user1.userId)
     val court1A = CourtsDataMem.addCourt(name = "Court A1", clubId = club1.clubID)
     val court1B = CourtsDataMem.addCourt(name = "Court A2", clubId = club1.clubID)
     val court1C = CourtsDataMem.addCourt(name = "Court A3", clubId = club1.clubID)
     RentalsDataMem.addRental(
-        userId = user1.userID,
+        userId = user1.userId,
         courtId = court1A.courtID,
         startTime = "2025-03-27T14:00:00Z",
         duration = 2,
         clubID = club1.clubID
     )
     RentalsDataMem.addRental(
-        userId = user1.userID,
+        userId = user1.userId,
         courtId = court1B.courtID,
         startTime = "2025-03-27T15:00:00Z",
         duration = 2,
         clubID = club1.clubID
     )
     RentalsDataMem.addRental(
-        userId = user1.userID,
+        userId = user1.userId,
         courtId = court1C.courtID,
         startTime = "2025-03-27T16:00:00Z",
         duration = 2,
@@ -61,18 +60,18 @@ fun main() {
     )
 
     val user2 = UsersDataMem.addUser(name = "Mert", email = "mert@example.com")
-    val club2 = ClubsDataMem.addClub(name = "Padel Club B", ownerId = user2.userID)
+    val club2 = ClubsDataMem.addClub(name = "Padel Club B", ownerId = user2.userId)
     val court2A = CourtsDataMem.addCourt(name = "Court B1", clubId = club2.clubID)
     val court2B = CourtsDataMem.addCourt(name = "Court B2", clubId = club2.clubID)
     RentalsDataMem.addRental(
-        userId = user2.userID,
+        userId = user2.userId,
         courtId = court2A.courtID,
         startTime = "2025-03-27T14:00:00Z",
         duration = 2,
         clubID = club2.clubID
     )
     RentalsDataMem.addRental(
-        userId = user2.userID,
+        userId = user2.userId,
         courtId = court2B.courtID,
         startTime = "2025-03-27T15:00:00Z",
         duration = 2,
@@ -80,10 +79,10 @@ fun main() {
     )
 
     val user3 = UsersDataMem.addUser(name = "Ali", email = "ali@example.com")
-    val club3 = ClubsDataMem.addClub(name = "Padel Club C", ownerId = user3.userID)
+    val club3 = ClubsDataMem.addClub(name = "Padel Club C", ownerId = user3.userId)
     val court3A = CourtsDataMem.addCourt(name = "Court C1", clubId = club3.clubID)
     RentalsDataMem.addRental(
-        userId = user3.userID,
+        userId = user3.userId,
         courtId = court3A.courtID,
         startTime = "2025-03-27T14:00:00Z",
         duration = 2,

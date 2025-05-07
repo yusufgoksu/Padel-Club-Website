@@ -9,7 +9,7 @@ object AuthService {
         // Burada token doğrulama işlemi yapılmalı, örneğin token'ı bir veritabanı ile karşılaştırabilirsiniz
         // Bu sadece örnek amaçlı bir kontrol
         return if (token == "valid-token-example") {
-            User(userID = "123", name = "Test User", email = "test@example.com")
+            User(userId = "123", name = "Test User", email = "test@example.com")
         } else {
             null
         }

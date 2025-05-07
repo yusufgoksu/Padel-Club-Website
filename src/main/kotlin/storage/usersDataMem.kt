@@ -9,8 +9,8 @@ object UsersDataMem {
 
     // Yeni bir kullanıcı ekleme
     fun addUser(name: String, email: String): User {
-        val user = User(userID = UUID.randomUUID().toString(), name = name, email = email)
-        users[user.userID] = user
+        val user = User(userId = UUID.randomUUID().toString(), name = name, email = email)
+        users[user.userId] = user
         return user
     }
 
@@ -29,7 +29,7 @@ object UsersDataMem {
         return user?.let {
             // Basit bir token üretimi (örneğin UUID kullanılarak)
             val token = UUID.randomUUID().toString()
-            Pair(token, it.userID) // token ve uid'yi döndürüyoruz
+            Pair(token, it.userId) // token ve uid'yi döndürüyoruz
         }
     }
 }

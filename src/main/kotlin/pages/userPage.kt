@@ -1,7 +1,5 @@
 package pages
 
-import models.User
-import models.Rental
 import services.UserServices
 import services.RentalServices
 import services.CourtServices
@@ -14,10 +12,10 @@ fun userPages(): RoutingHttpHandler = routes(
         val users = UserServices.getAllUsers()
         val rows = users.joinToString("\n") { u ->
             """<tr>
-           <td>${u.userID}</td>
+           <td>${u.userId}</td>
            <td>${u.name}</td>
            <td>${u.email}</td>
-           <td><a href="/users/${u.userID}">Details</a></td>
+           <td><a href="/users/${u.userId}">Details</a></td>
          </tr>"""
         }
         val html = """
@@ -41,9 +39,9 @@ fun userPages(): RoutingHttpHandler = routes(
       <!DOCTYPE html>
       <html><head><meta charset="UTF-8"><title>${u.name}</title></head><body>
         <h1>User: ${u.name}</h1>
-        <p>ID: ${u.userID}</p>
+        <p>ID: ${u.userId}</p>
         <p>Email: ${u.email}</p>
-        <a href="/users/${u.userID}/rentals">View Rentals</a><br>
+        <a href="/users/${u.userId}/rentals">View Rentals</a><br>
         <a href="/users">← Back to Users</a><br>
         <a href="/">Home</a>
       </body></html>

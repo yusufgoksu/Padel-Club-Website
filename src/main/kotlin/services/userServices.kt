@@ -15,7 +15,7 @@ object UserServices {
         val user = User(name = name, email = email)
 
         // Kullanıcıyı veritabanına ekle
-        UsersDataMem.users[user.userID] = user
+        UsersDataMem.users[user.userId] = user
         return user
     }
 

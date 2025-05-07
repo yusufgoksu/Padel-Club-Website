@@ -2,7 +2,7 @@
 
 Padel Club Booking API
 - API version: 1.0.0
-  - Build date: 2025-05-06T20:09:14.290376300+01:00[Europe/London]
+  - Build date: 2025-05-07T04:14:58.751546900+01:00[Europe/London]
   - Generator version: 7.7.0
 
 API for managing users, clubs, courts, and rentals in a padel club booking system.

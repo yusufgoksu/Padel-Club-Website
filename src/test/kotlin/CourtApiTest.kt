@@ -27,7 +27,7 @@ class CourtTests {
     fun `create court for existing club`() {
         // Create user and club first
         val user = UserServices.addUser("Club Owner", "owner@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
 
         val court = CourtServices.addCourt("Court 1", club.clubID)
 
@@ -53,7 +53,7 @@ class CourtTests {
     fun `cannot create court with empty name`() {
         // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
 
         // Attempt to create a court with an empty name
         val exception = assertThrows<IllegalArgumentException> {
@@ -68,7 +68,7 @@ class CourtTests {
     fun `cannot create court with name exceeding max length`() {
         // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
 
         // Attempt to create a court with a name exceeding max length
         val exception = assertThrows<IllegalArgumentException> {
@@ -83,7 +83,7 @@ class CourtTests {
     fun `create multiple courts for the same club`() {
         // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
 
         // Create multiple courts
         val court1 = CourtServices.addCourt("Court 1", club.clubID)
@@ -99,7 +99,7 @@ class CourtTests {
     fun `get court by name`() {
         // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
 
         // Create a court
         val court = CourtServices.addCourt("Court 1", club.clubID)
@@ -116,7 +116,7 @@ class CourtTests {
     fun `cannot get court by non-existent name`() {
         // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
 
         // Try to retrieve a non-existent court by name
         val retrievedCourt = CourtServices.getCourtByName("Non-existent Court")

@@ -21,7 +21,7 @@ class UserTests {
         val user = UserServices.addUser("John Doe", "john.doe@example.com")
 
         // Kullanıcının başarıyla oluşturulduğunu doğrula
-        assertNotNull(user.userID)
+        assertNotNull(user.userId)
         assertEquals("John Doe", user.name)
         assertEquals("john.doe@example.com", user.email)
     }
@@ -46,11 +46,11 @@ class UserTests {
         val user = UserServices.addUser("John Doe", "john.doe@example.com")
 
         // Kullanıcıyı ID ile getir
-        val retrievedUser = UserServices.getUserById(user.userID)
+        val retrievedUser = UserServices.getUserById(user.userId)
 
         // Doğru kullanıcıyı getirdiğini kontrol et
         assertNotNull(retrievedUser)
-        assertEquals(user.userID, retrievedUser?.userID)
+        assertEquals(user.userId, retrievedUser?.userId)
         assertEquals(user.name, retrievedUser?.name)
         assertEquals(user.email, retrievedUser?.email)
     }
@@ -87,7 +87,7 @@ class UserTests {
 
         // Doğru kullanıcıyı getirdiğini doğrula
         assertNotNull(foundUser)
-        assertEquals(user.userID, foundUser?.userID)
+        assertEquals(user.userId, foundUser?.userId)
     }
 
     @Test
@@ -105,11 +105,11 @@ class UserTests {
         val user = UserServices.addUser("Bob", "bob@example.com")
 
         // Token üret
-        val tokenPair = UserServices.generateUserToken(user.userID)
+        val tokenPair = UserServices.generateUserToken(user.userId)
 
         // Token'ın geçerli olduğunu kontrol et
         assertNotNull(tokenPair)
-        assertEquals(user.userID, tokenPair?.second)
+        assertEquals(user.userId, tokenPair?.second)
     }
 
     @Test

@@ -59,7 +59,7 @@ fun usersWebApi(): RoutingHttpHandler {
                 <body>
                     <h1>User Details</h1>
                     <table>
-                        <tr><th>User ID</th><td>${user.userID}</td></tr>
+                        <tr><th>User ID</th><td>${user.userId}</td></tr>
                         <tr><th>Name</th><td>${user.name}</td></tr>
                         <tr><th>Email</th><td>${user.email}</td></tr>
                         <tr><th>Token</th><td>${user.token}</td></tr>
@@ -67,7 +67,7 @@ fun usersWebApi(): RoutingHttpHandler {
                     <br>
                     <a href="/clubs">Back to Clubs</a>
                     <a href="/">Back to Home</a>
-                    <a href="/users/${user.userID}/rentals">View Rentals</a>
+                    <a href="/users/${user.userId}/rentals">View Rentals</a>
                 </body>
                 </html>
             """.trimIndent()

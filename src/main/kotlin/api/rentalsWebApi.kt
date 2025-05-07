@@ -1,3 +1,4 @@
+
 package api
 
 import models.*
@@ -68,8 +69,8 @@ fun rentalsWebApi(): RoutingHttpHandler {
                     </table>
 
                     <br/>
-                    <a href="/users/${user.userID}">View User Details</a><br/>
-                    <a href="/rentals/user/${user.userID}">Back to User Rentals</a><br/>
+                    <a href="/users/${user.userId}">View User Details</a><br/>
+                    <a href="/rentals/user/${user.userId}">Back to User Rentals</a><br/>
                     <a href="/">Home</a>
                   </body>
                 </html>

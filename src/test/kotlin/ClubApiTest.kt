@@ -22,10 +22,10 @@ class ClubTest {
     fun `create club with valid user`() {
         // Geçerli bir kullanıcı ile kulüp oluşturma testi
         val user = UserServices.addUser("Club Owner", "yusufasar@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
         assertNotNull(club.clubID)
         assertEquals("Tennis Club", club.name)
-        assertEquals(user.userID, club.ownerUid)
+        assertEquals(user.userId, club.ownerUid)
     }
 
     @Test
@@ -42,8 +42,8 @@ class ClubTest {
     fun `create multiple clubs with the same user`() {
         // Aynı kullanıcı ile birden fazla kulüp oluşturulabilir mi?
         val user = UserServices.addUser("Club Owner", "owner1@example.com")
-        val club1 = ClubServices.addClub("Tennis Club", user.userID)
-        val club2 = ClubServices.addClub("Football Club", user.userID)
+        val club1 = ClubServices.addClub("Tennis Club", user.userId)
+        val club2 = ClubServices.addClub("Football Club", user.userId)
 
         val clubs = ClubServices.getAllClubs()
         assertEquals(2, clubs.size)
@@ -56,7 +56,7 @@ class ClubTest {
         // Kulüp adı boş olamaz
         val user = UserServices.addUser("Club Owner", "owner2@example.com")
         val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.addClub("", user.userID)
+            ClubServices.addClub("", user.userId)
         }
         assertEquals("Club name cannot be empty", exception.message)
     }
@@ -66,7 +66,7 @@ class ClubTest {
         // Kulüp adı 100 karakteri geçemez
         val user = UserServices.addUser("Club Owner", "owner3@example.com")
         val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.addClub("A".repeat(101), user.userID)
+            ClubServices.addClub("A".repeat(101), user.userId)
         }
         assertEquals("Club name cannot exceed 100 characters", exception.message)
     }
@@ -75,8 +75,8 @@ class ClubTest {
     fun `list all clubs`() {
         // Tüm kulüplerin listelendiğinden emin ol
         val user = UserServices.addUser("Club Owner", "owner4@example.com")
-        ClubServices.addClub("Tennis Club", user.userID)
-        ClubServices.addClub("Football Club", user.userID)
+        ClubServices.addClub("Tennis Club", user.userId)
+        ClubServices.addClub("Football Club", user.userId)
 
         val clubs = ClubServices.getAllClubs()
         assertEquals(2, clubs.size)
@@ -88,15 +88,15 @@ class ClubTest {
     fun `verify club owner`() {
         // Kulübün sahibi doğru atanmış mı kontrol et
         val user = UserServices.addUser("Club Owner", "owner5@example.com")
-        val club = ClubServices.addClub("Tennis Club", user.userID)
-        assertEquals(user.userID, club.ownerUid)
+        val club = ClubServices.addClub("Tennis Club", user.userId)
+        assertEquals(user.userId, club.ownerUid)
     }
 
     @Test
     fun `get club by valid id`() {
         // Geçerli ID ile kulüp bulunabiliyor mu?
         val user = UserServices.addUser("Club Owner", "owner6@example.com")
-        val club = ClubServices.addClub("Basketball Club", user.userID)
+        val club = ClubServices.addClub("Basketball Club", user.userId)
         val foundClub = ClubServices.getClubById(club.clubID)
 
         assertNotNull(foundClub)
@@ -122,13 +122,13 @@ class ClubTest {
     fun `get club details by valid id`() {
         // Geçerli ID ile kulüp detayları alınabiliyor mu?
         val user = UserServices.addUser("Club Owner", "owner7@example.com")
-        val club = ClubServices.addClub("Chess Club", user.userID)
+        val club = ClubServices.addClub("Chess Club", user.userId)
         val details = ClubServices.getClubDetails(club.clubID)
 
         assertNotNull(details)
         assertEquals(club.clubID, details?.clubID)
         assertEquals("Chess Club", details?.name)
-        assertEquals(user.userID, details?.ownerUid)
+        assertEquals(user.userId, details?.ownerUid)
     }
 
     @Test
@@ -150,8 +150,8 @@ class ClubTest {
     fun `can create clubs with duplicate names`() {
         // Aynı isimle birden fazla kulüp oluşturulabiliyor mu?
         val user = UserServices.addUser("Club Owner", "owner8@example.com")
-        val club1 = ClubServices.addClub("Duplicate Club", user.userID)
-        val club2 = ClubServices.addClub("Duplicate Club", user.userID)
+        val club1 = ClubServices.addClub("Duplicate Club", user.userId)
+        val club2 = ClubServices.addClub("Duplicate Club", user.userId)
 
         assertNotNull(club1)
         assertNotNull(club2)

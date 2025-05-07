@@ -1,6 +1,5 @@
 package pages
 
-import models.Rental
 import services.RentalServices
 import services.CourtServices
 import services.ClubServices
@@ -44,12 +43,12 @@ fun rentalPages(): RoutingHttpHandler = routes(
       <html><head><meta charset="UTF-8"><title>Rental $id</title></head><body>
         <h1>Rental Details</h1>
         <p><strong>ID:</strong> ${r.rentalID}</p>
-        <p><strong>User:</strong> ${user.name} (${user.userID})</p>
+        <p><strong>User:</strong> ${user.name} (${user.userId})</p>
         <p><strong>Club:</strong> ${club.name}</p>
         <p><strong>Court:</strong> ${court.name}</p>
         <p><strong>Start:</strong> ${r.startTime}</p>
         <p><strong>Duration:</strong> ${r.duration} hrs</p>
-        <a href="/users/${user.userID}/rentals">← Back to User Rentals</a><br>
+        <a href="/users/${user.userId}/rentals">← Back to User Rentals</a><br>
         <a href="/">Home</a>
       </body></html>
     """.trimIndent()
