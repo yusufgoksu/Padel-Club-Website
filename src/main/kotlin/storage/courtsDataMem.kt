@@ -1,47 +1,48 @@
 package storage
 
-import models.*
-import java.util.*
+import models.Court
+import java.util.concurrent.atomic.AtomicInteger
 
 object CourtsDataMem {
 
-    val courts = mutableMapOf<String, Court>()
+    // courtID -> Court
+    val courts = mutableMapOf<Int, Court>()
+    val idCounter = AtomicInteger(1)  // Sıralı courtID oluşturmak için
 
-    //  Kort ekleme fonksiyonu
-    fun addCourt(name: String, clubId: String): Court {
-        // Kulübün varlığını kontrol et
-        require(ClubsDataMem.clubs.containsKey(clubId)) { "Club ID '$clubId' not found" }
+    /** Yeni bir kort ekler ve oluşturulan Court nesnesini döner. */
+    fun addCourt(name: String, clubId: Int): Court {
+        require(name.isNotBlank()) { "Court name cannot be empty" }
+        require(name.length <= 100) { "Court name cannot exceed 100 characters" }
+        require(clubId > 0) { "Club ID must be greater than 0" }
+        require(ClubsDataMem.getClubById(clubId) != null) { "Club ID '$clubId' not found" }
 
-        // Kortu oluştur
-        val court = Court(courtID = UUID.randomUUID().toString(), name = name, clubId = clubId)
-
-        // Kortu kaydet
-        courts[court.courtID] = court
+        val courtID = idCounter.getAndIncrement()
+        val court = Court(courtID = courtID, name = name, clubId = clubId)
+        courts[courtID] = court
         return court
     }
 
-    //  Kortun detaylarını almak (ID ile)
-    fun getCourtById(courtID: String): Court? {
-        // Kortun varlığını kontrol et
+    /** ID ile kortu getirir; bulunamazsa hata fırlatır. */
+    fun getCourtById(courtID: Int): Court? {
+        require(courtID > 0) { "Court ID must be greater than 0" }
         require(courts.containsKey(courtID)) { "Court ID '$courtID' not found" }
         return courts[courtID]
     }
 
-    //  Tüm kortları listeleme
-    fun getAllCourts(): List<Court> = courts.values.toList()
+    /** Tüm kortları listeler. */
+    fun getAllCourts(): List<Court> =
+        courts.values.toList()
 
-    //  Kortu isme göre bulma
+    /** İsme göre ilk eşleşen kortu bulur. */
     fun getCourtByName(name: String): Court? {
-        // İsme göre kort arama
+        require(name.isNotBlank()) { "Court name cannot be empty" }
         return courts.values.find { it.name == name }
     }
 
-    //  Belirli bir kulübe ait tüm kortları listeleme
-    fun getCourtsForClub(clubId: String): List<Court> {
-        // Kulübün varlığını kontrol et
-        require(ClubsDataMem.clubs.containsKey(clubId)) { "Club ID '$clubId' not found" }
-
-        // Kulübe ait kortları döndür
+    /** Belirli bir kulübe ait tüm kortları listeler. */
+    fun getCourtsForClub(clubId: Int): List<Court> {
+        require(clubId > 0) { "Club ID must be greater than 0" }
+        require(ClubsDataMem.getClubById(clubId) != null) { "Club ID '$clubId' not found" }
         return courts.values.filter { it.clubId == clubId }
     }
 }

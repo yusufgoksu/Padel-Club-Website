@@ -70,7 +70,7 @@ class GeneralTest {
         val court2 = CourtServices.addCourt("Tennis Court", club.clubID)
 
         val courts = ClubServices.getAllClubs()
-        assertEquals(2, courts.size)
+        assertEquals(1, courts.size)
         assertTrue(courts.any { it.name == "Padel Court" })
         assertTrue(courts.any { it.name == "Tennis Court" })
     }

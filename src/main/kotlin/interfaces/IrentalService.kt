@@ -6,7 +6,7 @@ interface IrentalService {
 
     fun getRentalDetails(rentalId: Int): Rental?
 
-    fun getRentals(clubId: Int, crid: Int, date: String? = null): List<Rental>
+    fun getRentals(clubId: Int, courtId: Int, date: String? = null): List<Rental>
 
     fun getUserRentals(userId: Int): List<Rental>
 

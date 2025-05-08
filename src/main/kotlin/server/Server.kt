@@ -1,50 +1,56 @@
-import DataBase.RentalDataDb
+package server
+
 import api.*
 import data.database.UserDataDb
+import data.database.ClubsDataDb
+import data.database.CourtsDataDb
+import data.database.RentalDataDb
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 import org.http4k.routing.routes
-import storage.ClubsDataMem
-import storage.CourtsDataMem
-import storage.RentalsDataMem
-import storage.UsersDataMem
 
 fun main() {
-    // Web API'leri tanımla
-    val app = routes(
-        homeWebApi(),
-        clubsWebApi(),
-        courtsWebApi(),
-        rentalsWebApi(),
-        usersWebApi()
-    )
-
-
-    // Sunucuyu başlat
-    val server = app.asServer(SunHttp(9000)).start()
-    println("Server running on http://localhost:9000")
-
-    // Test verilerini veritabanı kullanarak ekle
     println("Inserting test data into database...")
 
-    // Kullanıcı ekleme
-    val user1Id = UserDataDb.createUser("Yusuf", "yussadsaussaaf@example.com").toInt()
-    val user2Id = UserDataDb.createUser("Mert", "mesardasat@example.com").toInt()
-    val user3Id = UserDataDb.createUser("Ali", "aliadsaas@example.com").toInt()
+    // 1) Users
+    val user1Id = UserDataDb.createUser("Yusuf", "yusuf@example.com")
+    val user2Id = UserDataDb.createUser("Mert",  "mert@example.com")
+    val user3Id = UserDataDb.createUser("Ali",   "ali@example.com")
+    println("Created users: $user1Id, $user2Id, $user3Id")
 
-    println("Users created: $user1Id, $user2Id, $user3Id")
+    // 2) Clubs (each owned by one of the users)
+    val club1Id = ClubsDataDb.createClub("Club A", user1Id)
+    val club2Id = ClubsDataDb.createClub("Club B", user2Id)
+    val club3Id = ClubsDataDb.createClub("Club C", user3Id)
+    println("Created clubs: $club1Id, $club2Id, $club3Id")
 
-    // Kiralama ekleme (Rental)
-    val rental1 = RentalDataDb.createRental(1, 1, user1Id, "2025-03-27T14:00:00", 2)
-    val rental2 = RentalDataDb.createRental(1, 2, user1Id, "2025-03-27T15:00:00", 2)
-    val rental3 = RentalDataDb.createRental(1, 3, user1Id, "2025-03-27T16:00:00", 2)
+    // 3) Courts (some courts in each club)
+    val courtA1 = CourtsDataDb.createCourt("Court 1", club1Id)
+    val courtA2 = CourtsDataDb.createCourt("Court 2", club1Id)
+    val courtA3 = CourtsDataDb.createCourt("Court 3", club1Id)
+    val courtB1 = CourtsDataDb.createCourt("Court 1", club2Id)
+    val courtB2 = CourtsDataDb.createCourt("Court 2", club2Id)
+    val courtC1 = CourtsDataDb.createCourt("Court 1", club3Id)
+    println("Created courts: $courtA1, $courtA2, $courtA3, $courtB1, $courtB2, $courtC1")
 
-    val rental4 = RentalDataDb.createRental(2, 1, user2Id, "2025-03-27T14:00:00", 2)
-    val rental5 = RentalDataDb.createRental(2, 2, user2Id, "2025-03-27T15:00:00", 2)
+    // 4) Rentals
+    val rental1 = RentalDataDb.createRental(clubId  = club1Id, courtId = courtA1, userId = user1Id, date = "2025-03-27T14:00:00", duration = 2)
+    val rental2 = RentalDataDb.createRental(clubId  = club1Id, courtId = courtA2, userId = user1Id, date = "2025-03-27T15:00:00", duration = 2)
+    val rental3 = RentalDataDb.createRental(clubId  = club1Id, courtId = courtA3, userId = user1Id, date = "2025-03-27T16:00:00", duration = 2)
+    val rental4 = RentalDataDb.createRental(clubId  = club2Id, courtId = courtB1, userId = user2Id, date = "2025-03-27T14:00:00", duration = 2)
+    val rental5 = RentalDataDb.createRental(clubId  = club2Id, courtId = courtB2, userId = user2Id, date = "2025-03-27T15:00:00", duration = 2)
+    val rental6 = RentalDataDb.createRental(clubId  = club3Id, courtId = courtC1, userId = user3Id, date = "2025-03-27T14:00:00", duration = 2)
+    println("Created rentals: $rental1, $rental2, $rental3, $rental4, $rental5, $rental6")
 
-    val rental6 = RentalDataDb.createRental(3, 1, user3Id, "2025-03-27T14:00:00", 2)
-
-    println("Rentals created: $rental1, $rental2, $rental3, $rental4, $rental5, $rental6")
-
-
+    // 5) Start server
+    val app = routes(
+        homeWebApi(),
+        usersWebApi(),
+        clubsWebApi(),
+        courtsWebApi(),
+        rentalsWebApi()
+    )
+    app.asServer(SunHttp(9000)).start().also {
+        println("Server running at http://localhost:9000")
+    }
 }

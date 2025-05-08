@@ -1,118 +1,126 @@
 package storage
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.*
+
+import models.Rental
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
-import models.*
-import storage.CourtsDataMem.courts
-import storage.UsersDataMem.users
+import java.util.concurrent.atomic.AtomicInteger
+import storage.UsersDataMem
+import storage.CourtsDataMem
+import storage.ClubsDataMem
 
 object RentalsDataMem {
 
-    val rentals = mutableMapOf<String, Rental>()
+    // rentalID -> Rental
+    val rentals = mutableMapOf<Int, Rental>()
+    private val idCounter = AtomicInteger(1)
 
-    fun addRental(clubID: String, userId: String, courtId: String, startTime: String, duration: Int): Rental {
-        require(users.containsKey(userId)) { "User ID not found" }
-        require(courts.containsKey(courtId)) { "Court ID not found" }
-        require(duration in 1..10) { "Rental duration must be between 1 and 10 hours" }
+    /**
+     * Yeni bir rental ekler ve oluşturulan Rental nesnesini döner.
+     * @throws IllegalArgumentException Geçersiz girişler için
+     */
+    fun addRental(
+        clubId: Int,
+        courtId: Int,
+        userId: Int,
+        startTime: String,
+        duration: Int
+    ): Rental {
+        require(clubId > 0) { "Club ID must be greater than 0" }
+        require(ClubsDataMem.getClubById(clubId) != null) { "Club ID '$clubId' not found" }
+        require(courtId > 0) { "Court ID must be greater than 0" }
+        require(CourtsDataMem.getCourtById(courtId) != null) { "Court ID '$courtId' not found" }
+        require(userId > 0) { "User ID must be greater than 0" }
+        require(UsersDataMem.getUserById(userId) != null) { "User ID '$userId' not found" }
+        require(duration in 1..10) { "Duration must be between 1 and 10 hours" }
 
-        val formatter = DateTimeFormatter.ISO_DATE_TIME
-        val parsedStartTime = try {
+        // Zaman formatı kontrolü (ISO-8601, yyyy-MM-ddTHH:mm:ss)
+        val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        val parsed = try {
             LocalDateTime.parse(startTime, formatter)
         } catch (e: Exception) {
-            throw IllegalArgumentException("Invalid start time format")
+            throw IllegalArgumentException("Invalid startTime format; must be ISO-8601 ", )
         }
+        require(parsed.hour in 8..17) { "Start time hour must be between 08 and 17" }
 
-        val hour = parsedStartTime.hour
-        require(hour in 8..17) { "Start time must be between 08:00 and 17:00" }
-
+        val rentalID = idCounter.getAndIncrement()
         val rental = Rental(
-            rentalID = UUID.randomUUID().toString(),
-            clubId = clubID,
-            courtId = courtId,
-            userId = userId,
+            rentalID = rentalID,
+            clubId    = clubId,
+            courtId   = courtId,
+            userId    = userId,
             startTime = startTime,
-            duration = duration
+            duration  = duration
         )
-
-        rentals[rental.rentalID] = rental
+        rentals[rentalID] = rental
         return rental
     }
 
-    fun getRentalById(rentalID: String): Rental? = rentals[rentalID]
-
-    fun getAllRentals(): List<Rental> = rentals.values.toList()
-
-    fun getRentalsForClubAndCourt(clubID: String, courtID: String, date: String? = null): List<Rental> {
-        val filtered = rentals.values.filter {
-            it.clubId == clubID && it.courtId == courtID
-        }
-
-        return if (date != null) {
-            filtered.filter { it.startTime.startsWith(date) }
-        } else {
-            filtered
-        }
+    /**
+     * ID'ye göre rental getirir.
+     */
+    fun getRentalById(rentalID: Int): Rental? {
+        require(rentalID > 0) { "Rental ID must be greater than 0" }
+        return rentals[rentalID]
     }
 
-    fun getRentalsForUser(userId: String): List<Rental> =
-        rentals.values.filter { it.userId == userId }
+    /**
+     * Tüm rental'ları listeler.
+     */
+    fun getAllRentals(): List<Rental> =
+        rentals.values.toList()
 
-
-    fun getAvailableHours(clubId: String, courtId: String, date: String): List<Int> {
-        // List of all possible hours from 08:00 to 17:00
-        val allHours = (8..17).toMutableList()
-
-        // Filter the rentals for the given club, court, and date
-        val reservedHours = rentals.values
-            .filter { rental ->
-                rental.clubId == clubId && rental.courtId == courtId && rental.startTime.startsWith(date)
-            }
-            .flatMap { rental ->
-                // Convert rental start time to hour in UTC
-                val startHour = Instant.parse(rental.startTime)
-                    .atZone(ZoneOffset.UTC)
-                    .hour
-
-                // Create a range of occupied hours based on the rental's start hour and duration
-                (startHour until (startHour + rental.duration)).toList()
-            }
-
-        // Remove reserved hours from all possible hours
-        allHours.removeAll(reservedHours.toSet())
-
-        // Return the list of available hours
-        return allHours
+    /**
+     * Kulüp ve kort bazlı rental'ları getirir, isteğe bağlı tarih filtresiyle.
+     */
+    fun getRentalsForClubAndCourt(
+        clubId: Int,
+        courtId: Int,
+        date: String? = null
+    ): List<Rental> = getAllRentals().filter { r ->
+        r.clubId == clubId && r.courtId == courtId && (date == null || r.startTime.startsWith(date))
     }
 
+    /**
+     * Kullanıcı bazlı rental'ları getirir.
+     */
+    fun getRentalsForUser(userId: Int): List<Rental> =
+        getAllRentals().filter { it.userId == userId }
 
-    fun deleteRental(rentalID: String): Boolean =
+    /**
+     * Belirli bir tarih için 08:00–17:00 arası uygun saatleri döndürür.
+     */
+    fun getAvailableHours(clubId: Int, courtId: Int, date: String): List<Int> {
+        val occupied = getRentalsForClubAndCourt(clubId, courtId, date).flatMap { r ->
+            val startHour = LocalDateTime.parse(r.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME).hour
+            (startHour until startHour + r.duration)
+        }
+        return (8..17).filterNot { occupied.contains(it) }
+    }
+
+    /**
+     * ID ile rental siler.
+     */
+    fun deleteRental(rentalID: Int): Boolean =
         rentals.remove(rentalID) != null
 
-    fun updateRental(rid: String, newStartTime: String, newDuration: Int, newCourtId: String): Rental {
-        val rental = getRentalById(rid) ?: throw IllegalArgumentException("Rental with ID $rid not found")
-
-        require(courts.containsKey(newCourtId)) { "Court ID not found" }
-        require(newDuration in 1..10) { "Rental duration must be between 1 and 10 hours" }
-
-        val formatter = DateTimeFormatter.ISO_DATE_TIME
-        val parsedNewStart = try {
-            LocalDateTime.parse(newStartTime, formatter)
-        } catch (e: Exception) {
-            throw IllegalArgumentException("Invalid start time format")
-        }
-
-        val hour = parsedNewStart.hour
-        require(hour in 8..17) { "Start time must be between 08:00 and 17:00" }
-
-        val updatedRental = rental.copy(
+    /**
+     * ID ile rental günceller.
+     */
+    fun updateRental(
+        rentalID: Int,
+        newStartTime: String,
+        newDuration: Int,
+        newCourtId: Int
+    ): Rental {
+        val existing = getRentalById(rentalID)
+            ?: throw IllegalArgumentException("Rental ID '$rentalID' not found")
+        deleteRental(rentalID)
+        return addRental(
+            clubId    = existing.clubId,
+            courtId   = newCourtId,
+            userId    = existing.userId,
             startTime = newStartTime,
-            duration = newDuration,
-            courtId = newCourtId
+            duration  = newDuration
         )
-
-        rentals[rid] = updatedRental
-        return updatedRental
     }
 }

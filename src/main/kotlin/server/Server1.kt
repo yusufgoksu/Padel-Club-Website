@@ -1,11 +1,7 @@
 package main
 
 import api.*
-import pages.clubPages
-import pages.courtPages
-import pages.homePage
-import pages.rentalPages
-import pages.userPages
+
 import storage.ClubsDataMem
 import storage.CourtsDataMem
 import storage.RentalsDataMem
@@ -31,65 +27,70 @@ fun main() {
     app.asServer(SunHttp(9000)).start()
     println("Server running on http://localhost:9000")
 
-    // 4) Sunucu ayağa kalktıktan sonra test verilerini ekle
+    // 1) İlk test verilerini ekle
     val user1 = UsersDataMem.addUser(name = "Yusuf", email = "yusuf@example.com")
-    val club1 = ClubsDataMem.addClub(name = "Padel Club A", ownerId = user1.userId)
+    val club1 = ClubsDataMem.addClub(name = "Padel Club A", userID = user1.userId)
     val court1A = CourtsDataMem.addCourt(name = "Court A1", clubId = club1.clubID)
     val court1B = CourtsDataMem.addCourt(name = "Court A2", clubId = club1.clubID)
     val court1C = CourtsDataMem.addCourt(name = "Court A3", clubId = club1.clubID)
+
     RentalsDataMem.addRental(
-        userId = user1.userId,
-        courtId = court1A.courtID,
-        startTime = "2025-03-27T14:00:00Z",
-        duration = 2,
-        clubID = club1.clubID
+        clubId    = club1.clubID,
+        courtId   = court1A.courtID,
+        userId    = user1.userId,
+        startTime = "2025-03-27T14:00:00",
+        duration  = 2
     )
     RentalsDataMem.addRental(
-        userId = user1.userId,
-        courtId = court1B.courtID,
-        startTime = "2025-03-27T15:00:00Z",
-        duration = 2,
-        clubID = club1.clubID
+        clubId    = club1.clubID,
+        courtId   = court1B.courtID,
+        userId    = user1.userId,
+        startTime = "2025-03-27T15:00:00",
+        duration  = 2
     )
     RentalsDataMem.addRental(
-        userId = user1.userId,
-        courtId = court1C.courtID,
-        startTime = "2025-03-27T16:00:00Z",
-        duration = 2,
-        clubID = club1.clubID
+        clubId    = club1.clubID,
+        courtId   = court1C.courtID,
+        userId    = user1.userId,
+        startTime = "2025-03-27T16:00:00",
+        duration  = 2
     )
 
+    // 2) İkinci kullanıcı ve kulüp
     val user2 = UsersDataMem.addUser(name = "Mert", email = "mert@example.com")
-    val club2 = ClubsDataMem.addClub(name = "Padel Club B", ownerId = user2.userId)
+    val club2 = ClubsDataMem.addClub(name = "Padel Club B", userID = user2.userId)
     val court2A = CourtsDataMem.addCourt(name = "Court B1", clubId = club2.clubID)
     val court2B = CourtsDataMem.addCourt(name = "Court B2", clubId = club2.clubID)
+
     RentalsDataMem.addRental(
-        userId = user2.userId,
-        courtId = court2A.courtID,
-        startTime = "2025-03-27T14:00:00Z",
-        duration = 2,
-        clubID = club2.clubID
+        clubId    = club2.clubID,
+        courtId   = court2A.courtID,
+        userId    = user2.userId,
+        startTime = "2025-03-27T14:00:00",
+        duration  = 2
     )
     RentalsDataMem.addRental(
-        userId = user2.userId,
-        courtId = court2B.courtID,
-        startTime = "2025-03-27T15:00:00Z",
-        duration = 2,
-        clubID = club2.clubID
+        clubId    = club2.clubID,
+        courtId   = court2B.courtID,
+        userId    = user2.userId,
+        startTime = "2025-03-27T15:00:00",
+        duration  = 2
     )
 
+    // 3) Üçüncü kullanıcı ve kulüp
     val user3 = UsersDataMem.addUser(name = "Ali", email = "ali@example.com")
-    val club3 = ClubsDataMem.addClub(name = "Padel Club C", ownerId = user3.userId)
+    val club3 = ClubsDataMem.addClub(name = "Padel Club C", userID = user3.userId)
     val court3A = CourtsDataMem.addCourt(name = "Court C1", clubId = club3.clubID)
+
     RentalsDataMem.addRental(
-        userId = user3.userId,
-        courtId = court3A.courtID,
-        startTime = "2025-03-27T14:00:00Z",
-        duration = 2,
-        clubID = club3.clubID
+        clubId    = club3.clubID,
+        courtId   = court3A.courtID,
+        userId    = user3.userId,
+        startTime = "2025-03-27T14:00:00",
+        duration  = 2
     )
 
-    println("Test verisi başarıyla eklendi:")
+    println("Test verileri başarıyla eklendi:")
     println("User 1: $user1, Club 1: $club1, Courts: $court1A, $court1B, $court1C")
     println("User 2: $user2, Club 2: $club2, Courts: $court2A, $court2B")
     println("User 3: $user3, Club 3: $club3, Court: $court3A")

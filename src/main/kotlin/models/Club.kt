@@ -1,19 +1,17 @@
 package models
 
 import kotlinx.serialization.Serializable
-import java.util.UUID
 
 @Serializable
 data class Club(
-    val clubID: String = UUID.randomUUID().toString(),  // Club ID otomatik olarak oluşturulacak
+    val clubID: Int,   // clubID sıralı integer olacak
     val name: String,  // Kulüp adı
-    val ownerUid: String  // Sahip UID'si
+    val userID: Int    // Sahip UID'si (integer)
 ) {
     init {
-        // Club adı boş olamaz
         require(name.isNotBlank()) { "Club name cannot be empty" }
-
-        // Sahip UID'si boş olamaz
-        require(ownerUid.isNotBlank()) { "Owner ID cannot be empty" }
+        require(name.length <= 100) { "Club name cannot exceed 100 characters" }
+        require(userID > 0) { "User ID must be greater than 0" }
+        require(clubID > 0) { "Club ID must be greater than 0" }
     }
 }

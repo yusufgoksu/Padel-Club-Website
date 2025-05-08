@@ -1,198 +1,255 @@
-package DataBase
+package data.database
 
 import interfaces.IrentalService
 import models.Rental
-
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
 import java.sql.SQLException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object RentalDataDb : IrentalService {
-    // Function to add a new rental
-    override fun createRental(cid: Int, crid: Int, uid: Int, date: String, duration: Int): Int {
-        val query = """
-            INSERT INTO rentals (cid, crid, user_uid, date, duration)
-            VALUES (?, ?, ?, ?, ?) RETURNING rid;
+
+    // Yeni bir kiralama oluşturur ve geri dönen rentalId'yi Int olarak verir
+    override fun createRental(
+        clubId: Int,
+        courtId: Int,
+        userId: Int,
+        date: String,
+        duration: Int
+    ): Int {
+        val sql = """
+            INSERT INTO public.rentals ("clubId", "courtId", "userId", "date", "duration")
+            VALUES (?, ?, ?, ?, ?)
+            RETURNING "rentalId";
         """.trimIndent()
-        val connection: Connection = Database.getConnection()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
 
-            val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-            val localDateTime = LocalDateTime.parse(date, formatter)
-            val sqlTimestamp = java.sql.Timestamp.valueOf(localDateTime)
-
-            preparedStatement.setInt(1, cid)
-            preparedStatement.setInt(2, crid)
-            preparedStatement.setInt(3, uid)
-            preparedStatement.setTimestamp(4, sqlTimestamp)
-            preparedStatement.setInt(5, duration)
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            if (resultSet.next()) {
-                return resultSet.getInt("rid")
-            }
-            throw SQLException("Failed to create rental")
-        } finally {
-            connection.close()
-        }
-    }
-
-    // Function to get rental details by RID
-    override fun getRentalDetails(rid: Int): Rental? {
-        val query = "SELECT rid, cid, crid, user_uid, date, duration FROM rentals WHERE rid = ?;"
-        val connection: Connection = Database.getConnection()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-            preparedStatement.setInt(1, rid)
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            if (resultSet.next()) {
-                return Rental(
-                    rentalID = resultSet.getInt("rentalid").toString(),
-                    clubId = resultSet.getInt("cid").toString(),
-                    courtId = resultSet.getInt("crid").toString(),
-                    userId = resultSet.getInt("user_uid").toString(),
-                    startTime = resultSet.getString("date"),
-                    duration = resultSet.getInt("duration")
-                )
-            }
-            return null
-        } finally {
-            connection.close()
-        }
-    }
-
-    // Function to get rentals by club and court, optionally filtering by date
-    override fun getRentals(cid: Int, crid: Int, date: String?): List<Rental> {
-        val query = if (date != null) {
-            "SELECT rid, cid, crid, user_uid, date, duration FROM rentals WHERE cid = ? AND crid = ? AND date LIKE ?;"
-        } else {
-            "SELECT rid, cid, crid, user_uid, date, duration FROM rentals WHERE cid = ? AND crid = ?;"
-        }
-        val connection: Connection = Database.getConnection()
-        val rentals = mutableListOf<Rental>()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-            preparedStatement.setInt(1, cid)
-            preparedStatement.setInt(2, crid)
-            if (date != null) {
-                preparedStatement.setString(3, "$date%")
-            }
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            while (resultSet.next()) {
-                rentals.add(
-                    Rental(
-                        rentalID = resultSet.getInt("rid").toString(),
-                        clubId = resultSet.getInt("cid").toString(),
-                        courtId = resultSet.getInt("crid").toString(),
-                        userId = resultSet.getInt("user_uid").toString(),
-                        startTime = resultSet.getString("date"),
-                        duration = resultSet.getInt("duration")
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    val ts = java.sql.Timestamp.valueOf(
+                        LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                     )
-                )
-            }
-            return rentals
-        } finally {
-            connection.close()
-        }
-    }
+                    stmt.setInt(1, clubId)
+                    stmt.setInt(2, courtId)
+                    stmt.setInt(3, userId)
+                    stmt.setTimestamp(4, ts)
+                    stmt.setInt(5, duration)
 
-    // Function to get rentals by user ID
-    override fun getUserRentals(uid: Int): List<Rental> {
-        val query = "SELECT rid, cid, crid, user_uid, date, duration FROM rentals WHERE user_uid = ?;"
-        val connection: Connection = Database.getConnection()
-        val rentals = mutableListOf<Rental>()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-            preparedStatement.setInt(1, uid)
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            while (resultSet.next()) {
-                rentals.add(
-                    Rental(
-                        rentalID = resultSet.getInt("rid").toString(),
-                        clubId = resultSet.getInt("cid").toString(),
-                        courtId = resultSet.getInt("crid").toString(),
-                        userId = resultSet.getInt("user_uid").toString(),
-                        startTime = resultSet.getString("date"),
-                        duration = resultSet.getInt("duration")
-                    )
-                )
-            }
-            return rentals
-        } finally {
-            connection.close()
-        }
-    }
-
-    // Function to get available rental hours
-    override fun getAvailableRentalHours(cid: Int, crid: Int, date: String): List<String> {
-        val bookedHoursQuery = """
-            SELECT date, duration FROM rentals WHERE cid = ? AND crid = ? AND date LIKE ?;
-        """.trimIndent()
-        val connection: Connection = Database.getConnection()
-        val bookedHours = mutableSetOf<String>()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(bookedHoursQuery)
-            preparedStatement.setInt(1, cid)
-            preparedStatement.setInt(2, crid)
-            preparedStatement.setString(3, "$date%")
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            while (resultSet.next()) {
-                val rentalStart = LocalDateTime.parse(resultSet.getString("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-                val rentalEnd = rentalStart.plusHours(resultSet.getInt("duration").toLong())
-                var currentHour = rentalStart.hour
-                while (currentHour < rentalEnd.hour) {
-                    bookedHours.add("$date ${currentHour}:00")
-                    currentHour++
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            rs.getInt("rentalId")
+                        } else {
+                            throw SQLException("Failed to create rental, no ID returned.")
+                        }
+                    }
                 }
             }
-        } finally {
-            connection.close()
-        }
-        val allHours = (0..23).map { "$date ${it}:00" }
-        return allHours - bookedHours
-    }
-
-    // Function to update rental date and duration by rental ID
-    override fun updateRental(rid: Int, date: String, duration: Int): Boolean {
-        val query = """
-        UPDATE rentals 
-        SET date = ?, duration = ? 
-        WHERE rid = ?;
-    """.trimIndent()
-
-        val connection: Connection = Database.getConnection()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-
-            val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-            val localDateTime = LocalDateTime.parse(date, formatter)
-            val sqlTimestamp = java.sql.Timestamp.valueOf(localDateTime)
-
-            preparedStatement.setTimestamp(1, sqlTimestamp)
-            preparedStatement.setInt(2, duration)
-            preparedStatement.setInt(3, rid)
-
-            val affectedRows = preparedStatement.executeUpdate()
-            return affectedRows > 0
-        } finally {
-            connection.close()
+        } catch (e: SQLException) {
+            throw RuntimeException("Error creating rental: ${e.message}", e)
         }
     }
 
-    // Function to delete rental by rental ID
-    override fun deleteRental(rid: Int): Boolean {
-        val query = "DELETE FROM rentals WHERE rid = ?;"
-        val connection: Connection = Database.getConnection()
+    // Belirtilen rentalId ile kiralama detaylarını getirir
+    override fun getRentalDetails(rentalId: Int): Rental? {
+        val sql = """
+            SELECT
+                "rentalId",
+                "clubId",
+                "courtId",
+                "userId",
+                "date",
+                "duration"
+            FROM public.rentals
+            WHERE "rentalId" = ?;
+        """.trimIndent()
+
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setInt(1, rentalId)
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            Rental(
+                                rentalID = rs.getInt("rentalId"),
+                                clubId   = rs.getInt("clubId"),
+                                courtId  = rs.getInt("courtId"),
+                                userId   = rs.getInt("userId"),
+                                startTime = rs.getTimestamp("date")
+                                    .toLocalDateTime()
+                                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                duration = rs.getInt("duration")
+                            )
+                        } else null
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            throw RuntimeException("Error fetching rental details: ${e.message}", e)
+        }
+    }
+
+    // Belirli bir clubId ve courtId için kiralamaları, opsiyonel date filtresiyle getirir
+    override fun getRentals(clubId: Int, courtId: Int, date: String?): List<Rental> {
+        val baseSql = """
+            SELECT
+                "rentalId",
+                "clubId",
+                "courtId",
+                "userId",
+                "date",
+                "duration"
+            FROM public.rentals
+            WHERE "clubId" = ? AND "courtId" = ?
+        """.trimIndent()
+        val sql = if (date != null) "$baseSql AND \"date\"::text LIKE ?;" else "$baseSql;"
+
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setInt(1, clubId)
+                    stmt.setInt(2, courtId)
+                    if (date != null) {
+                        stmt.setString(3, "$date%")
+                    }
+                    stmt.executeQuery().use { rs ->
+                        val list = mutableListOf<Rental>()
+                        while (rs.next()) {
+                            list += Rental(
+                                rentalID = rs.getInt("rentalId"),
+                                clubId   = rs.getInt("clubId"),
+                                courtId  = rs.getInt("courtId"),
+                                userId   = rs.getInt("userId"),
+                                startTime = rs.getTimestamp("date")
+                                    .toLocalDateTime()
+                                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                duration = rs.getInt("duration")
+                            )
+                        }
+                        list
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            throw RuntimeException("Error fetching rentals: ${e.message}", e)
+        }
+    }
+
+    // Belirtilen userId'ye ait tüm kiralamaları listeler
+    override fun getUserRentals(userId: Int): List<Rental> {
+        val sql = """
+            SELECT
+                "rentalId",
+                "clubId",
+                "courtId",
+                "userId",
+                "date",
+                "duration"
+            FROM public.rentals
+            WHERE "userId" = ?;
+        """.trimIndent()
+
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setInt(1, userId)
+                    stmt.executeQuery().use { rs ->
+                        val list = mutableListOf<Rental>()
+                        while (rs.next()) {
+                            list += Rental(
+                                rentalID = rs.getInt("rentalId"),
+                                clubId   = rs.getInt("clubId"),
+                                courtId  = rs.getInt("courtId"),
+                                userId   = rs.getInt("userId"),
+                                startTime = rs.getTimestamp("date")
+                                    .toLocalDateTime()
+                                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                duration = rs.getInt("duration")
+                            )
+                        }
+                        list
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            throw RuntimeException("Error fetching user rentals: ${e.message}", e)
+        }
+    }
+
+    // Mevcut bir tarih için boş saat dilimlerini döner
+    override fun getAvailableRentalHours(clubId: Int, courtId: Int, date: String): List<String> {
+        val sql = """
+            SELECT "date", duration
+            FROM public.rentals
+            WHERE "clubId" = ? AND "courtId" = ? AND "date"::text LIKE ?;
+        """.trimIndent()
+
+        val booked = mutableSetOf<String>()
         try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-            preparedStatement.setInt(1, rid)
-            val affectedRows = preparedStatement.executeUpdate()
-            return affectedRows > 0
-        } finally {
-            connection.close()
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setInt(1, clubId)
+                    stmt.setInt(2, courtId)
+                    stmt.setString(3, "$date%")
+                    stmt.executeQuery().use { rs ->
+                        while (rs.next()) {
+                            val start = rs.getTimestamp("date").toLocalDateTime()
+                            val end   = start.plusHours(rs.getInt("duration").toLong())
+                            var h = start.hour
+                            while (h < end.hour) {
+                                booked += "$date ${h}:00"
+                                h++
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            throw RuntimeException("Error computing booked hours: ${e.message}", e)
+        }
+
+        return (0..23).map { "$date ${it}:00" } - booked
+    }
+
+    // Belirtilen rentalId'li kaydı günceller
+    override fun updateRental(rentalId: Int, date: String, duration: Int): Boolean {
+        val sql = """
+            UPDATE public.rentals
+            SET "date" = ?, "duration" = ?
+            WHERE "rentalId" = ?;
+        """.trimIndent()
+
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    val ts = java.sql.Timestamp.valueOf(
+                        LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    )
+                    stmt.setTimestamp(1, ts)
+                    stmt.setInt(2, duration)
+                    stmt.setInt(3, rentalId)
+                    stmt.executeUpdate() > 0
+                }
+            }
+        } catch (e: SQLException) {
+            throw RuntimeException("Error updating rental: ${e.message}", e)
+        }
+    }
+
+    // Belirtilen rentalId'li kaydı siler
+    override fun deleteRental(rentalId: Int): Boolean {
+        val sql = """
+            DELETE FROM public.rentals
+            WHERE "rentalId" = ?;
+        """.trimIndent()
+
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setInt(1, rentalId)
+                    stmt.executeUpdate() > 0
+                }
+            }
+        } catch (e: SQLException) {
+            throw RuntimeException("Error deleting rental: ${e.message}", e)
         }
     }
 }

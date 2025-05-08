@@ -7,13 +7,17 @@ import services.CourtServices
 import services.RentalServices
 import org.http4k.core.*
 import org.http4k.format.KotlinxSerialization.auto
+import org.http4k.lens.Path
+import org.http4k.lens.int
 import org.http4k.routing.*
 
 fun courtsWebApi(): RoutingHttpHandler {
 
-    val courtLens   = Body.auto<Court>().toLens()
-    val courtsLens  = Body.auto<List<Court>>().toLens()
-    val rentalsLens = Body.auto<List<Rental>>().toLens()
+    val courtLens    = Body.auto<Court>().toLens()
+    val courtsLens   = Body.auto<List<Court>>().toLens()
+    val rentalsLens  = Body.auto<List<Rental>>().toLens()
+    val courtIdPath  = Path.int().of("courtID")
+    val clubIdPath   = Path.int().of("clubId")
 
     return routes(
         // — JSON endpoints —
@@ -26,15 +30,15 @@ fun courtsWebApi(): RoutingHttpHandler {
 
         // Tek bir kortu JSON olarak getir
         "/courts/{courtID}/json" bind Method.GET to { req ->
-            val id = req.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
+            val id = courtIdPath(req)
             val court = CourtServices.getCourtById(id)
-                ?: return@to Response(Status.NOT_FOUND)
+                ?: return@to Response(Status.NOT_FOUND).body("Court not found")
             Response(Status.OK).with(courtLens of court)
         },
 
         // — HTML endpoints —
 
-        // Courts List — Clubs List stiliyle
+        // Courts List
         "/courts" bind Method.GET to {
             val courts = CourtServices.getAllCourts()
             val html = buildString {
@@ -45,7 +49,7 @@ fun courtsWebApi(): RoutingHttpHandler {
                       <meta charset="UTF-8">
                       <title>Courts List</title>
                       <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        body { font-family: Arial; padding: 20px; }
                         ul { list-style: none; padding: 0; }
                         li { margin: 8px 0; }
                         a { color: #007bff; text-decoration: none; }
@@ -56,7 +60,7 @@ fun courtsWebApi(): RoutingHttpHandler {
                       <h1>Courts List</h1>
                       <ul>
                 """.trimIndent())
-                for (c in courts) {
+                courts.forEach { c ->
                     append("""<li><a href="/courts/${c.courtID}">${c.name}</a></li>""")
                 }
                 append("""
@@ -72,13 +76,13 @@ fun courtsWebApi(): RoutingHttpHandler {
                 .body(html)
         },
 
-        // Court Details — Clubs Details stiliyle
+        // Court Details
         "/courts/{courtID}" bind Method.GET to { req ->
-            val id = req.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
+            val id = courtIdPath(req)
             val court = CourtServices.getCourtById(id)
-                ?: return@to Response(Status.NOT_FOUND)
+                ?: return@to Response(Status.NOT_FOUND).body("Court not found")
             val club = ClubServices.getClubById(court.clubId)
-                ?: return@to Response(Status.NOT_FOUND)
+                ?: return@to Response(Status.NOT_FOUND).body("Club not found")
 
             val html = """
                 <!DOCTYPE html>
@@ -87,7 +91,7 @@ fun courtsWebApi(): RoutingHttpHandler {
                   <meta charset="UTF-8">
                   <title>Court Details</title>
                   <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    body { font-family: Arial; padding: 20px; }
                     p { margin: 8px 0; }
                     a { display: inline-block; margin: 8px 0; color: #007bff; text-decoration: none; }
                     a:hover { text-decoration: underline; }
@@ -97,13 +101,11 @@ fun courtsWebApi(): RoutingHttpHandler {
                   <h1>Court: ${court.name}</h1>
                   <p><strong>Court ID:</strong> ${court.courtID}</p>
                   <p><strong>Club:</strong> ${club.name}</p>
-                  <p><strong>Owner UID:</strong> ${club.ownerUid}</p>
+                  <p><strong>Owner User ID:</strong> ${club.userID}</p>
                   <br>
-                  <!-- Kiralamaları gör -->
                   <a href="/courts/${court.courtID}/rentals">View Rentals</a><br>
-                  <!-- Geri linkler -->
                   <a href="/courts">← Back to Courts List</a><br>
-                  <a href="/">Home</a><br>
+                  <a href="/">Home</a>
                 </body>
                 </html>
             """.trimIndent()
@@ -113,11 +115,11 @@ fun courtsWebApi(): RoutingHttpHandler {
                 .body(html)
         },
 
-        // Courts in Club — Clubs List stiliyle
+        // Courts in Club
         "/courts/club/{clubId}" bind Method.GET to { req ->
-            val clubId = req.path("clubId") ?: return@to Response(Status.BAD_REQUEST)
+            val clubId = clubIdPath(req)
             val club   = ClubServices.getClubById(clubId)
-                ?: return@to Response(Status.NOT_FOUND)
+                ?: return@to Response(Status.NOT_FOUND).body("Club not found")
             val courts = CourtServices.getCourtsForClub(clubId)
 
             val html = buildString {
@@ -128,7 +130,7 @@ fun courtsWebApi(): RoutingHttpHandler {
                       <meta charset="UTF-8">
                       <title>Courts in ${club.name}</title>
                       <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        body { font-family: Arial; padding: 20px; }
                         ul { list-style: none; padding: 0; }
                         li { margin: 8px 0; }
                         a { color: #007bff; text-decoration: none; }
@@ -139,13 +141,13 @@ fun courtsWebApi(): RoutingHttpHandler {
                       <h1>Courts in ${club.name}</h1>
                       <ul>
                 """.trimIndent())
-                for (c in courts) {
+                courts.forEach { c ->
                     append("""<li><a href="/courts/${c.courtID}">${c.name}</a></li>""")
                 }
                 append("""
                       </ul>
                       <br>
-                      <a href="/clubs">← Back to Clubs</a>
+                      <a href="/clubs">← Back to Clubs</a><br>
                       <a href="/">Back to Home</a>
                     </body>
                     </html>
@@ -159,9 +161,9 @@ fun courtsWebApi(): RoutingHttpHandler {
 
         // Rentals for a Court
         "/courts/{courtID}/rentals" bind Method.GET to { req ->
-            val courtID = req.path("courtID") ?: return@to Response(Status.BAD_REQUEST)
+            val courtID = courtIdPath(req)
             val court   = CourtServices.getCourtById(courtID)
-                ?: return@to Response(Status.NOT_FOUND)
+                ?: return@to Response(Status.NOT_FOUND).body("Court not found")
             val rentals = RentalServices.getRentalsForClubAndCourt(court.clubId, courtID)
 
             val html = buildString {
@@ -172,7 +174,7 @@ fun courtsWebApi(): RoutingHttpHandler {
                       <meta charset="UTF-8">
                       <title>Rentals for ${court.name}</title>
                       <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        body { font-family: Arial; padding: 20px; }
                         table { border-collapse: collapse; width: 100%; }
                         th, td { border: 1px solid #ddd; padding: 8px; }
                         th { background: #f2f2f2; }

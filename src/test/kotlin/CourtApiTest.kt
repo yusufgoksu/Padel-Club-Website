@@ -4,13 +4,15 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import services.UserServices
-import services.ClubServices
 import services.CourtServices
+import services.ClubServices
+import services.UserServices
 import storage.UsersDataMem
 import storage.ClubsDataMem
 import storage.CourtsDataMem
 import storage.RentalsDataMem
+
+
 
 class CourtTests {
 
@@ -18,9 +20,11 @@ class CourtTests {
     fun setup() {
         // Clear all in-memory storage before each test
         UsersDataMem.users.clear()
+        UsersDataMem.idCounter.set(1)
         ClubsDataMem.clubs.clear()
         CourtsDataMem.courts.clear()
         RentalsDataMem.rentals.clear()
+
     }
 
     @Test
@@ -38,116 +42,88 @@ class CourtTests {
 
     @Test
     fun `cannot create court for non-existent club`() {
-        // Öncelikle geçerli bir kulüp ekleyelim
-        val clubID = "non-existent-club-id"
+        val invalidClubId = 999
 
-        // Geçerli kulüp ID'si kullanılarak kort eklemeye çalışılmalı
-        val exception = assertThrows<IllegalArgumentException> {
-            CourtServices.addCourt("Phantom Court", clubID)
+        val ex = assertThrows<IllegalArgumentException> {
+            CourtServices.addCourt("Phantom Court", invalidClubId)
         }
 
-        assertEquals("Club ID '$clubID' not found" , exception.message)
+        assertEquals("Club ID '999' not found", ex.message)
     }
 
     @Test
     fun `cannot create court with empty name`() {
-        // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
         val club = ClubServices.addClub("Tennis Club", user.userId)
 
-        // Attempt to create a court with an empty name
-        val exception = assertThrows<IllegalArgumentException> {
+        val ex = assertThrows<IllegalArgumentException> {
             CourtServices.addCourt("", club.clubID)
         }
 
-        // Check the exception message
-        assertEquals("Court name cannot be empty", exception.message)
+        assertEquals("Court name cannot be empty", ex.message)
     }
 
     @Test
     fun `cannot create court with name exceeding max length`() {
-        // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
         val club = ClubServices.addClub("Tennis Club", user.userId)
 
-        // Attempt to create a court with a name exceeding max length
-        val exception = assertThrows<IllegalArgumentException> {
-            CourtServices.addCourt("A".repeat(101), club.clubID) // 101 characters
+        val longName = "X".repeat(101)
+        val ex = assertThrows<IllegalArgumentException> {
+            CourtServices.addCourt(longName, club.clubID)
         }
 
-        // Check the exception message
-        assertEquals("Court name cannot exceed 100 characters", exception.message)
+        assertEquals("Court name cannot exceed 100 characters", ex.message)
     }
 
     @Test
     fun `create multiple courts for the same club`() {
-        // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
         val club = ClubServices.addClub("Tennis Club", user.userId)
 
-        // Create multiple courts
-        val court1 = CourtServices.addCourt("Court 1", club.clubID)
-        val court2 = CourtServices.addCourt("Court 2", club.clubID)
+        val court1 = CourtServices.addCourt("Court A", club.clubID)
+        val court2 = CourtServices.addCourt("Court B", club.clubID)
 
-        // Ensure both courts were created successfully
-        assertNotNull(court1.courtID)
-        assertNotNull(court2.courtID)
-        assertEquals(2, CourtServices.getAllCourts().size)
+        val all = CourtServices.getAllCourts()
+        assertEquals(2, all.size)
+        assertTrue(all.any { it.name == "Court A" })
+        assertTrue(all.any { it.name == "Court B" })
     }
 
     @Test
     fun `get court by name`() {
-        // First create a user and a club
         val user = UserServices.addUser("Club Owner", "owner@example.com")
         val club = ClubServices.addClub("Tennis Club", user.userId)
 
-        // Create a court
-        val court = CourtServices.addCourt("Court 1", club.clubID)
+        val court = CourtServices.addCourt("Court X", club.clubID)
+        val found = CourtServices.getCourtByName("Court X")
 
-        // Get court by name
-        val retrievedCourt = CourtServices.getCourtByName("Court 1")
-
-        // Ensure the court was retrieved correctly
-        assertNotNull(retrievedCourt)
-        assertEquals("Court 1", retrievedCourt?.name)
+        assertNotNull(found)
+        assertEquals(court.courtID, found?.courtID)
     }
 
     @Test
-    fun `cannot get court by non-existent name`() {
-        // First create a user and a club
+    fun `get court by non-existent name returns null`() {
         val user = UserServices.addUser("Club Owner", "owner@example.com")
         val club = ClubServices.addClub("Tennis Club", user.userId)
 
-        // Try to retrieve a non-existent court by name
-        val retrievedCourt = CourtServices.getCourtByName("Non-existent Court")
-
-        // Ensure no court is returned
-        assertNull(retrievedCourt)
-    }
-    @Test
-    fun `get court by invalid id returns exception`() {
-        // Geçersiz ID ile kort arandı ve IllegalArgumentException fırlatılmalı
-        val exception = assertThrows<IllegalArgumentException> {
-            CourtServices.getCourtById("non-existent-id")
-        }
-
-        // İstediğimiz hatanın mesajını kontrol et
-        assertEquals("Court ID 'non-existent-id' not found", exception.message)
+        val found = CourtServices.getCourtByName("NoSuchCourt")
+        assertNull(found)
     }
 
     @Test
-    fun `get court details by invalid id returns exception`() {
-        // Geçersiz ID ile kort detayları için sorgulama yapılmalı ve IllegalArgumentException fırlatılmalı
-        val exception = assertThrows<IllegalArgumentException> {
-            CourtServices.getCourtById("non-existent-id")
+    fun `get court by invalid id throws exception`() {
+        val ex = assertThrows<IllegalArgumentException> {
+            CourtServices.getCourtById(999)
         }
-
-        // İstediğimiz hatanın mesajını kontrol et
-        assertEquals("Court ID 'non-existent-id' not found", exception.message)
+        assertEquals("Court ID '999' not found", ex.message)
     }
 
-
-
+    @Test
+    fun `get courts for invalid club id throws exception`() {
+        val ex = assertThrows<IllegalArgumentException> {
+            CourtServices.getCourtsForClub(999)
+        }
+        assertEquals("Club ID '999' not found", ex.message)
+    }
 }
-
-

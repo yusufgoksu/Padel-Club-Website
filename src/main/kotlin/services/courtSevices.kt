@@ -1,49 +1,51 @@
 package services
 
-import models.*
+import models.Court
 import storage.ClubsDataMem
 import storage.CourtsDataMem
 
 object CourtServices {
 
-    // Kort ekleme işlemi
-    fun addCourt(name: String, clubId: String): Court {
-        // Kulüp ID'sinin geçerli olup olmadığını kontrol et
-        require(ClubsDataMem.clubs.containsKey(clubId)) { "Club ID '$clubId' not found" }
-
-        // Kort isminin boş olamayacağını kontrol et
+    /**
+     * Yeni bir kort ekler.
+     * @throws IllegalArgumentException Geçersiz girişler için
+     */
+    fun addCourt(name: String, clubId: Int): Court {
         require(name.isNotBlank()) { "Court name cannot be empty" }
-
-        // Kort isminin uzunluğunun 100 karakteri aşmaması gerektiğini kontrol et
         require(name.length <= 100) { "Court name cannot exceed 100 characters" }
+        require(clubId > 0) { "Club ID must be greater than 0" }
+        require(ClubsDataMem.getClubById(clubId) != null) { "Club ID '$clubId' not found" }
 
-        // Yeni Kort nesnesi oluşturuluyor
-        val court = Court(name = name, clubId = clubId)
-
-        // Kortu hafızaya ekle
-        CourtsDataMem.courts[court.courtID] = court
-
-        return court
+        return CourtsDataMem.addCourt(name = name, clubId = clubId)
     }
 
-    // Tüm kortları listeleme
-    fun getAllCourts(): List<Court> = CourtsDataMem.getAllCourts()
+    /**
+     * Tüm kortları döner.
+     */
+    fun getAllCourts(): List<Court> =
+        CourtsDataMem.getAllCourts()
 
-    // Kortu ID'ye göre getirme
-    fun getCourtById(courtID: String): Court? {
-        // Kortun var olup olmadığını kontrol et
+    /**
+     * ID ile kort getirir.
+     */
+    fun getCourtById(courtID: Int): Court? {
+        require(courtID > 0) { "Court ID must be greater than 0" }
         return CourtsDataMem.getCourtById(courtID)
     }
 
-    // Kulübe ait kortları listeleme
-    fun getCourtsForClub(clubId: String): List<Court> {
-
-        // Kulübe ait kortları döndür
+    /**
+     * Belirli bir kulübe ait kortları listeler.
+     */
+    fun getCourtsForClub(clubId: Int): List<Court> {
+        require(clubId > 0) { "Club ID must be greater than 0" }
         return CourtsDataMem.getCourtsForClub(clubId)
     }
 
+    /**
+     * İsme göre ilk eşleşen kortu getirir.
+     */
     fun getCourtByName(name: String): Court? {
+        require(name.isNotBlank()) { "Court name cannot be empty" }
         return CourtsDataMem.getCourtByName(name)
     }
-
 }

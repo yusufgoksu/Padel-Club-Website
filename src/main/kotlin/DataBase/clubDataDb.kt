@@ -1,78 +1,88 @@
-package DataBase
+package data.database
 
-import interfaces.IclubServices
 import models.Club
-
-
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
+import interfaces.IclubServices
 import java.sql.SQLException
 
+object ClubsDataDb : IclubServices {
 
-object ClubDataDb : IclubServices {
+    /**
+     * Inserts a new club and returns the generated integer club_id.
+     */
+    override fun createClub(name: String, userID: Int): Int {
+        val sql = """
+            INSERT INTO clubs (name, userId)
+            VALUES (?, ?)
+            RETURNING club_id;
+        """.trimIndent()
 
-    // Function to add a new club
-    override fun createClub(name: String, ownerUid: Int): String {
-        val query = "INSERT INTO clubs (name, owner_uid) VALUES (?, ?) RETURNING cid;"
-        val connection: Connection = Database.getConnection()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-            preparedStatement.setString(1, name)
-            preparedStatement.setInt(2, ownerUid)
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            if (resultSet.next()) {
-                return resultSet.getString("cid")
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, name)
+                    stmt.setInt   (2, userID)
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) rs.getInt("club_id")
+                        else throw SQLException("Club creation failed, no ID returned.")
+                    }
+                }
             }
-            throw SQLException("Failed to create club")
-        } finally {
-            connection.close()
+        } catch (e: SQLException) {
+            throw RuntimeException("Error creating club: ${e.message}", e)
         }
     }
 
-    // Function to get club details by CID
-    override fun getClubDetails(cid: Int): Club? {
-        val query = "SELECT cid, name, owner_uid FROM clubs WHERE cid = ?;"
+    /**
+     * Fetch a single club by its integer ID.
+     */
+    override fun getClubDetails(clubId: Int): Club? {
+        val sql = """
+            SELECT club_id, name, userId
+            FROM clubs
+            WHERE club_id = ?;
+        """.trimIndent()
 
-        val connection: Connection = Database.getConnection()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-            preparedStatement.setInt(1, cid)
-
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            if (resultSet.next()) {
-                return Club(
-                    clubID = resultSet.getInt("cid").toString(),
-                    name = resultSet.getString("name"),
-                    ownerUid = resultSet.getInt("owner_uid").toString()
-                )
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setInt(1, clubId)
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) Club(
+                            clubID = rs.getInt("club_id"),
+                            name   = rs.getString("name"),
+                            userID = rs.getInt("owner_id")
+                        ) else null
+                    }
+                }
             }
-            return null
-        } finally {
-            connection.close()
+        } catch (e: SQLException) {
+            throw RuntimeException("Error fetching club details: ${e.message}", e)
         }
     }
 
-    // Function to get all clubs
+    /**
+     * List all clubs.
+     */
     override fun getAllClubs(): List<Club> {
-        val query = "SELECT cid, name, owner_uid FROM clubs;"
-        val connection: Connection = Database.getConnection()
-        val clubs = mutableListOf<Club>()
-        try {
-            val preparedStatement: PreparedStatement = connection.prepareStatement(query)
-            val resultSet: ResultSet = preparedStatement.executeQuery()
-            while (resultSet.next()) {
-                clubs.add(
-                    Club(
-                        clubID = resultSet.getInt("cid").toString(),
-                        name = resultSet.getString("name"),
-                        ownerUid = resultSet.getInt("owner_uid").toString()
-                    )
-                )
+        val sql = "SELECT club_id, name, user_id FROM clubs;"
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.executeQuery().use { rs ->
+                        val list = mutableListOf<Club>()
+                        while (rs.next()) {
+                            list += Club(
+                                clubID = rs.getInt("club_id"),
+                                name   = rs.getString("name"),
+                                userID = rs.getInt("owner_id")
+                            )
+                        }
+                        list
+                    }
+                }
             }
-            return clubs
-        } finally {
-            connection.close()
+        } catch (e: SQLException) {
+            throw RuntimeException("Error listing clubs: ${e.message}", e)
         }
     }
 }

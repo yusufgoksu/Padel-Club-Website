@@ -1,28 +1,32 @@
 package data.database
 
-import DataBase.Database
 import models.User
-import java.sql.Connection
-import java.sql.SQLException
 import interfaces.IuserServices
-
+import java.sql.SQLException
 
 object UserDataDb : IuserServices {
 
-    // Function to create a new user
-    override fun createUser(name: String, email: String): String {
-        val query = "INSERT INTO users (name, email) VALUES (?, ?) RETURNING user_id;"
-        return try {
-            Database.getConnection().use { connection ->
-                connection.prepareStatement(query).use { preparedStatement ->
-                    preparedStatement.setString(1, name)
-                    preparedStatement.setString(2, email)
+    /**
+     * Inserts a new user and returns the generated integer user_id.
+     */
+    override fun createUser(name: String, email: String): Int {
+        val sql = """
+            INSERT INTO users (name, email)
+            VALUES (?, ?)
+            RETURNING user_id;
+        """.trimIndent()
 
-                    preparedStatement.executeQuery().use { resultSet ->
-                        if (resultSet.next()) {
-                            return resultSet.getString("user_Id")
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, name)
+                    stmt.setString(2, email)
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            rs.getInt("user_id")
+                        } else {
+                            throw SQLException("User creation failed, no ID returned.")
                         }
-                        throw SQLException("User creation failed, no ID obtained.")
                     }
                 }
             }
@@ -31,23 +35,25 @@ object UserDataDb : IuserServices {
         }
     }
 
-    // Function to get user details by UID
+    /**
+     * Fetch a single user by its integer ID.
+     */
     override fun getUserDetails(userId: Int): User? {
-        val query = "SELECT * FROM users WHERE user_id = ?;"
-
+        val sql = "SELECT user_id, name, email FROM users WHERE user_id = ?;"
         return try {
-            Database.getConnection().use { connection ->
-                connection.prepareStatement(query).use { preparedStatement ->
-                    preparedStatement.setInt(1, userId)
-                    preparedStatement.executeQuery().use { resultSet ->
-                        if (resultSet.next()) {
-                            return User(
-                                userId = resultSet.getInt("user_id").toString(),
-                                name = resultSet.getString("name"),
-                                email = resultSet.getString("email")
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setInt(1, userId)
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            User(
+                                userId = rs.getInt("user_id"),
+                                name   = rs.getString("name"),
+                                email  = rs.getString("email")
                             )
+                        } else {
+                            null
                         }
-                        null
                     }
                 }
             }
@@ -56,28 +62,27 @@ object UserDataDb : IuserServices {
         }
     }
 
-    // Function to get all users
+    /**
+     * List all users.
+     */
     override fun getAllUsers(): List<User> {
-        val query = "SELECT * FROM users;"
-        val users = mutableListOf<User>()
-
-        return try {
-            Database.getConnection().use { connection ->
-                connection.prepareStatement(query).use { preparedStatement ->
-                    preparedStatement.executeQuery().use { resultSet ->
-                        while (resultSet.next()) {
-                            users.add(
-                                User(
-                                    userId = resultSet.getInt("userId").toString(),
-                                    name = resultSet.getString("name"),
-                                    email = resultSet.getString("email")
-                                )
+        val sql = "SELECT user_id, name, email FROM users;"
+        val list = mutableListOf<User>()
+        try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.executeQuery().use { rs ->
+                        while (rs.next()) {
+                            list += User(
+                                userId = rs.getInt("user_id"),
+                                name   = rs.getString("name"),
+                                email  = rs.getString("email")
                             )
                         }
                     }
                 }
             }
-            users
+            return list
         } catch (e: SQLException) {
             throw RuntimeException("Error fetching all users: ${e.message}", e)
         }
