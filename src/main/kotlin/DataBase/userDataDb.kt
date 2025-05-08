@@ -13,7 +13,7 @@ object UserDataDb : IuserServices {
         val sql = """
             INSERT INTO users (name, email)
             VALUES (?, ?)
-            RETURNING user_id;
+            RETURNING userId;
         """.trimIndent()
 
         return try {
@@ -23,7 +23,7 @@ object UserDataDb : IuserServices {
                     stmt.setString(2, email)
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) {
-                            rs.getInt("user_id")
+                            rs.getInt("userId")
                         } else {
                             throw SQLException("User creation failed, no ID returned.")
                         }
@@ -47,7 +47,7 @@ object UserDataDb : IuserServices {
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) {
                             User(
-                                userId = rs.getInt("user_id"),
+                                userId = rs.getInt("userId"),
                                 name   = rs.getString("name"),
                                 email  = rs.getString("email")
                             )
@@ -74,7 +74,7 @@ object UserDataDb : IuserServices {
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             list += User(
-                                userId = rs.getInt("user_id"),
+                                userId = rs.getInt("userId"),
                                 name   = rs.getString("name"),
                                 email  = rs.getString("email")
                             )

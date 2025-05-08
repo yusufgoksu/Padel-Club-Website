@@ -13,7 +13,7 @@ object ClubsDataDb : IclubServices {
         val sql = """
             INSERT INTO clubs (name, userId)
             VALUES (?, ?)
-            RETURNING club_id;
+            RETURNING clubId;
         """.trimIndent()
 
         return try {
@@ -22,7 +22,7 @@ object ClubsDataDb : IclubServices {
                     stmt.setString(1, name)
                     stmt.setInt   (2, userID)
                     stmt.executeQuery().use { rs ->
-                        if (rs.next()) rs.getInt("club_id")
+                        if (rs.next()) rs.getInt("club_Id")
                         else throw SQLException("Club creation failed, no ID returned.")
                     }
                 }
@@ -37,9 +37,9 @@ object ClubsDataDb : IclubServices {
      */
     override fun getClubDetails(clubId: Int): Club? {
         val sql = """
-            SELECT club_id, name, userId
+            SELECT club_Id, name, userId
             FROM clubs
-            WHERE club_id = ?;
+            WHERE club_Id = ?;
         """.trimIndent()
 
         return try {
@@ -48,9 +48,9 @@ object ClubsDataDb : IclubServices {
                     stmt.setInt(1, clubId)
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) Club(
-                            clubID = rs.getInt("club_id"),
+                            clubID = rs.getInt("club_Id"),
                             name   = rs.getString("name"),
-                            userID = rs.getInt("owner_id")
+                            userID = rs.getInt("userId")
                         ) else null
                     }
                 }
@@ -72,9 +72,9 @@ object ClubsDataDb : IclubServices {
                         val list = mutableListOf<Club>()
                         while (rs.next()) {
                             list += Club(
-                                clubID = rs.getInt("club_id"),
+                                clubID = rs.getInt("clubId"),
                                 name   = rs.getString("name"),
-                                userID = rs.getInt("owner_id")
+                                userID = rs.getInt("userId")
                             )
                         }
                         list
