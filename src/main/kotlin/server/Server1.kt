@@ -1,97 +1,75 @@
 package main
 
-import api.*
-
+import api.clubsWebApi
+import api.courtsWebApi
+import api.usersWebApi
+import api.rentalsWebApi
 import storage.ClubsDataMem
 import storage.CourtsDataMem
 import storage.RentalsDataMem
 import storage.UsersDataMem
-import org.http4k.routing.routes
+import org.http4k.core.*
+import org.http4k.core.Method.GET
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
+import org.http4k.routing.*
+import org.http4k.routing.ResourceLoader.Companion.Classpath
+
+// — JSON API handlers under /api —
+// (api.clubsWebApi, courtsWebApi, usersWebApi, rentalsWebApi imported)
+
+
+// — SPA shell + static-content fallback —
+fun spaAndStatic(): RoutingHttpHandler {
+    val indexHtml = Thread.currentThread().contextClassLoader
+        .getResource("static-content/index.html")!!
+        .readText()
+
+    return routes(
+        "/static-content" bind static(Classpath("static-content")),
+        "/"        bind GET to { _: Request -> Response(Status.OK).header("Content-Type", "text/html; charset=UTF-8").body(indexHtml) },
+        "/{any:.*}" bind GET to { _: Request -> Response(Status.OK).header("Content-Type", "text/html; charset=UTF-8").body(indexHtml) }
+    )
+}
+
+fun addTestData() {
+    println("✅ Adding test data...")
+
+    val u1 = UsersDataMem.addUser("Yusuf", "yusuf@example.com")
+    val u2 = UsersDataMem.addUser("Mert",  "mert@example.com")
+    val u3 = UsersDataMem.addUser("Ali",   "ali@example.com")
+
+    val c1 = ClubsDataMem.addClub("Padel Club A", u1.userId)
+    val c2 = ClubsDataMem.addClub("Padel Club B", u2.userId)
+    val c3 = ClubsDataMem.addClub("Padel Club C", u3.userId)
+
+    listOf(c1 to u1.userId, c2 to u2.userId, c3 to u3.userId).forEach { (club, owner) ->
+        val courts = listOf(
+            CourtsDataMem.addCourt("Court 1", club.clubID),
+            CourtsDataMem.addCourt("Court 2", club.clubID),
+            CourtsDataMem.addCourt("Court 3", club.clubID)
+        )
+        courts.forEachIndexed { idx, court ->
+            RentalsDataMem.addRental(clubId = club.clubID, courtId = court.courtID, userId = owner, startTime = "2025-03-27T1${4 + idx}:00:00", duration = 2)
+        }
+    }
+
+    println("✅ Test data added.")
+}
 
 fun main() {
+    val PORT = 9000
+    addTestData()
 
-
-    // 2) HTML sayfa rotaları (root altında)
-    val pageRoutes = routes(
-        homeWebApi(),
+    val app = routes(
         clubsWebApi(),
         courtsWebApi(),
+        usersWebApi(),
         rentalsWebApi(),
-        usersWebApi()
+        spaAndStatic()
     )
 
-    // 3) Hepsini birleştir ve sunucuyu başlat
-    val app = routes(pageRoutes)
-    app.asServer(SunHttp(9000)).start()
-    println("Server running on http://localhost:9000")
-
-    // 1) İlk test verilerini ekle
-    val user1 = UsersDataMem.addUser(name = "Yusuf", email = "yusuf@example.com")
-    val club1 = ClubsDataMem.addClub(name = "Padel Club A", userID = user1.userId)
-    val court1A = CourtsDataMem.addCourt(name = "Court A1", clubId = club1.clubID)
-    val court1B = CourtsDataMem.addCourt(name = "Court A2", clubId = club1.clubID)
-    val court1C = CourtsDataMem.addCourt(name = "Court A3", clubId = club1.clubID)
-
-    RentalsDataMem.addRental(
-        clubId    = club1.clubID,
-        courtId   = court1A.courtID,
-        userId    = user1.userId,
-        startTime = "2025-03-27T14:00:00",
-        duration  = 2
-    )
-    RentalsDataMem.addRental(
-        clubId    = club1.clubID,
-        courtId   = court1B.courtID,
-        userId    = user1.userId,
-        startTime = "2025-03-27T15:00:00",
-        duration  = 2
-    )
-    RentalsDataMem.addRental(
-        clubId    = club1.clubID,
-        courtId   = court1C.courtID,
-        userId    = user1.userId,
-        startTime = "2025-03-27T16:00:00",
-        duration  = 2
-    )
-
-    // 2) İkinci kullanıcı ve kulüp
-    val user2 = UsersDataMem.addUser(name = "Mert", email = "mert@example.com")
-    val club2 = ClubsDataMem.addClub(name = "Padel Club B", userID = user2.userId)
-    val court2A = CourtsDataMem.addCourt(name = "Court B1", clubId = club2.clubID)
-    val court2B = CourtsDataMem.addCourt(name = "Court B2", clubId = club2.clubID)
-
-    RentalsDataMem.addRental(
-        clubId    = club2.clubID,
-        courtId   = court2A.courtID,
-        userId    = user2.userId,
-        startTime = "2025-03-27T14:00:00",
-        duration  = 2
-    )
-    RentalsDataMem.addRental(
-        clubId    = club2.clubID,
-        courtId   = court2B.courtID,
-        userId    = user2.userId,
-        startTime = "2025-03-27T15:00:00",
-        duration  = 2
-    )
-
-    // 3) Üçüncü kullanıcı ve kulüp
-    val user3 = UsersDataMem.addUser(name = "Ali", email = "ali@example.com")
-    val club3 = ClubsDataMem.addClub(name = "Padel Club C", userID = user3.userId)
-    val court3A = CourtsDataMem.addCourt(name = "Court C1", clubId = club3.clubID)
-
-    RentalsDataMem.addRental(
-        clubId    = club3.clubID,
-        courtId   = court3A.courtID,
-        userId    = user3.userId,
-        startTime = "2025-03-27T14:00:00",
-        duration  = 2
-    )
-
-    println("Test verileri başarıyla eklendi:")
-    println("User 1: $user1, Club 1: $club1, Courts: $court1A, $court1B, $court1C")
-    println("User 2: $user2, Club 2: $club2, Courts: $court2A, $court2B")
-    println("User 3: $user3, Club 3: $club3, Court: $court3A")
+    app.asServer(SunHttp(PORT)).start().also {
+        println("Server running on http://localhost:$PORT")
+    }
 }

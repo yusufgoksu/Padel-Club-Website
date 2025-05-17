@@ -44,7 +44,6 @@ fun main() {
 
     // 5) Start server
     val app = routes(
-        homeWebApi(),
         usersWebApi(),
         clubsWebApi(),
         courtsWebApi(),
