@@ -4,8 +4,7 @@ export function homeHandler(app) {
     <h1>Welcome to the Padel Club System</h1>
     <nav>
       <a href="/" data-link>Home</a> |
-      <a href="/clubs" data-link>Clubs</a> |
-      <a href="/users" data-link>Users</a>
+      <a href="/clubs" data-link>Clubs</a>
     </nav>
     <p>Welcome!</p>
   `;
