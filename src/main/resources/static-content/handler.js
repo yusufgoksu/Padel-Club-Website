@@ -202,7 +202,7 @@ export async function courtRentalsListHandler(app, clubID, courtID) {
 
 
 export async function rentalDetailsHandler(app, clubID, courtID, rentalID) {
-    app.innerHTML = `<h1>Loading rental details...</h1>`;
+    app.innerHTML = `ai<h1>Loading rental detls...</h1>`;
 
     try {
         // 1. Rental detayını çek
