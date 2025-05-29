@@ -7,7 +7,7 @@ import java.sql.SQLException
 object ClubsDataDb : IclubServices {
 
     /**
-     * Inserts a new club and returns the generated integer club_id.
+     * Inserts a new club and returns the generated clubId.
      */
     override fun createClub(name: String, userID: Int): Int {
         val sql = """
@@ -20,9 +20,9 @@ object ClubsDataDb : IclubServices {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
                     stmt.setString(1, name)
-                    stmt.setInt   (2, userID)
+                    stmt.setInt(2, userID)
                     stmt.executeQuery().use { rs ->
-                        if (rs.next()) rs.getInt("club_Id")
+                        if (rs.next()) rs.getInt("clubId")
                         else throw SQLException("Club creation failed, no ID returned.")
                     }
                 }
@@ -37,9 +37,9 @@ object ClubsDataDb : IclubServices {
      */
     override fun getClubDetails(clubId: Int): Club? {
         val sql = """
-            SELECT club_Id, name, userId
+            SELECT clubId, name, userId
             FROM clubs
-            WHERE club_Id = ?;
+            WHERE clubId = ?;
         """.trimIndent()
 
         return try {
@@ -48,7 +48,7 @@ object ClubsDataDb : IclubServices {
                     stmt.setInt(1, clubId)
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) Club(
-                            clubID = rs.getInt("club_Id"),
+                            clubID = rs.getInt("clubId"),
                             name   = rs.getString("name"),
                             userID = rs.getInt("userId")
                         ) else null
@@ -64,7 +64,7 @@ object ClubsDataDb : IclubServices {
      * List all clubs.
      */
     override fun getAllClubs(): List<Club> {
-        val sql = "SELECT club_id, name, user_id FROM clubs;"
+        val sql = "SELECT clubId, name, userId FROM clubs;"
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->

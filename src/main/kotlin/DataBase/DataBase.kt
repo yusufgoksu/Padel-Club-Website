@@ -20,68 +20,67 @@ object Database {
 
                 // 2) users tablosu ve sequence
                 stmt.execute("""
-                    CREATE SEQUENCE IF NOT EXISTS public.users_user_id_seq
-                      START WITH 1 INCREMENT BY 1 CACHE 1
+                    CREATE SEQUENCE IF NOT EXISTS public.users_userId_seq START 1 INCREMENT 1 CACHE 1;
                 """.trimIndent())
                 stmt.execute("""
                     CREATE TABLE IF NOT EXISTS public.users (
-                      user_id INTEGER NOT NULL DEFAULT nextval('public.users_user_id_seq'),
-                      name    VARCHAR(100)   NOT NULL,
-                      email   VARCHAR(255)   NOT NULL UNIQUE,
-                      PRIMARY KEY (user_id)
-                    )
+                        userId INTEGER NOT NULL DEFAULT nextval('public.users_userId_seq'),
+                        name   VARCHAR(100) NOT NULL,
+                        email  VARCHAR(255) NOT NULL UNIQUE,
+                        PRIMARY KEY (userId)
+                    );
                 """.trimIndent())
-                stmt.execute("ALTER SEQUENCE public.users_user_id_seq OWNED BY public.users.user_id;")
+                stmt.execute("ALTER SEQUENCE public.users_userId_seq OWNED BY public.users.userId;")
 
                 // 3) clubs tablosu ve sequence
                 stmt.execute("""
-                    CREATE SEQUENCE IF NOT EXISTS public.clubs_club_id_seq
-                      START WITH 1 INCREMENT BY 1 CACHE 1
+                    CREATE SEQUENCE IF NOT EXISTS public.clubs_clubId_seq START 1 INCREMENT 1 CACHE 1;
                 """.trimIndent())
                 stmt.execute("""
                     CREATE TABLE IF NOT EXISTS public.clubs (
-                      club_id  INTEGER NOT NULL DEFAULT nextval('public.clubs_club_id_seq'),
-                      name     VARCHAR(100) NOT NULL,
-                      owner_id INTEGER        NOT NULL,
-                      PRIMARY KEY (club_id),
-                      FOREIGN KEY (owner_id) REFERENCES public.users(user_id) ON DELETE CASCADE
-                    )
+                        clubId  INTEGER NOT NULL DEFAULT nextval('public.clubs_clubId_seq'),
+                        name    VARCHAR(100) NOT NULL,
+                        userId  INTEGER NOT NULL,
+                        PRIMARY KEY (clubId),
+                        FOREIGN KEY (userId) REFERENCES public.users(userId) ON DELETE CASCADE
+                    );
                 """.trimIndent())
-                stmt.execute("ALTER SEQUENCE public.clubs_club_id_seq OWNED BY public.clubs.club_id;")
+                stmt.execute("ALTER SEQUENCE public.clubs_clubId_seq OWNED BY public.clubs.clubId;")
 
                 // 4) courts tablosu ve sequence
                 stmt.execute("""
-                    CREATE SEQUENCE IF NOT EXISTS public.courts_crid_seq
-                      START WITH 1 INCREMENT BY 1 CACHE 1
+                    CREATE SEQUENCE IF NOT EXISTS public.courts_courtId_seq START 1 INCREMENT 1 CACHE 1;
                 """.trimIndent())
                 stmt.execute("""
                     CREATE TABLE IF NOT EXISTS public.courts (
-                      crid  INTEGER NOT NULL DEFAULT nextval('public.courts_crid_seq'),
-                      name  VARCHAR(100) NOT NULL,
-                      cid   INTEGER        NOT NULL,
-                      PRIMARY KEY (crid),
-                      FOREIGN KEY (cid) REFERENCES public.clubs(club_id) ON DELETE CASCADE
-                    )
+                        courtId INTEGER NOT NULL DEFAULT nextval('public.courts_courtId_seq'),
+                        name    VARCHAR(100) NOT NULL,
+                        clubId  INTEGER NOT NULL,
+                        PRIMARY KEY (courtId),
+                        FOREIGN KEY (clubId) REFERENCES public.clubs(clubId) ON DELETE CASCADE
+                    );
                 """.trimIndent())
-                stmt.execute("ALTER SEQUENCE public.courts_crid_seq OWNED BY public.courts.crid;")
+                stmt.execute("ALTER SEQUENCE public.courts_courtId_seq OWNED BY public.courts.courtId;")
 
                 // 5) rentals tablosu ve sequence
                 stmt.execute("""
-                    CREATE SEQUENCE IF NOT EXISTS public.rentals_rid_seq
-                      START WITH 1 INCREMENT BY 1 CACHE 1
+                    CREATE SEQUENCE IF NOT EXISTS public.rentals_rentalId_seq START 1 INCREMENT 1 CACHE 1;
                 """.trimIndent())
                 stmt.execute("""
                     CREATE TABLE IF NOT EXISTS public.rentals (
-                      rid       INTEGER   NOT NULL DEFAULT nextval('public.rentals_rid_seq'),
-                      cid       INTEGER   NOT NULL REFERENCES public.clubs(club_id)   ON DELETE CASCADE,
-                      crid      INTEGER   NOT NULL REFERENCES public.courts(crid)     ON DELETE CASCADE,
-                      user_uid  INTEGER   NOT NULL REFERENCES public.users(user_id)   ON DELETE CASCADE,
-                      date      TIMESTAMP NOT NULL,
-                      duration  INTEGER   NOT NULL,
-                      PRIMARY KEY (rid)
-                    )
+                        rentalId INTEGER NOT NULL DEFAULT nextval('public.rentals_rentalId_seq'),
+                        clubId   INTEGER NOT NULL,
+                        courtId  INTEGER NOT NULL,
+                        userId   INTEGER NOT NULL,
+                        date     TIMESTAMP NOT NULL,
+                        duration INTEGER NOT NULL,
+                        PRIMARY KEY (rentalId),
+                        FOREIGN KEY (clubId)  REFERENCES public.clubs(clubId)  ON DELETE CASCADE,
+                        FOREIGN KEY (courtId) REFERENCES public.courts(courtId) ON DELETE CASCADE,
+                        FOREIGN KEY (userId)  REFERENCES public.users(userId)  ON DELETE CASCADE
+                    );
                 """.trimIndent())
-                stmt.execute("ALTER SEQUENCE public.rentals_rid_seq OWNED BY public.rentals.rid;")
+                stmt.execute("ALTER SEQUENCE public.rentals_rentalId_seq OWNED BY public.rentals.rentalId;")
             }
             conn.commit()
         }

@@ -1,32 +1,26 @@
 package data.database
 
-import interfaces.IcourtServices
 import models.Court
+import interfaces.IcourtServices
 import java.sql.SQLException
 
 object CourtsDataDb : IcourtServices {
 
-    /**
-     * Yeni bir kort oluşturur ve geri dönen courtId'yi Int olarak verir
-     */
     override fun createCourt(name: String, clubId: Int): Int {
         val sql = """
-            INSERT INTO public.courts (name, cid)
+            INSERT INTO courts (name, clubId)
             VALUES (?, ?)
-            RETURNING crid AS courtId;
+            RETURNING courtId;
         """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
                     stmt.setString(1, name)
-                    stmt.setInt   (2, clubId)
+                    stmt.setInt(2, clubId)
                     stmt.executeQuery().use { rs ->
-                        if (rs.next()) {
-                            rs.getInt("courtId")
-                        } else {
-                            throw SQLException("Failed to create court, no ID returned.")
-                        }
+                        if (rs.next()) rs.getInt("courtId")
+                        else throw SQLException("Court creation failed.")
                     }
                 }
             }
@@ -35,16 +29,11 @@ object CourtsDataDb : IcourtServices {
         }
     }
 
-    /**
-     * Verilen courtId ile kort detaylarını getirir, yoksa null döner
-     */
     override fun getCourt(courtId: Int): Court? {
         val sql = """
-            SELECT crid AS courtId,
-                   name,
-                   cid  AS clubId
-            FROM public.courts
-            WHERE crid = ?;
+            SELECT courtId, name, clubId
+            FROM courts
+            WHERE courtId = ?;
         """.trimIndent()
 
         return try {
@@ -52,35 +41,21 @@ object CourtsDataDb : IcourtServices {
                 conn.prepareStatement(sql).use { stmt ->
                     stmt.setInt(1, courtId)
                     stmt.executeQuery().use { rs ->
-                        if (rs.next()) {
-                            Court(
-                                courtID = rs.getInt("courtId"),
-                                name    = rs.getString("name"),
-                                clubId  = rs.getInt("clubId")
-                            )
-                        } else {
-                            null
-                        }
+                        if (rs.next()) Court(
+                            courtID = rs.getInt("courtId"),
+                            name    = rs.getString("name"),
+                            clubId  = rs.getInt("clubId")
+                        ) else null
                     }
                 }
             }
         } catch (e: SQLException) {
-            throw RuntimeException("Error fetching court details: ${e.message}", e)
+            throw RuntimeException("Error fetching court: ${e.message}", e)
         }
     }
 
-    /**
-     * Belirli bir kulübe ait tüm kortları listeler
-     */
     override fun getCourtsByClub(clubId: Int): List<Court> {
-        val sql = """
-            SELECT crid AS courtId,
-                   name,
-                   cid  AS clubId
-            FROM public.courts
-            WHERE cid = ?;
-        """.trimIndent()
-
+        val sql = "SELECT courtId, name, clubId FROM courts WHERE clubId = ?;"
         val list = mutableListOf<Court>()
         return try {
             Database.getConnection().use { conn ->
@@ -99,7 +74,7 @@ object CourtsDataDb : IcourtServices {
             }
             list
         } catch (e: SQLException) {
-            throw RuntimeException("Error fetching courts by club: ${e.message}", e)
+            throw RuntimeException("Error fetching courts: ${e.message}", e)
         }
     }
 }

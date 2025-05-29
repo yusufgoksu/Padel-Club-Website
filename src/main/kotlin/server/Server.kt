@@ -1,55 +1,59 @@
-package server
+package main
 
-import api.*
-import data.database.UserDataDb
+import api.clubsWebApi
+import api.courtsWebApi
+import api.usersWebApi
+import api.rentalsWebApi
 import data.database.ClubsDataDb
 import data.database.CourtsDataDb
+import data.database.UserDataDb
 import data.database.RentalDataDb
+import org.http4k.core.*
+import org.http4k.core.Method.GET
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
-import org.http4k.routing.routes
+import org.http4k.routing.*
+import org.http4k.routing.ResourceLoader.Companion.Classpath
+
+
+
+fun addTestDataToDatabase() {
+    println("✅ Adding test data to PostgreSQL...")
+
+    val u1Id = UserDataDb.createUser("Yusuf", "yusuf@example.com")
+    val u2Id = UserDataDb.createUser("Mert",  "mert@example.com")
+    val u3Id = UserDataDb.createUser("Ali",   "ali@example.com")
+
+    val c1Id = ClubsDataDb.createClub("Padel Club A", u1Id)
+    val c2Id = ClubsDataDb.createClub("Padel Club B", u2Id)
+    val c3Id = ClubsDataDb.createClub("Padel Club C", u3Id)
+
+    listOf(c1Id to u1Id, c2Id to u2Id, c3Id to u3Id).forEach { (clubId, ownerId) ->
+        val court1 = CourtsDataDb.createCourt("Court 1", clubId)
+        val court2 = CourtsDataDb.createCourt("Court 2", clubId)
+        val court3 = CourtsDataDb.createCourt("Court 3", clubId)
+
+        RentalDataDb.createRental(clubId, court1, ownerId, "2025-03-27T14:00:00", 2)
+        RentalDataDb.createRental(clubId, court2, ownerId, "2025-03-27T15:00:00", 2)
+        RentalDataDb.createRental(clubId, court3, ownerId, "2025-03-27T16:00:00", 2)
+    }
+
+    println("✅ Test data added to PostgreSQL.")
+}
 
 fun main() {
-    println("Inserting test data into database...")
+    val PORT = 9000
+    addTestDataToDatabase()
 
-    // 1) Users
-    val user1Id = UserDataDb.createUser("Yusuf", "yusuf@example.com")
-    val user2Id = UserDataDb.createUser("Mert",  "mert@example.com")
-    val user3Id = UserDataDb.createUser("Ali",   "ali@example.com")
-    println("Created users: $user1Id, $user2Id, $user3Id")
-
-    // 2) Clubs (each owned by one of the users)
-    val club1Id = ClubsDataDb.createClub("Club A", user1Id)
-    val club2Id = ClubsDataDb.createClub("Club B", user2Id)
-    val club3Id = ClubsDataDb.createClub("Club C", user3Id)
-    println("Created clubs: $club1Id, $club2Id, $club3Id")
-
-    // 3) Courts (some courts in each club)
-    val courtA1 = CourtsDataDb.createCourt("Court 1", club1Id)
-    val courtA2 = CourtsDataDb.createCourt("Court 2", club1Id)
-    val courtA3 = CourtsDataDb.createCourt("Court 3", club1Id)
-    val courtB1 = CourtsDataDb.createCourt("Court 1", club2Id)
-    val courtB2 = CourtsDataDb.createCourt("Court 2", club2Id)
-    val courtC1 = CourtsDataDb.createCourt("Court 1", club3Id)
-    println("Created courts: $courtA1, $courtA2, $courtA3, $courtB1, $courtB2, $courtC1")
-
-    // 4) Rentals
-    val rental1 = RentalDataDb.createRental(clubId  = club1Id, courtId = courtA1, userId = user1Id, date = "2025-03-27T14:00:00", duration = 2)
-    val rental2 = RentalDataDb.createRental(clubId  = club1Id, courtId = courtA2, userId = user1Id, date = "2025-03-27T15:00:00", duration = 2)
-    val rental3 = RentalDataDb.createRental(clubId  = club1Id, courtId = courtA3, userId = user1Id, date = "2025-03-27T16:00:00", duration = 2)
-    val rental4 = RentalDataDb.createRental(clubId  = club2Id, courtId = courtB1, userId = user2Id, date = "2025-03-27T14:00:00", duration = 2)
-    val rental5 = RentalDataDb.createRental(clubId  = club2Id, courtId = courtB2, userId = user2Id, date = "2025-03-27T15:00:00", duration = 2)
-    val rental6 = RentalDataDb.createRental(clubId  = club3Id, courtId = courtC1, userId = user3Id, date = "2025-03-27T14:00:00", duration = 2)
-    println("Created rentals: $rental1, $rental2, $rental3, $rental4, $rental5, $rental6")
-
-    // 5) Start server
     val app = routes(
-        usersWebApi(),
         clubsWebApi(),
         courtsWebApi(),
-        rentalsWebApi()
+        usersWebApi(),
+        rentalsWebApi(),
+        spaAndStatic()
     )
-    app.asServer(SunHttp(9000)).start().also {
-        println("Server running at http://localhost:9000")
+
+    app.asServer(SunHttp(PORT)).start().also {
+        println("🚀 Server running on http://localhost:$PORT")
     }
 }

@@ -1,52 +1,55 @@
 package services
 
 import models.User
-import storage.UsersDataMem
+import data.database.UserDataDb
 
 object UserServices {
 
-    // Kullanıcı ekleme fonksiyonu
+    // Kullanıcı ekleme
     fun addUser(name: String, email: String): User {
-        // Giriş doğrulamaları
         require(name.isNotBlank()) { "Name cannot be empty" }
         require(email.isNotBlank()) { "Email cannot be empty" }
         require("@" in email) { "Email must be valid" }
 
-        // E-posta adresinin daha önce var olup olmadığını kontrol et
-        require(UsersDataMem.users.values.none { it.email == email }) {
-            "Email already exists"
-        }
+        // Eğer e-posta zaten varsa hata ver
+        val existing = getUserByEmail(email)
+        require(existing == null) { "Email already exists" }
 
-        // userId'yi her yeni kullanıcı için artan şekilde oluşturuyoruz
-        val userId = UsersDataMem.idCounter.getAndIncrement()
-
-        // Yeni kullanıcıyı oluştur
-        val user = User(userId = userId, name = name, email = email)
-
-        // Kullanıcıyı veritabanına ekle
-        UsersDataMem.users[user.userId] = user
-        return user
+        val userId = UserDataDb.createUser(name, email)
+        return UserDataDb.getUserDetails(userId)
+            ?: throw IllegalStateException("User creation failed")
     }
 
-    // Tüm kullanıcıları listeleme
+    // Tüm kullanıcıları getir
     fun getAllUsers(): List<User> =
-        UsersDataMem.getAllUsers()
+        UserDataDb.getAllUsers()
 
-    // Kullanıcıyı ID'ye göre getirme
+    // ID'ye göre kullanıcı getir
     fun getUserById(userID: Int): User? {
         require(userID > 0) { "User ID must be greater than 0" }
-        return UsersDataMem.getUserById(userID)
+        return UserDataDb.getUserDetails(userID)
     }
 
-    // Kullanıcıyı e-posta ile getirme
+    // E-posta ile kullanıcı getir
     fun getUserByEmail(email: String): User? {
         require(email.isNotBlank()) { "Email cannot be empty" }
-        return UsersDataMem.getUserByEmail(email)
+        return UserDataDb.getAllUsers().find { it.email == email }
     }
 
-    // Kullanıcıya ait token üretme
-    fun generateUserToken(uid: Int): Pair<String, Int>? {
-        require(uid > 0) { "User ID must be greater than 0" }
-        return UsersDataMem.generateUserToken(uid)
+    // Token üretimi (şimdilik basit, bellekte tutuluyor)
+    private val tokenStore = mutableMapOf<String, Int>()
+
+    fun generateUserToken(userId: Int): Pair<String, Int>? {
+        require(userId > 0) { "User ID must be greater than 0" }
+        val user = getUserById(userId) ?: return null
+
+        val token = java.util.UUID.randomUUID().toString()
+        tokenStore[token] = userId
+        return token to userId
+    }
+
+    fun getUserFromToken(token: String): User? {
+        val uid = tokenStore[token] ?: return null
+        return getUserById(uid)
     }
 }

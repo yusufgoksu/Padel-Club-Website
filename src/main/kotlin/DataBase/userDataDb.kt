@@ -1,13 +1,13 @@
 package data.database
 
-import models.User
 import interfaces.IuserServices
+import models.User
 import java.sql.SQLException
 
 object UserDataDb : IuserServices {
 
     /**
-     * Inserts a new user and returns the generated integer user_id.
+     * Inserts a new user and returns the generated userId.
      */
     override fun createUser(name: String, email: String): Int {
         val sql = """
@@ -22,11 +22,8 @@ object UserDataDb : IuserServices {
                     stmt.setString(1, name)
                     stmt.setString(2, email)
                     stmt.executeQuery().use { rs ->
-                        if (rs.next()) {
-                            rs.getInt("userId")
-                        } else {
-                            throw SQLException("User creation failed, no ID returned.")
-                        }
+                        if (rs.next()) rs.getInt("userId")
+                        else throw SQLException("User creation failed, no ID returned.")
                     }
                 }
             }
@@ -36,10 +33,11 @@ object UserDataDb : IuserServices {
     }
 
     /**
-     * Fetch a single user by its integer ID.
+     * Fetch a single user by userId.
      */
     override fun getUserDetails(userId: Int): User? {
-        val sql = "SELECT user_id, name, email FROM users WHERE user_id = ?;"
+        val sql = "SELECT userId, name, email FROM users WHERE userId = ?;"
+
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
@@ -51,9 +49,7 @@ object UserDataDb : IuserServices {
                                 name   = rs.getString("name"),
                                 email  = rs.getString("email")
                             )
-                        } else {
-                            null
-                        }
+                        } else null
                     }
                 }
             }
@@ -66,9 +62,10 @@ object UserDataDb : IuserServices {
      * List all users.
      */
     override fun getAllUsers(): List<User> {
-        val sql = "SELECT user_id, name, email FROM users;"
+        val sql = "SELECT userId, name, email FROM users;"
         val list = mutableListOf<User>()
-        try {
+
+        return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
                     stmt.executeQuery().use { rs ->
@@ -82,7 +79,7 @@ object UserDataDb : IuserServices {
                     }
                 }
             }
-            return list
+            list
         } catch (e: SQLException) {
             throw RuntimeException("Error fetching all users: ${e.message}", e)
         }

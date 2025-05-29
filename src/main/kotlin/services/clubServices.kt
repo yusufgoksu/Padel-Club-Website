@@ -1,31 +1,31 @@
 package services
 
 import models.Club
-import storage.ClubsDataMem
-import storage.UsersDataMem
+import data.database.ClubsDataDb
+import data.database.UserDataDb
 
 object ClubServices {
 
     // Yeni bir kulüp ekleme
     fun addClub(name: String, userID: Int): Club {
-        // Input doğrulamaları
         require(name.isNotBlank()) { "Club name cannot be empty" }
         require(name.length <= 100) { "Club name cannot exceed 100 characters" }
         require(userID > 0) { "User ID must be greater than 0" }
-        require(UsersDataMem.users.containsKey(userID)) { "User ID '$userID' not found" }
+        require(UserDataDb.getUserDetails(userID) != null) { "User ID '$userID' not found" }
 
-        // Depolama katmanına delege et
-        return ClubsDataMem.addClub(name = name, userID = userID)
+        val clubId = ClubsDataDb.createClub(name, userID)
+        return ClubsDataDb.getClubDetails(clubId)
+            ?: throw IllegalStateException("Club creation failed")
     }
 
     // Tüm kulüpleri listeleme
     fun getAllClubs(): List<Club> =
-        ClubsDataMem.getAllClubs()
+        ClubsDataDb.getAllClubs()
 
     // ID'ye göre kulüp getirme
     fun getClubById(clubID: Int): Club? {
         require(clubID > 0) { "Club ID must be greater than 0" }
-        return ClubsDataMem.getClubById(clubID)
+        return ClubsDataDb.getClubDetails(clubID)
     }
 
     // Kulüp detaylarını alma

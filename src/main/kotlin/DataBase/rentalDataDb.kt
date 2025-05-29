@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter
 
 object RentalDataDb : IrentalService {
 
-    // Yeni bir kiralama oluşturur ve geri dönen rentalId'yi Int olarak verir
     override fun createRental(
         clubId: Int,
         courtId: Int,
@@ -17,9 +16,9 @@ object RentalDataDb : IrentalService {
         duration: Int
     ): Int {
         val sql = """
-            INSERT INTO public.rentals ("clubId", "courtId", "userId", "date", "duration")
+            INSERT INTO rentals (clubId, courtId, userId, date, duration)
             VALUES (?, ?, ?, ?, ?)
-            RETURNING "rentalId";
+            RETURNING rentalId;
         """.trimIndent()
 
         return try {
@@ -35,11 +34,8 @@ object RentalDataDb : IrentalService {
                     stmt.setInt(5, duration)
 
                     stmt.executeQuery().use { rs ->
-                        if (rs.next()) {
-                            rs.getInt("rentalId")
-                        } else {
-                            throw SQLException("Failed to create rental, no ID returned.")
-                        }
+                        if (rs.next()) rs.getInt("rentalId")
+                        else throw SQLException("Failed to create rental, no ID returned.")
                     }
                 }
             }
@@ -48,18 +44,11 @@ object RentalDataDb : IrentalService {
         }
     }
 
-    // Belirtilen rentalId ile kiralama detaylarını getirir
     override fun getRentalDetails(rentalId: Int): Rental? {
         val sql = """
-            SELECT
-                "rentalId",
-                "clubId",
-                "courtId",
-                "userId",
-                "date",
-                "duration"
-            FROM public.rentals
-            WHERE "rentalId" = ?;
+            SELECT rentalId, clubId, courtId, userId, date, duration
+            FROM rentals
+            WHERE rentalId = ?;
         """.trimIndent()
 
         return try {
@@ -70,9 +59,9 @@ object RentalDataDb : IrentalService {
                         if (rs.next()) {
                             Rental(
                                 rentalID = rs.getInt("rentalId"),
-                                clubId   = rs.getInt("clubId"),
-                                courtId  = rs.getInt("courtId"),
-                                userId   = rs.getInt("userId"),
+                                clubId = rs.getInt("clubId"),
+                                courtId = rs.getInt("courtId"),
+                                userId = rs.getInt("userId"),
                                 startTime = rs.getTimestamp("date")
                                     .toLocalDateTime()
                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -87,37 +76,29 @@ object RentalDataDb : IrentalService {
         }
     }
 
-    // Belirli bir clubId ve courtId için kiralamaları, opsiyonel date filtresiyle getirir
     override fun getRentals(clubId: Int, courtId: Int, date: String?): List<Rental> {
         val baseSql = """
-            SELECT
-                "rentalId",
-                "clubId",
-                "courtId",
-                "userId",
-                "date",
-                "duration"
-            FROM public.rentals
-            WHERE "clubId" = ? AND "courtId" = ?
+            SELECT rentalId, clubId, courtId, userId, date, duration
+            FROM rentals
+            WHERE clubId = ? AND courtId = ?
         """.trimIndent()
-        val sql = if (date != null) "$baseSql AND \"date\"::text LIKE ?;" else "$baseSql;"
+        val sql = if (date != null) "$baseSql AND date::text LIKE ?;" else "$baseSql;"
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
                     stmt.setInt(1, clubId)
                     stmt.setInt(2, courtId)
-                    if (date != null) {
-                        stmt.setString(3, "$date%")
-                    }
+                    if (date != null) stmt.setString(3, "$date%")
+
                     stmt.executeQuery().use { rs ->
                         val list = mutableListOf<Rental>()
                         while (rs.next()) {
                             list += Rental(
                                 rentalID = rs.getInt("rentalId"),
-                                clubId   = rs.getInt("clubId"),
-                                courtId  = rs.getInt("courtId"),
-                                userId   = rs.getInt("userId"),
+                                clubId = rs.getInt("clubId"),
+                                courtId = rs.getInt("courtId"),
+                                userId = rs.getInt("userId"),
                                 startTime = rs.getTimestamp("date")
                                     .toLocalDateTime()
                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -133,18 +114,11 @@ object RentalDataDb : IrentalService {
         }
     }
 
-    // Belirtilen userId'ye ait tüm kiralamaları listeler
     override fun getUserRentals(userId: Int): List<Rental> {
         val sql = """
-            SELECT
-                "rentalId",
-                "clubId",
-                "courtId",
-                "userId",
-                "date",
-                "duration"
-            FROM public.rentals
-            WHERE "userId" = ?;
+            SELECT rentalId, clubId, courtId, userId, date, duration
+            FROM rentals
+            WHERE userId = ?;
         """.trimIndent()
 
         return try {
@@ -156,9 +130,9 @@ object RentalDataDb : IrentalService {
                         while (rs.next()) {
                             list += Rental(
                                 rentalID = rs.getInt("rentalId"),
-                                clubId   = rs.getInt("clubId"),
-                                courtId  = rs.getInt("courtId"),
-                                userId   = rs.getInt("userId"),
+                                clubId = rs.getInt("clubId"),
+                                courtId = rs.getInt("courtId"),
+                                userId = rs.getInt("userId"),
                                 startTime = rs.getTimestamp("date")
                                     .toLocalDateTime()
                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -174,12 +148,11 @@ object RentalDataDb : IrentalService {
         }
     }
 
-    // Mevcut bir tarih için boş saat dilimlerini döner
     override fun getAvailableRentalHours(clubId: Int, courtId: Int, date: String): List<String> {
         val sql = """
-            SELECT "date", duration
-            FROM public.rentals
-            WHERE "clubId" = ? AND "courtId" = ? AND "date"::text LIKE ?;
+            SELECT date, duration
+            FROM rentals
+            WHERE clubId = ? AND courtId = ? AND date::text LIKE ?;
         """.trimIndent()
 
         val booked = mutableSetOf<String>()
@@ -192,7 +165,7 @@ object RentalDataDb : IrentalService {
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             val start = rs.getTimestamp("date").toLocalDateTime()
-                            val end   = start.plusHours(rs.getInt("duration").toLong())
+                            val end = start.plusHours(rs.getInt("duration").toLong())
                             var h = start.hour
                             while (h < end.hour) {
                                 booked += "$date ${h}:00"
@@ -209,12 +182,11 @@ object RentalDataDb : IrentalService {
         return (0..23).map { "$date ${it}:00" } - booked
     }
 
-    // Belirtilen rentalId'li kaydı günceller
     override fun updateRental(rentalId: Int, date: String, duration: Int): Boolean {
         val sql = """
-            UPDATE public.rentals
-            SET "date" = ?, "duration" = ?
-            WHERE "rentalId" = ?;
+            UPDATE rentals
+            SET date = ?, duration = ?
+            WHERE rentalId = ?;
         """.trimIndent()
 
         return try {
@@ -234,11 +206,10 @@ object RentalDataDb : IrentalService {
         }
     }
 
-    // Belirtilen rentalId'li kaydı siler
     override fun deleteRental(rentalId: Int): Boolean {
         val sql = """
-            DELETE FROM public.rentals
-            WHERE "rentalId" = ?;
+            DELETE FROM rentals
+            WHERE rentalId = ?;
         """.trimIndent()
 
         return try {

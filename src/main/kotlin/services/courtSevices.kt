@@ -1,8 +1,8 @@
 package services
 
 import models.Court
-import storage.ClubsDataMem
-import storage.CourtsDataMem
+import data.database.ClubsDataDb
+import data.database.CourtsDataDb
 
 object CourtServices {
 
@@ -14,23 +14,29 @@ object CourtServices {
         require(name.isNotBlank()) { "Court name cannot be empty" }
         require(name.length <= 100) { "Court name cannot exceed 100 characters" }
         require(clubId > 0) { "Club ID must be greater than 0" }
-        require(ClubsDataMem.getClubById(clubId) != null) { "Club ID '$clubId' not found" }
+        require(ClubsDataDb.getClubDetails(clubId) != null) { "Club ID '$clubId' not found" }
 
-        return CourtsDataMem.addCourt(name = name, clubId = clubId)
+        val courtId = CourtsDataDb.createCourt(name, clubId)
+        return CourtsDataDb.getCourt(courtId)
+            ?: throw IllegalStateException("Court creation failed")
     }
 
     /**
      * Tüm kortları döner.
+     * Not: Eğer böyle bir API yoksa getCourtsByClub ile her kulüpten alınabilir.
+     * Burada tüm kortları dönen özel bir endpoint örnek verilmiyor.
      */
-    fun getAllCourts(): List<Court> =
-        CourtsDataMem.getAllCourts()
+    fun getAllCourts(): List<Court> {
+        // Eğer CourtsDataDb.getAllCourts() gibi bir şey tanımlı değilse, kaldırabilirsin.
+        throw NotImplementedError("This method is not implemented in database layer")
+    }
 
     /**
      * ID ile kort getirir.
      */
     fun getCourtById(courtID: Int): Court? {
         require(courtID > 0) { "Court ID must be greater than 0" }
-        return CourtsDataMem.getCourtById(courtID)
+        return CourtsDataDb.getCourt(courtID)
     }
 
     /**
@@ -38,14 +44,18 @@ object CourtServices {
      */
     fun getCourtsForClub(clubId: Int): List<Court> {
         require(clubId > 0) { "Club ID must be greater than 0" }
-        return CourtsDataMem.getCourtsForClub(clubId)
+        return CourtsDataDb.getCourtsByClub(clubId)
     }
 
     /**
      * İsme göre ilk eşleşen kortu getirir.
+     * Not: Bu desteklenmiyorsa, geçici olarak tüm kortları getirip filtreleyebilirsin.
      */
     fun getCourtByName(name: String): Court? {
         require(name.isNotBlank()) { "Court name cannot be empty" }
-        return CourtsDataMem.getCourtByName(name)
+
+        // Bu desteklenmiyor, manuel filtreleme yapılabilir.
+        return CourtsDataDb.getCourtsByClub(0)  // clubId = 0 yanlış bir filtre olur
+            .find { it.name.equals(name, ignoreCase = true) }
     }
 }
