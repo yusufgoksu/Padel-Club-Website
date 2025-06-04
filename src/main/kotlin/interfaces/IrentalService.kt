@@ -2,7 +2,7 @@ package interfaces
 import models.Rental
 
 interface IrentalService {
-    fun createRental(clubId: Int, courtId: Int, userId: Int, date: String, duration: Int): Int
+    fun createRental(rentalId: Int, clubId: Int, courtId: Int, userId: Int, date: String, duration: Int): Int
 
     fun getRentalDetails(rentalId: Int): Rental?
 

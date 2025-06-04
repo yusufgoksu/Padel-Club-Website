@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter
 object RentalDataDb : IrentalService {
 
     override fun createRental(
+        rentalId: Int,   // manuel ID parametresi eklendi
         clubId: Int,
         courtId: Int,
         userId: Int,
@@ -16,33 +17,39 @@ object RentalDataDb : IrentalService {
         duration: Int
     ): Int {
         val sql = """
-            INSERT INTO rentals (clubId, courtId, userId, date, duration)
-            VALUES (?, ?, ?, ?, ?)
-            RETURNING rentalId;
-        """.trimIndent()
+        INSERT INTO rentals (rentalId, clubId, courtId, userId, date, duration)
+        VALUES (?, ?, ?, ?, ?, ?);
+    """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
-                    val ts = java.sql.Timestamp.valueOf(
-                        LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                    )
-                    stmt.setInt(1, clubId)
-                    stmt.setInt(2, courtId)
-                    stmt.setInt(3, userId)
-                    stmt.setTimestamp(4, ts)
-                    stmt.setInt(5, duration)
-
-                    stmt.executeQuery().use { rs ->
-                        if (rs.next()) rs.getInt("rentalId")
-                        else throw SQLException("Failed to create rental, no ID returned.")
+                    val ts = try {
+                        java.sql.Timestamp.valueOf(
+                            LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        )
+                    } catch (e: java.time.format.DateTimeParseException) {
+                        throw IllegalArgumentException("Invalid startTime format; must be ISO-8601 ", e)
                     }
+
+                    stmt.setInt(1, rentalId)  // manuel id
+                    stmt.setInt(2, clubId)
+                    stmt.setInt(3, courtId)
+                    stmt.setInt(4, userId)
+                    stmt.setTimestamp(5, ts)
+                    stmt.setInt(6, duration)
+
+                    val rowsInserted = stmt.executeUpdate()
+                    if (rowsInserted == 0) throw SQLException("Failed to create rental")
+                    rentalId
                 }
             }
         } catch (e: SQLException) {
             throw RuntimeException("Error creating rental: ${e.message}", e)
         }
     }
+
+
 
     override fun getRentalDetails(rentalId: Int): Rental? {
         val sql = """
@@ -223,4 +230,7 @@ object RentalDataDb : IrentalService {
             throw RuntimeException("Error deleting rental: ${e.message}", e)
         }
     }
+
+
+
 }

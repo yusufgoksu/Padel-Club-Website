@@ -13,6 +13,7 @@ object RentalServices {
      * @throws IllegalArgumentException Geçersiz girişler için
      */
     fun addRental(
+        rentalId: Int,
         clubId: Int,
         courtId: Int,
         userId: Int,
@@ -26,10 +27,12 @@ object RentalServices {
         require(userId > 0) { "User ID must be greater than 0" }
         require(UserDataDb.getUserDetails(userId) != null) { "User ID '$userId' not found" }
 
-        val rentalId = RentalDataDb.createRental(clubId, courtId, userId, startTime, duration)
+        RentalDataDb.createRental(rentalId, clubId, courtId, userId, startTime, duration)
+
         return RentalDataDb.getRentalDetails(rentalId)
             ?: throw IllegalStateException("Rental creation failed")
     }
+
 
     /** ID'ye göre kiralamayı getirir */
     fun getRentalById(rentalID: Int): Rental? =
@@ -81,4 +84,6 @@ object RentalServices {
         RentalDataDb.getAvailableRentalHours(clubId, courtId, date).mapNotNull {
             it.split(" ").getOrNull(1)?.split(":")?.getOrNull(0)?.toIntOrNull()
         }
+
+
 }

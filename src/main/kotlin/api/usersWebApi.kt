@@ -1,9 +1,7 @@
 package api
 
 import models.User
-import models.Rental
 import services.UserServices
-import services.RentalServices
 
 import org.http4k.core.*
 import org.http4k.core.Method.*
@@ -13,32 +11,25 @@ import org.http4k.routing.*
 
 fun usersWebApi(): RoutingHttpHandler {
 
-    // JSON ↔ User / Rental lenses
-    val userLens    = Body.auto<User>().toLens()
-    val usersLens   = Body.auto<List<User>>().toLens()
-    val rentalsLens = Body.auto<List<Rental>>().toLens()
-
-    // Path & query lenses (lower-camel)
+    val userLens  = Body.auto<User>().toLens()
+    val usersLens = Body.auto<List<User>>().toLens()
     val userIdPath = Path.int().of("userId")
     val emailQuery = Query.string().required("email")
 
     return routes(
         // 1) List all users
         "/api/users" bind GET to {
-            Response(Status.OK)
-                .with(usersLens of UserServices.getAllUsers())
+            Response(Status.OK).with(usersLens of UserServices.getAllUsers())
         },
 
-        // 2) Create a new user
+        // 2) Create a new user (userId zorunlu)
         "/api/users" bind POST to { req ->
             try {
                 val userReq = userLens(req)
-                val created = UserServices.addUser(userReq.name, userReq.email)
-                Response(Status.CREATED)
-                    .with(userLens of created)
+                val created = UserServices.addUser(userReq.userId, userReq.name, userReq.email)
+                Response(Status.CREATED).with(userLens of created)
             } catch (e: IllegalArgumentException) {
-                Response(Status.BAD_REQUEST)
-                    .body(e.message ?: "Invalid input")
+                Response(Status.BAD_REQUEST).body(e.message ?: "Invalid input")
             }
         },
 
@@ -47,19 +38,17 @@ fun usersWebApi(): RoutingHttpHandler {
             val uId = userIdPath(req)
             val user = UserServices.getUserById(uId)
                 ?: return@to Response(Status.NOT_FOUND).body("User not found")
-            Response(Status.OK)
-                .with(userLens of user)
+            Response(Status.OK).with(userLens of user)
         },
 
         // 4) List rentals for a given user
         "/api/users/{userId}/rentals" bind GET to { req ->
             val uId = userIdPath(req)
-            val list = RentalServices.getRentalsForUser(uId)
+            val list = services.RentalServices.getRentalsForUser(uId)
             if (list.isEmpty()) {
                 Response(Status.NOT_FOUND).body("No rentals found for user")
             } else {
-                Response(Status.OK)
-                    .with(rentalsLens of list)
+                Response(Status.OK).with(Body.auto<List<models.Rental>>().toLens() of list)
             }
         },
 
@@ -68,8 +57,7 @@ fun usersWebApi(): RoutingHttpHandler {
             val email = emailQuery(req)
             val user = UserServices.getUserByEmail(email)
                 ?: return@to Response(Status.NOT_FOUND).body("User not found")
-            Response(Status.OK)
-                .with(userLens of user)
+            Response(Status.OK).with(userLens of user)
         }
     )
 }

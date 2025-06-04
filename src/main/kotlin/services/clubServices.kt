@@ -6,17 +6,19 @@ import data.database.UserDataDb
 
 object ClubServices {
 
-    // Yeni bir kulüp ekleme
-    fun addClub(name: String, userID: Int): Club {
+    // Yeni bir kulüp ekleme (manuel clubId ile)
+    fun addClub(clubId: Int, name: String, userID: Int): Club {
         require(name.isNotBlank()) { "Club name cannot be empty" }
         require(name.length <= 100) { "Club name cannot exceed 100 characters" }
         require(userID > 0) { "User ID must be greater than 0" }
         require(UserDataDb.getUserDetails(userID) != null) { "User ID '$userID' not found" }
 
-        val clubId = ClubsDataDb.createClub(name, userID)
+        ClubsDataDb.createClub(clubId, name, userID)
+
         return ClubsDataDb.getClubDetails(clubId)
             ?: throw IllegalStateException("Club creation failed")
     }
+
 
     // Tüm kulüpleri listeleme
     fun getAllClubs(): List<Club> =

@@ -13,7 +13,7 @@ class ClubTest {
 
     @BeforeEach
     fun setup() {
-        // Her testten önce bellek verilerini temizle
+        // Bellekteki test verilerini temizle
         UsersDataMem.users.clear()
         ClubsDataMem.clubs.clear()
         ClubsDataMem.idCounter.set(1)

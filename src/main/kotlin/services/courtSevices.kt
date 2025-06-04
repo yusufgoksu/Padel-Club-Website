@@ -6,20 +6,18 @@ import data.database.CourtsDataDb
 
 object CourtServices {
 
-    /**
-     * Yeni bir kort ekler.
-     * @throws IllegalArgumentException Geçersiz girişler için
-     */
-    fun addCourt(name: String, clubId: Int): Court {
+    fun addCourt(courtId: Int, name: String, clubId: Int): Court {
         require(name.isNotBlank()) { "Court name cannot be empty" }
         require(name.length <= 100) { "Court name cannot exceed 100 characters" }
         require(clubId > 0) { "Club ID must be greater than 0" }
         require(ClubsDataDb.getClubDetails(clubId) != null) { "Club ID '$clubId' not found" }
 
-        val courtId = CourtsDataDb.createCourt(name, clubId)
+        CourtsDataDb.createCourt(courtId, name, clubId)
+
         return CourtsDataDb.getCourt(courtId)
             ?: throw IllegalStateException("Court creation failed")
     }
+
 
     /**
      * Tüm kortları döner.

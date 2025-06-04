@@ -6,31 +6,29 @@ import java.sql.SQLException
 
 object UserDataDb : IuserServices {
 
-    /**
-     * Inserts a new user and returns the generated userId.
-     */
-    override fun createUser(name: String, email: String): Int {
+
+    override fun createUser(userId: Int, name: String, email: String): Int {
         val sql = """
-            INSERT INTO users (name, email)
-            VALUES (?, ?)
-            RETURNING userId;
-        """.trimIndent()
+        INSERT INTO users (userId, name, email)
+        VALUES (?, ?, ?);
+    """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
-                    stmt.setString(1, name)
-                    stmt.setString(2, email)
-                    stmt.executeQuery().use { rs ->
-                        if (rs.next()) rs.getInt("userId")
-                        else throw SQLException("User creation failed, no ID returned.")
-                    }
+                    stmt.setInt(1, userId)     // Manuel ID gönderiliyor
+                    stmt.setString(2, name)
+                    stmt.setString(3, email)
+                    val updatedRows = stmt.executeUpdate()
+                    if (updatedRows == 0) throw SQLException("No rows inserted")
+                    userId  // Manuel verdiğin ID'yi döndür
                 }
             }
         } catch (e: SQLException) {
             throw RuntimeException("Error creating user: ${e.message}", e)
         }
     }
+
 
     /**
      * Fetch a single user by userId.

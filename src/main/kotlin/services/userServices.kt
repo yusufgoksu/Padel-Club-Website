@@ -5,20 +5,21 @@ import data.database.UserDataDb
 
 object UserServices {
 
-    // Kullanıcı ekleme
-    fun addUser(name: String, email: String): User {
+    fun addUser(userID: Int, name: String, email: String): User {
         require(name.isNotBlank()) { "Name cannot be empty" }
         require(email.isNotBlank()) { "Email cannot be empty" }
         require("@" in email) { "Email must be valid" }
 
-        // Eğer e-posta zaten varsa hata ver
         val existing = getUserByEmail(email)
         require(existing == null) { "Email already exists" }
 
-        val userId = UserDataDb.createUser(name, email)
-        return UserDataDb.getUserDetails(userId)
+        // userID parametresi eklenmiş createUser çağrısı
+        UserDataDb.createUser(userID, name, email)
+
+        return UserDataDb.getUserDetails(userID)
             ?: throw IllegalStateException("User creation failed")
     }
+
 
     // Tüm kullanıcıları getir
     fun getAllUsers(): List<User> =

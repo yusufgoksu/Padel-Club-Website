@@ -6,22 +6,21 @@ import java.sql.SQLException
 
 object CourtsDataDb : IcourtServices {
 
-    override fun createCourt(name: String, clubId: Int): Int {
+    override fun createCourt(courtId: Int, name: String, clubId: Int): Int {
         val sql = """
-            INSERT INTO courts (name, clubId)
-            VALUES (?, ?)
-            RETURNING courtId;
-        """.trimIndent()
+        INSERT INTO courts (courtId, name, clubId)
+        VALUES (?, ?, ?);
+    """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
-                    stmt.setString(1, name)
-                    stmt.setInt(2, clubId)
-                    stmt.executeQuery().use { rs ->
-                        if (rs.next()) rs.getInt("courtId")
-                        else throw SQLException("Court creation failed.")
-                    }
+                    stmt.setInt(1, courtId)     // Manuel ID gönderiliyor
+                    stmt.setString(2, name)
+                    stmt.setInt(3, clubId)
+                    val rowsInserted = stmt.executeUpdate()
+                    if (rowsInserted == 0) throw SQLException("No rows inserted")
+                    courtId  // Manuel verdiğin ID'yi döndür
                 }
             }
         } catch (e: SQLException) {

@@ -20,6 +20,7 @@ dependencies {
     implementation("org.http4k:http4k-server-jetty:4.41.1.0")
     implementation("org.http4k:http4k-client-okhttp:4.41.1.0")
     implementation("org.http4k:http4k-format-kotlinx-serialization:4.41.1.0")
+    implementation("org.http4k:http4k-client-apache:4.41.0.0") // örnek son sürüm
 
     // ✅ Eksik Bağımlılık: Routing Desteği
 

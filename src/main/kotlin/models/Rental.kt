@@ -15,7 +15,8 @@ data class Rental(
     val userId: Int,
     val startTime: String,
     val duration: Int
-) {
+)
+ {
     init {
         require(rentalID > 0) { "Rental ID must be greater than 0" }
         require(clubId > 0)   { "Club ID must be greater than 0" }
