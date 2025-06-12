@@ -33,4 +33,12 @@ object ClubServices {
     // Kulüp detaylarını alma
     fun getClubDetails(clubID: Int): Club? =
         getClubById(clubID)
+
+
+    fun searchClubsByName(partialName: String): List<Club> {
+        println("🔍 Running SQL with: %$partialName%")
+        require(partialName.isNotBlank()) { "Partial name cannot be empty" }
+        return ClubsDataDb.searchClubsByName(partialName)
+    }
+
 }

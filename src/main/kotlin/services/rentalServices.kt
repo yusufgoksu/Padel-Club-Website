@@ -85,5 +85,14 @@ object RentalServices {
             it.split(" ").getOrNull(1)?.split(":")?.getOrNull(0)?.toIntOrNull()
         }
 
+    fun getUsersWithRentalCountsByCourt(courtID: Int): List<Pair<Int, Int>> {
+        return RentalDataDb.getUsersWithRentalCountsByCourt(courtID)
+    }
+    fun getCourtsWithRentalCountsByUser(userId: Int): List<Pair<Int, Int>> {
+        val user = UserServices.getUserById(userId)
+            ?: throw IllegalArgumentException("User ID '$userId' not found")
+
+        return RentalDataDb.getCourtsWithRentalCountsByUser(userId)
+    }
 
 }

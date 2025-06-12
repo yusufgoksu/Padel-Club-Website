@@ -9,22 +9,40 @@ import org.http4k.lens.*
 import org.http4k.routing.*
 
 fun clubsWebApi(): RoutingHttpHandler {
-    // JSON ↔ Club lenses
-    val clubLens   = Body.auto<Club>().toLens()
-    val clubsLens  = Body.auto<List<Club>>().toLens()
+    val clubLens = Body.auto<Club>().toLens()
+    val clubsLens = Body.auto<List<Club>>().toLens()
     val clubIdPath = Path.int().of("clubId")
 
     return routes(
-        // 1) List all clubs
-        "/api/clubs" bind GET to {
-            Response(Status.OK)
-                .with(clubsLens of ClubServices.getAllClubs())
+        // 📌 Search clubs by name → ÖNCE tanımlanmalı
+        "/api/clubs/search" bind GET to { req ->
+            val name = req.query("name")
+
+            if (name.isNullOrBlank()) {
+                Response(Status.BAD_REQUEST)
+                    .body("Missing or empty 'name' parameter")
+                    .header("Content-Type", "application/json")
+            } else {
+                val results = ClubServices.searchClubsByName(name)
+                println("🔍 Searching clubs with: $name")
+                Response(Status.OK)
+                    .with(clubsLens of results)
+                    .header("Content-Type", "application/json")
+            }
         },
 
-        // 2) Create a new club with manual clubId
+        // 📌 List all clubs
+        "/api/clubs" bind GET to {
+            val allClubs = ClubServices.getAllClubs()
+            Response(Status.OK)
+                .with(clubsLens of allClubs)
+                .header("Content-Type", "application/json")
+        },
+
+        // 📌 Create a new club
         "/api/clubs" bind POST to { req ->
             try {
-                val clubReq = clubLens(req)  // clubReq has clubID, name, userID
+                val clubReq = clubLens(req)
                 val created = ClubServices.addClub(
                     clubId = clubReq.clubID,
                     name = clubReq.name,
@@ -32,19 +50,24 @@ fun clubsWebApi(): RoutingHttpHandler {
                 )
                 Response(Status.CREATED)
                     .with(clubLens of created)
+                    .header("Content-Type", "application/json")
             } catch (e: IllegalArgumentException) {
                 Response(Status.BAD_REQUEST)
                     .body(e.message ?: "Invalid input")
+                    .header("Content-Type", "application/json")
             }
         },
 
-        // 3) Get one club by ID
+        // 📌 Get one club by ID
         "/api/clubs/{clubId}" bind GET to { req ->
             val id = clubIdPath(req)
             val club = ClubServices.getClubById(id)
-                ?: return@to Response(Status.NOT_FOUND).body("Club not found")
+                ?: return@to Response(Status.NOT_FOUND)
+                    .body("Club not found")
+                    .header("Content-Type", "application/json")
             Response(Status.OK)
                 .with(clubLens of club)
+                .header("Content-Type", "application/json")
         }
     )
 }

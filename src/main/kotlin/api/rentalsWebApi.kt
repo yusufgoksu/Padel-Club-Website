@@ -100,6 +100,31 @@ fun rentalsWebApi(): RoutingHttpHandler {
             )
         },
 
+        // 9) Korte kiralama yapmış kullanıcılar ve kiralama sayıları
+        "api/courts/{courtId}/users" bind GET to { req ->
+            val cId = courtIdPath(req)
+            val usersWithCounts: List<Pair<Int, Int>> = RentalServices.getUsersWithRentalCountsByCourt(cId)
 
+            val json = usersWithCounts.joinToString(separator = ",", prefix = "[", postfix = "]") {
+                """{"userId":${it.first},"rentalCount":${it.second}}"""
+            }
+
+            Response(Status.OK)
+                .body(json)
+                .header("Content-Type", "application/json")
+        },
+
+        "api/users/{userId}/courts" bind Method.GET to { req ->
+            val uId = userIdPath(req)
+            val courtsWithCounts = RentalServices.getCourtsWithRentalCountsByUser(uId)
+
+            val json = courtsWithCounts.joinToString(
+                separator = ",", prefix = "[", postfix = "]"
+            ) { """{"courtId":${it.first},"rentalCount":${it.second}}""" }
+
+            Response(Status.OK)
+                .body(json)
+                .header("Content-Type", "application/json")
+        }
     )
 }

@@ -85,4 +85,40 @@ object ClubsDataDb : IclubServices {
             throw RuntimeException("Error listing clubs: ${e.message}", e)
         }
     }
+    override fun searchClubsByName(partialName: String): List<Club> {
+        println("🔍 Searching clubs with: $partialName")  // LOG 1
+
+        val sql = """
+        SELECT clubId, name, userId 
+        FROM clubs 
+        WHERE name ILIKE ?
+    """.trimIndent()
+
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, "%$partialName%") // 👈 contains match
+                    stmt.executeQuery().use { rs ->
+                        val results = mutableListOf<Club>()
+                        while (rs.next()) {
+                            results += Club(
+                                clubID = rs.getInt("clubId"),
+                                name = rs.getString("name"),
+                                userID = rs.getInt("userId")
+                            )
+                        }
+                        println("✅ SQL result count: ${results.size}")  // LOG 2
+                        results
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            println("❌ SQL error: ${e.message}")
+            throw RuntimeException("Error searching clubs: ${e.message}", e)
+        }
+    }
+
+
+
+
 }

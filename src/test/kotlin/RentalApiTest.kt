@@ -324,5 +324,56 @@ class RentalTests {
         assertNull(rental)
     }
 
+    @Test
+    fun `should return users with rental counts for a specific court`() {
+        val userId1 = 1111
+        val userId2 = 1112
+        val clubId = 2110
+        val courtId = 3110
+
+        UserServices.addUser(userId1, "User1", "u1@example.com")
+        UserServices.addUser(userId2, "User2", "u2@example.com")
+        ClubServices.addClub(clubId, "Club 1", userId1)
+        CourtServices.addCourt(courtId, "Court 1", clubId)
+
+        RentalServices.addRental(4111, clubId, courtId, userId1, "2024-07-01T10:00:00", 1)
+        RentalServices.addRental(4112, clubId, courtId, userId1, "2024-07-01T11:00:00", 1)
+        RentalServices.addRental(4113, clubId, courtId, userId2, "2024-07-01T12:00:00", 1)
+
+        val request = Request(Method.GET, "api/courts/$courtId/users")
+        val response = rentalsWebApi()(request)
+
+        assertEquals(Status.OK, response.status)
+        val body = response.bodyString()
+        println("Response: $body")
+
+        assertTrue(body.contains("\"userId\":$userId1"))
+        assertTrue(body.contains("\"userId\":$userId2"))
+    }
+    @Test
+    fun `should return courts with rental counts for a specific user`() {
+        // Test verisini oluştur
+        val user = UserServices.addUser(1, "User1", "user1@example.com")
+        val club = ClubServices.addClub(1, "Club 1", user.userId)
+        val court1 = CourtServices.addCourt(1, "Court 1", club.clubID)
+        val court2 = CourtServices.addCourt(2, "Court 2", club.clubID)
+
+        // Kiralamalar
+        RentalServices.addRental(1, club.clubID, court1.courtID, user.userId, "2024-07-01T10:00:00", 1)
+        RentalServices.addRental(2, club.clubID, court1.courtID, user.userId, "2024-07-01T11:00:00", 1)
+        RentalServices.addRental(3, club.clubID, court2.courtID, user.userId, "2024-07-01T12:00:00", 1)
+
+        // HTTP isteği simülasyonu
+        val request = Request(Method.GET, "api/users/${user.userId}/courts")
+        val response = rentalsWebApi()(request)
+
+        assertEquals(Status.OK, response.status)
+        val body = response.bodyString()
+
+        assertTrue(body.contains("\"courtId\":${court1.courtID}"))
+        assertTrue(body.contains("\"courtId\":${court2.courtID}"))
+        assertTrue(body.contains("\"rentalCount\":2"))
+        assertTrue(body.contains("\"rentalCount\":1"))
+    }
 
 }

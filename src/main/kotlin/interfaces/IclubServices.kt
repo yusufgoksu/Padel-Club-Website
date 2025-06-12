@@ -8,4 +8,6 @@ interface IclubServices {
     fun getClubDetails(clubId: Int): Club?
 
     fun getAllClubs(): List<Club>
+    fun searchClubsByName(partialName: String): List<Club>
+
 }

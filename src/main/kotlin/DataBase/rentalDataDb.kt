@@ -230,6 +230,57 @@ object RentalDataDb : IrentalService {
             throw RuntimeException("Error deleting rental: ${e.message}", e)
         }
     }
+    fun getUsersWithRentalCountsByCourt(courtID: Int): List<Pair<Int, Int>> {
+        val sql = """
+        SELECT userId, COUNT(*) as rental_count
+        FROM rentals
+        WHERE courtId = ?
+        GROUP BY userId;
+    """.trimIndent()
+
+        val list = mutableListOf<Pair<Int, Int>>()
+
+        Database.getConnection().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, courtID)
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        list += Pair(
+                            rs.getInt("userId"),
+                            rs.getInt("rental_count")
+                        )
+                    }
+                }
+            }
+        }
+        return list
+    }
+
+    fun getCourtsWithRentalCountsByUser(userId: Int): List<Pair<Int, Int>> {
+        val sql = """
+        SELECT courtId, COUNT(*) as rental_count
+        FROM rentals
+        WHERE userId = ?
+        GROUP BY courtId;
+    """.trimIndent()
+
+        val list = mutableListOf<Pair<Int, Int>>()
+
+        Database.getConnection().use { conn ->
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, userId)
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        list += Pair(
+                            rs.getInt("courtId"),
+                            rs.getInt("rental_count")
+                        )
+                    }
+                }
+            }
+        }
+        return list
+    }
 
 
 

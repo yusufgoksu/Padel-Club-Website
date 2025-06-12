@@ -15,11 +15,7 @@ import org.http4k.server.asServer
 import org.http4k.routing.*
 import org.http4k.routing.ResourceLoader.Companion.Classpath
 
-// — JSON API handlers under /api —
-// (api.clubsWebApi, courtsWebApi, usersWebApi, rentalsWebApi imported)
 
-
-// — SPA shell + static-content fallback —
 fun spaAndStatic(): RoutingHttpHandler {
     val indexHtml = Thread.currentThread().contextClassLoader
         .getResource("static-content/index.html")!!
@@ -27,10 +23,27 @@ fun spaAndStatic(): RoutingHttpHandler {
 
     return routes(
         "/static-content" bind static(Classpath("static-content")),
-        "/"        bind GET to { _: Request -> Response(Status.OK).header("Content-Type", "text/html; charset=UTF-8").body(indexHtml) },
-        "/{any:.*}" bind GET to { _: Request -> Response(Status.OK).header("Content-Type", "text/html; charset=UTF-8").body(indexHtml) }
+
+        // ⛔️ /api ile başlayan istekleri dışlıyoruz
+        "/" bind GET to { _: Request ->
+            Response(Status.OK)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(indexHtml)
+        },
+
+        // ✅ sadece /api dışındaki yollar için fallback
+        "/{any:.*}" bind GET to { req: Request ->
+            if (req.uri.path.startsWith("/api")) {
+                Response(Status.NOT_FOUND)
+            } else {
+                Response(Status.OK)
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(indexHtml)
+            }
+        }
     )
 }
+
 
 fun addTestData() {
     println("✅ Adding test data...")

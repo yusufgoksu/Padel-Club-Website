@@ -4,11 +4,52 @@ export function homeHandler(app) {
     <h1>Welcome to the Padel Club System</h1>
     <nav>
       <a href="/" data-link>Home</a> |
-      <a href="/clubs" data-link>Clubs</a>
+      <a href="/clubs" data-link>All Clubs</a>
     </nav>
-    <p>Welcome!</p>
+    
+    <form id="searchForm" class="mt-4">
+      <div class="input-group mb-3" style="max-width: 400px;">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search club by name">
+        <button class="btn btn-primary" type="submit">Search</button>
+      </div>
+    </form>
+
+    <div id="searchResults"></div>
   `;
+
+    document.getElementById("searchForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("searchInput").value.trim();
+
+        if (!name) {
+            document.getElementById("searchResults").innerHTML = `<p class="text-danger">Please enter a club name.</p>`;
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/clubs/search?name=${encodeURIComponent(name)}`);
+            if (!response.ok) throw new Error("Search failed");
+            const clubs = await response.json();
+
+            if (clubs.length === 0) {
+                document.getElementById("searchResults").innerHTML = `<p>No clubs found for "<strong>${name}</strong>".</p>`;
+                return;
+            }
+
+            const listHtml = `
+            <ul class="list-group">
+              ${clubs.map(club => `<li class="list-group-item"><a href="/clubs/${club.clubID}" data-link>${club.name}</a></li>`).join("")}
+            </ul>
+          `;
+
+            document.getElementById("searchResults").innerHTML = listHtml;
+
+        } catch (error) {
+            document.getElementById("searchResults").innerHTML = `<p class="text-danger">Error fetching clubs.</p>`;
+        }
+    });
 }
+
 
 export async function clubsListHandler(app) {
     app.innerHTML = `
