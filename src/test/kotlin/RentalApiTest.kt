@@ -32,7 +32,7 @@ class RentalTests {
         val courtId = 3001
         val rentalId = 4001
 
-        UserServices.addUser(userId, "Renter", "renter@example.com")
+        UserServices.CreateUser(userId, "Renter", "renter@example.com")
         ClubServices.addClub(clubId, "Tennis Club", userId)
         CourtServices.addCourt(courtId, "Court 1", clubId)
 
@@ -62,7 +62,7 @@ class RentalTests {
         val courtId = 3002
         val rentalId = 4002
 
-        UserServices.addUser(userId, "Renter", "renter2@example.com")
+        UserServices.CreateUser(userId, "Renter", "renter2@example.com")
         CourtServices.addCourt(courtId, "Court 2", badClubId) // Invalid club
 
         val ex = assertThrows<IllegalArgumentException> {
@@ -85,7 +85,7 @@ class RentalTests {
         val badCourtId = 9999
         val rentalId = 4003
 
-        UserServices.addUser(userId, "Renter", "renter3@example.com")
+        UserServices.CreateUser(userId, "Renter", "renter3@example.com")
         ClubServices.addClub(clubId, "Tennis Club 3", userId)
 
         val ex = assertThrows<IllegalArgumentException> {
@@ -109,7 +109,7 @@ class RentalTests {
         val badUserId = 9999
         val rentalId = 4004
 
-        UserServices.addUser(ownerId, "Owner", "owner@example.com")
+        UserServices.CreateUser(ownerId, "Owner", "owner@example.com")
         ClubServices.addClub(clubId, "Tennis Club 4", ownerId)
         CourtServices.addCourt(courtId, "Court 4", clubId)
 
@@ -133,7 +133,7 @@ class RentalTests {
         val courtId = 3010
         val rentalId = 4010
 
-        UserServices.addUser(userId, "Test User", "test@example.com")
+        UserServices.CreateUser(userId, "Test User", "test@example.com")
         ClubServices.addClub(clubId, "Test Club", userId)
         CourtServices.addCourt(courtId, "Test Court", clubId)
         RentalServices.addRental(
@@ -164,7 +164,7 @@ class RentalTests {
         val rentalId1 = 4020
         val rentalId2 = 4021
 
-        UserServices.addUser(userId, "Test User", "test2@example.com")
+        UserServices.CreateUser(userId, "Test User", "test2@example.com")
         ClubServices.addClub(clubId, "Test Club", userId)
         CourtServices.addCourt(courtId, "Test Court", clubId)
 
@@ -185,7 +185,7 @@ class RentalTests {
         val rentalId1 = 4030
         val rentalId2 = 4031
 
-        UserServices.addUser(userId, "Test User", "test3@example.com")
+        UserServices.CreateUser(userId, "Test User", "test3@example.com")
         ClubServices.addClub(clubId, "Test Club", userId)
         CourtServices.addCourt(courtId, "Test Court", clubId)
 
@@ -205,7 +205,7 @@ class RentalTests {
         val courtId = 3040
         val rentalId = 4040
 
-        UserServices.addUser(userId, "Test User", "test4@example.com")
+        UserServices.CreateUser(userId, "Test User", "test4@example.com")
         ClubServices.addClub(clubId, "Test Club", userId)
         CourtServices.addCourt(courtId, "Test Court", clubId)
 
@@ -230,7 +230,7 @@ class RentalTests {
         val courtId = 3050
         val rentalId = 4050
 
-        UserServices.addUser(userId, "Test User", "test5@example.com")
+        UserServices.CreateUser(userId, "Test User", "test5@example.com")
         ClubServices.addClub(clubId, "Test Club", userId)
         CourtServices.addCourt(courtId, "Test Court", clubId)
 
@@ -250,7 +250,7 @@ class RentalTests {
         val courtId = 3060
         val rentalId = 4060
 
-        UserServices.addUser(userId, "Test User", "test6@example.com")
+        UserServices.CreateUser(userId, "Test User", "test6@example.com")
         ClubServices.addClub(clubId, "Test Club", userId)
         CourtServices.addCourt(courtId, "Test Court", clubId)
 
@@ -269,7 +269,7 @@ class RentalTests {
         val courtId = 3070
         val rentalId = 4070
 
-        UserServices.addUser(userId, "Renter", "renter7@example.com")
+        UserServices.CreateUser(userId, "Renter", "renter7@example.com")
         ClubServices.addClub(clubId, "Tennis Club", userId)
         CourtServices.addCourt(courtId, "Court 7", clubId)
 
@@ -286,7 +286,7 @@ class RentalTests {
         val courtId = 3080
         val rentalId = 4080
 
-        UserServices.addUser(userId, "Renter", "renter8@example.com")
+        UserServices.CreateUser(userId, "Renter", "renter8@example.com")
         ClubServices.addClub(clubId, "Tennis Club", userId)
         CourtServices.addCourt(courtId, "Court 8", clubId)
 
@@ -299,7 +299,7 @@ class RentalTests {
     @Test
     fun `get rentals for user with no rentals`() {
         val userId = 1090
-        UserServices.addUser(userId, "Test User", "test9@example.com")
+        UserServices.CreateUser(userId, "Test User", "test9@example.com")
         val rentals = RentalServices.getRentalsForUser(userId)
         assertTrue(rentals.isEmpty())
     }
@@ -310,7 +310,7 @@ class RentalTests {
         val clubId = 2100
         val courtId = 3100
 
-        UserServices.addUser(userId, "Test User", "test10@example.com")
+        UserServices.CreateUser(userId, "Test User", "test10@example.com")
         ClubServices.addClub(clubId, "Test Club", userId)
         CourtServices.addCourt(courtId, "Test Court", clubId)
 
@@ -331,8 +331,8 @@ class RentalTests {
         val clubId = 2110
         val courtId = 3110
 
-        UserServices.addUser(userId1, "User1", "u1@example.com")
-        UserServices.addUser(userId2, "User2", "u2@example.com")
+        UserServices.CreateUser(userId1, "User1", "u1@example.com")
+        UserServices.CreateUser(userId2, "User2", "u2@example.com")
         ClubServices.addClub(clubId, "Club 1", userId1)
         CourtServices.addCourt(courtId, "Court 1", clubId)
 
@@ -353,7 +353,7 @@ class RentalTests {
     @Test
     fun `should return courts with rental counts for a specific user`() {
         // Test verisini oluştur
-        val user = UserServices.addUser(1, "User1", "user1@example.com")
+        val user = UserServices.CreateUser(1, "User1", "user1@example.com")
         val club = ClubServices.addClub(1, "Club 1", user.userId)
         val court1 = CourtServices.addCourt(1, "Court 1", club.clubID)
         val court2 = CourtServices.addCourt(2, "Court 2", club.clubID)

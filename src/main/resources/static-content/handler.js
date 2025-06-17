@@ -1,4 +1,20 @@
-// HOME
+// 🏟️ Add Club dropdown'u dahil
+async function loadUserEmailsForDropdown() {
+    const select = document.getElementById("clubOwnerSelect");
+    try {
+        const res = await fetch("/api/users");
+        if (!res.ok) throw new Error("Failed to fetch users");
+
+        const users = await res.json();
+        select.innerHTML = users.map(user =>
+            `<option value="${user.email}">${user.name} (${user.email})</option>`
+        ).join("");
+
+    } catch (err) {
+        select.innerHTML = `<option disabled>Error loading users</option>`;
+    }
+}
+
 export function homeHandler(app) {
     app.innerHTML = `
     <h1>Welcome to the Padel Club System</h1>
@@ -6,7 +22,8 @@ export function homeHandler(app) {
       <a href="/" data-link>Home</a> |
       <a href="/clubs" data-link>All Clubs</a>
     </nav>
-    
+
+    <!-- 🔍 Search Club -->
     <form id="searchForm" class="mt-4">
       <div class="input-group mb-3" style="max-width: 400px;">
         <input type="text" id="searchInput" class="form-control" placeholder="Search club by name">
@@ -15,8 +32,29 @@ export function homeHandler(app) {
     </form>
 
     <div id="searchResults"></div>
+
+    <!-- 👤 Add User -->
+    <div class="card p-3 my-4" style="max-width: 400px;">
+        <h4>Add New User</h4>
+        <input type="text" id="userName" class="form-control mb-2" placeholder="Name">
+        <input type="email" id="userEmail" class="form-control mb-2" placeholder="Email">
+        <button class="btn btn-success" id="addUserBtn">Add User</button>
+        <div id="userAddStatus" class="mt-2"></div>
+    </div>
+
+    <!-- 🏟️ Add Club -->
+    <div class="card p-3 my-4" style="max-width: 400px;">
+        <h4>Add New Club</h4>
+        <input type="text" id="clubName" class="form-control mb-2" placeholder="Club Name">
+        <select id="clubOwnerSelect" class="form-select mb-2">
+          <option disabled selected>Choose owner email</option>
+        </select>
+        <button class="btn btn-primary" id="addClubBtn">Add Club</button>
+        <div id="clubAddStatus" class="mt-2"></div>
+    </div>
   `;
 
+    // 📦 Search handler
     document.getElementById("searchForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const name = document.getElementById("searchInput").value.trim();
@@ -48,8 +86,73 @@ export function homeHandler(app) {
             document.getElementById("searchResults").innerHTML = `<p class="text-danger">Error fetching clubs.</p>`;
         }
     });
-}
 
+    // 👤 Add user handler
+    document.getElementById("addUserBtn").addEventListener("click", async () => {
+        const name = document.getElementById("userName").value.trim();
+        const email = document.getElementById("userEmail").value.trim();
+        const statusDiv = document.getElementById("userAddStatus");
+
+        if (!name || !email) {
+            statusDiv.innerHTML = `<span class="text-danger">Name and email must not be empty.</span>`;
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email })
+            });
+
+            if (res.ok) {
+                statusDiv.innerHTML = `<span class="text-success">User created successfully!</span>`;
+                document.getElementById("userName").value = "";
+                document.getElementById("userEmail").value = "";
+                await loadUserEmailsForDropdown(); // 👈 yeni kullanıcıyı dropdown'a da ekle
+            } else {
+                const errText = await res.text();
+                statusDiv.innerHTML = `<span class="text-danger">Error: ${errText}</span>`;
+            }
+        } catch (e) {
+            statusDiv.innerHTML = `<span class="text-danger">Failed to connect to server.</span>`;
+        }
+    });
+
+    // 🏟️ Add club handler
+    document.getElementById("addClubBtn").addEventListener("click", async () => {
+        const name = document.getElementById("clubName").value.trim();
+        const userName = document.getElementById("clubOwnerSelect").value;
+        const statusDiv = document.getElementById("clubAddStatus");
+
+        if (!name || !userName) {
+            statusDiv.innerHTML = `<span class="text-danger">Please fill all fields.</span>`;
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/clubs", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, userName })
+            });
+
+            if (res.ok) {
+                const newClub = await res.json();
+                statusDiv.innerHTML = `<span class="text-success">Club "${newClub.name}" created successfully!</span>`;
+                document.getElementById("clubName").value = "";
+            } else {
+                const errText = await res.text();
+                statusDiv.innerHTML = `<span class="text-danger">Error: ${errText}</span>`;
+            }
+        } catch (e) {
+            statusDiv.innerHTML = `<span class="text-danger">Failed to connect to server.</span>`;
+        }
+    });
+
+    // 🔄 dropdown'u yükle
+    loadUserEmailsForDropdown();
+}
 
 export async function clubsListHandler(app) {
     app.innerHTML = `

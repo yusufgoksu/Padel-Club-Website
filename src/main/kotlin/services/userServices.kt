@@ -5,7 +5,20 @@ import data.database.UserDataDb
 
 object UserServices {
 
-    fun addUser(userID: Int, name: String, email: String): User {
+    // ✅ Yeni kullanıcı ekler, ID otomatik atanır
+    fun addUser(name: String, email: String): User {
+        require(name.isNotBlank()) { "Name must not be empty." }
+        require(email.isNotBlank()) { "Email must not be empty." }
+        require("@" in email) { "Email must be valid." }
+
+        val existing = getUserByEmail(email)
+        require(existing == null) { "Email already exists." }
+
+        return UserDataDb.addUser(name, email)
+    }
+
+    // 🔴 Eski manuel ID ile kullanıcı oluşturma (artık kullanılmıyor gibi, istersen sil)
+    fun CreateUser(userID: Int, name: String, email: String): User {
         require(name.isNotBlank()) { "Name cannot be empty" }
         require(email.isNotBlank()) { "Email cannot be empty" }
         require("@" in email) { "Email must be valid" }
@@ -13,31 +26,26 @@ object UserServices {
         val existing = getUserByEmail(email)
         require(existing == null) { "Email already exists" }
 
-        // userID parametresi eklenmiş createUser çağrısı
         UserDataDb.createUser(userID, name, email)
 
         return UserDataDb.getUserDetails(userID)
             ?: throw IllegalStateException("User creation failed")
     }
 
-
-    // Tüm kullanıcıları getir
     fun getAllUsers(): List<User> =
         UserDataDb.getAllUsers()
 
-    // ID'ye göre kullanıcı getir
     fun getUserById(userID: Int): User? {
         require(userID > 0) { "User ID must be greater than 0" }
         return UserDataDb.getUserDetails(userID)
     }
 
-    // E-posta ile kullanıcı getir
     fun getUserByEmail(email: String): User? {
         require(email.isNotBlank()) { "Email cannot be empty" }
         return UserDataDb.getAllUsers().find { it.email == email }
     }
 
-    // Token üretimi (şimdilik basit, bellekte tutuluyor)
+    // Token üretimi
     private val tokenStore = mutableMapOf<String, Int>()
 
     fun generateUserToken(userId: Int): Pair<String, Int>? {

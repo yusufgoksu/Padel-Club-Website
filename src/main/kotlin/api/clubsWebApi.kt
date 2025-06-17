@@ -1,6 +1,7 @@
 package api
 
 import models.Club
+import models.ClubInput
 import services.ClubServices
 import org.http4k.core.*
 import org.http4k.core.Method.*
@@ -11,6 +12,7 @@ import org.http4k.routing.*
 fun clubsWebApi(): RoutingHttpHandler {
     val clubLens = Body.auto<Club>().toLens()
     val clubsLens = Body.auto<List<Club>>().toLens()
+    val clubInputLens = Body.auto<ClubInput>().toLens()
     val clubIdPath = Path.int().of("clubId")
 
     return routes(
@@ -68,6 +70,18 @@ fun clubsWebApi(): RoutingHttpHandler {
             Response(Status.OK)
                 .with(clubLens of club)
                 .header("Content-Type", "application/json")
+        },
+        // 🆕 Add new club using ClubInput (email -> userID eşleştirme içerir)
+        "/api/clubs" bind POST to { req ->
+            try {
+                val input = clubInputLens(req)
+                val created = ClubServices.addClub(input)
+                Response(Status.CREATED).with(clubLens of created)
+            } catch (e: IllegalArgumentException) {
+                Response(Status.BAD_REQUEST).body(e.message ?: "Invalid input")
+            }
+
         }
     )
 }
+

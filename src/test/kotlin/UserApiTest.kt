@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import services.UserServices
-import storage.UsersDataMem
 
 class UserTests {
 
@@ -23,7 +22,7 @@ class UserTests {
     @Test
     fun `should create user with manual userId`() {
         val userId = 10
-        val user = UserServices.addUser(userId, "John Doe", "john.doe@example.com")
+        val user = UserServices.CreateUser(userId, "John Doe", "john.doe@example.com")
 
         assertEquals(userId, user.userId)
         assertEquals("John Doe", user.name)
@@ -32,10 +31,10 @@ class UserTests {
 
     @Test
     fun `should not allow duplicate email`() {
-        UserServices.addUser(11, "John Doe", "john.doe@example.com")
+        UserServices.CreateUser(11, "John Doe", "john.doe@example.com")
 
         val exception = assertThrows<IllegalArgumentException> {
-            UserServices.addUser(12, "Jane Doe", "john.doe@example.com")
+            UserServices.CreateUser(12, "Jane Doe", "john.doe@example.com")
         }
 
         assertEquals("Email already exists", exception.message)
@@ -44,7 +43,7 @@ class UserTests {
     @Test
     fun `should get user by valid ID`() {
         val userId = 13
-        val user = UserServices.addUser(userId, "John Doe", "john.doe@example.com")
+        val user = UserServices.CreateUser(userId, "John Doe", "john.doe@example.com")
         val retrieved = UserServices.getUserById(user.userId)
 
         assertNotNull(retrieved)
@@ -61,8 +60,8 @@ class UserTests {
 
     @Test
     fun `should list all users`() {
-        UserServices.addUser(14, "User 1", "user1@example.com")
-        UserServices.addUser(15, "User 2", "user2@example.com")
+        UserServices.CreateUser(14, "User 1", "user1@example.com")
+        UserServices.CreateUser(15, "User 2", "user2@example.com")
 
         val list = UserServices.getAllUsers()
         assertEquals(2, list.size)
@@ -71,7 +70,7 @@ class UserTests {
     @Test
     fun `should get user by email`() {
         val userId = 16
-        val user = UserServices.addUser(userId, "Alice", "alice@example.com")
+        val user = UserServices.CreateUser(userId, "Alice", "alice@example.com")
         val found = UserServices.getUserByEmail("alice@example.com")
 
         assertNotNull(found)
@@ -87,7 +86,7 @@ class UserTests {
     @Test
     fun `should generate token for valid user`() {
         val userId = 17
-        val user = UserServices.addUser(userId, "Bob", "bob@example.com")
+        val user = UserServices.CreateUser(userId, "Bob", "bob@example.com")
         val tokenPair = UserServices.generateUserToken(user.userId)
 
         assertNotNull(tokenPair)

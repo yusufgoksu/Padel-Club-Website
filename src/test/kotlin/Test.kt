@@ -8,10 +8,6 @@ import services.CourtServices
 import services.ClubServices
 import services.RentalServices
 import services.UserServices
-import storage.ClubsDataMem
-import storage.CourtsDataMem
-import storage.RentalsDataMem
-import storage.UsersDataMem
 import java.time.LocalDateTime
 
 class GeneralTest {
@@ -29,8 +25,8 @@ class GeneralTest {
 
     @Test
     fun `create two users`() {
-        val user1 = UserServices.addUser(1, "John Doe", "john.doe@example.com")
-        val user2 = UserServices.addUser(2, "Jane Smith", "jane.smith@example.com")
+        val user1 = UserServices.CreateUser(1, "John Doe", "john.doe@example.com")
+        val user2 = UserServices.CreateUser(2, "Jane Smith", "jane.smith@example.com")
 
         assertNotNull(user1)
         assertNotNull(user2)
@@ -40,16 +36,16 @@ class GeneralTest {
 
     @Test
     fun `cannot create user with duplicate email`() {
-        UserServices.addUser(1, "John Doe", "john.doe@example.com")
+        UserServices.CreateUser(1, "John Doe", "john.doe@example.com")
         val exception = assertThrows<IllegalArgumentException> {
-            UserServices.addUser(2, "Jane Doe", "john.doe@example.com")
+            UserServices.CreateUser(2, "Jane Doe", "john.doe@example.com")
         }
         assertEquals("Email already exists", exception.message)
     }
 
     @Test
     fun `create two clubs`() {
-        val user = UserServices.addUser(1, "Club Owner", "owner@example.com")
+        val user = UserServices.CreateUser(1, "Club Owner", "owner@example.com")
         val club1 = ClubServices.addClub(1, "Tennis Club", user.userId)
         val club2 = ClubServices.addClub(2, "Football Club", user.userId)
 
@@ -61,7 +57,7 @@ class GeneralTest {
 
     @Test
     fun `add two courts to the first club`() {
-        val user = UserServices.addUser(1, "Club Owner", "owner@example.com")
+        val user = UserServices.CreateUser(1, "Club Owner", "owner@example.com")
         val club = ClubServices.addClub(1, "Tennis Club", user.userId)
 
         val court1 = CourtServices.addCourt(1, "Padel Court", club.clubID)
@@ -75,7 +71,7 @@ class GeneralTest {
 
     @Test
     fun `list all courts of the two clubs`() {
-        val user = UserServices.addUser(1, "Club Owner", "owner@example.com")
+        val user = UserServices.CreateUser(1, "Club Owner", "owner@example.com")
         val club1 = ClubServices.addClub(1, "Tennis Club", user.userId)
         val club2 = ClubServices.addClub(2, "Football Club", user.userId)
 
@@ -92,7 +88,7 @@ class GeneralTest {
 
     @Test
     fun `list available hours for the first court today`() {
-        val user = UserServices.addUser(1, "Club Owner", "owner@example.com")
+        val user = UserServices.CreateUser(1, "Club Owner", "owner@example.com")
         val club = ClubServices.addClub(1, "Tennis Club", user.userId)
         val court = CourtServices.addCourt(1, "Padel Court", club.clubID)
 
@@ -103,7 +99,7 @@ class GeneralTest {
 
     @Test
     fun `create rental with invalid date`() {
-        val user = UserServices.addUser(1, "John Doe", "john.doe@example.com")
+        val user = UserServices.CreateUser(1, "John Doe", "john.doe@example.com")
         val club = ClubServices.addClub(1, "Tennis Club", user.userId)
         val court = CourtServices.addCourt(1, "Padel Court", club.clubID)
 
@@ -116,7 +112,7 @@ class GeneralTest {
 
     @Test
     fun `create three rentals of two hours in the first court today`() {
-        val user = UserServices.addUser(1, "John Doe", "john.doe@example.com")
+        val user = UserServices.CreateUser(1, "John Doe", "john.doe@example.com")
         val club = ClubServices.addClub(1, "Tennis Club", user.userId)
         val court = CourtServices.addCourt(1, "Padel Court", club.clubID)
 
@@ -131,7 +127,7 @@ class GeneralTest {
 
     @Test
     fun `list available hours for the first court today after rentals`() {
-        val user = UserServices.addUser(1, "John Doe", "john.doe@example.com")
+        val user = UserServices.CreateUser(1, "John Doe", "john.doe@example.com")
         val club = ClubServices.addClub(1, "Tennis Club", user.userId)
         val court = CourtServices.addCourt(1, "Padel Court", club.clubID)
 

@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import services.ClubServices
 import services.UserServices
-import storage.ClubsDataMem
-import storage.UsersDataMem
 
 class ClubTest {
 
@@ -25,7 +23,7 @@ class ClubTest {
     @Test
     fun `create club with manual userId`() {
         val userId = 10
-        val user = UserServices.addUser(userId, "Club Owner", "owner@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner@example.com")
         assertEquals(userId, user.userId)
 
         val clubId = 20
@@ -48,7 +46,7 @@ class ClubTest {
     @Test
     fun `create multiple clubs with the same user and manual IDs`() {
         val userId = 30
-        val user = UserServices.addUser(userId, "Club Owner", "owner2@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner2@example.com")
 
         val club1Id = 101
         val club2Id = 102
@@ -64,7 +62,7 @@ class ClubTest {
     @Test
     fun `cannot create club with empty name`() {
         val userId = 40
-        val user = UserServices.addUser(userId, "Club Owner", "owner3@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner3@example.com")
         val exception = assertThrows<IllegalArgumentException> {
             ClubServices.addClub(55, "", user.userId)
         }
@@ -74,7 +72,7 @@ class ClubTest {
     @Test
     fun `cannot create club with name exceeding max length`() {
         val userId = 50
-        val user = UserServices.addUser(userId, "Club Owner", "owner4@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner4@example.com")
         val longName = "A".repeat(101)
         val exception = assertThrows<IllegalArgumentException> {
             ClubServices.addClub(56, longName, user.userId)
@@ -85,7 +83,7 @@ class ClubTest {
     @Test
     fun `list all clubs`() {
         val userId = 60
-        val user = UserServices.addUser(userId, "Club Owner", "owner5@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner5@example.com")
         ClubServices.addClub(200, "Tennis Club", user.userId)
         ClubServices.addClub(201, "Football Club", user.userId)
 
@@ -98,7 +96,7 @@ class ClubTest {
     @Test
     fun `verify club owner`() {
         val userId = 70
-        val user = UserServices.addUser(userId, "Club Owner", "owner6@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner6@example.com")
         val clubId = 300
         val club = ClubServices.addClub(clubId, "Tennis Club", user.userId)
         assertEquals(user.userId, club.userID)
@@ -107,7 +105,7 @@ class ClubTest {
     @Test
     fun `get club by valid id`() {
         val userId = 80
-        val user = UserServices.addUser(userId, "Club Owner", "owner7@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner7@example.com")
         val clubId = 400
         val created = ClubServices.addClub(clubId, "Basketball Club", user.userId)
         val foundClub = ClubServices.getClubById(clubId)
@@ -129,7 +127,7 @@ class ClubTest {
     @Test
     fun `get club details by valid id`() {
         val userId = 90
-        val user = UserServices.addUser(userId, "Club Owner", "owner8@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner8@example.com")
         val clubId = 500
         val created = ClubServices.addClub(clubId, "Chess Club", user.userId)
         val details = ClubServices.getClubDetails(clubId)
@@ -152,7 +150,7 @@ class ClubTest {
     @Test
     fun `can create clubs with duplicate names`() {
         val userId = 100
-        val user = UserServices.addUser(userId, "Club Owner", "owner9@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner9@example.com")
         val club1 = ClubServices.addClub(600, "Duplicate Club", user.userId)
         val club2 = ClubServices.addClub(601, "Duplicate Club", user.userId)
 

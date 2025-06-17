@@ -27,7 +27,7 @@ class CourtTests {
         val clubId = 1
         val courtId = 1
 
-        val user = UserServices.addUser(userId, "Club Owner", "owner@example.com")
+        val user = UserServices.CreateUser(userId, "Club Owner", "owner@example.com")
         val club = ClubServices.addClub(clubId, "Tennis Club", user.userId)
         val court = CourtServices.addCourt(courtId, "Court 1", club.clubID)
 
@@ -47,7 +47,7 @@ class CourtTests {
 
     @Test
     fun `cannot create court with empty name`() {
-        val user = UserServices.addUser(3, "Club Owner", "owner2@example.com")
+        val user = UserServices.CreateUser(3, "Club Owner", "owner2@example.com")
         val club = ClubServices.addClub(3, "Tennis Club", user.userId)
 
         val ex = assertThrows<IllegalArgumentException> {
@@ -58,7 +58,7 @@ class CourtTests {
 
     @Test
     fun `cannot create court with name exceeding max length`() {
-        val user = UserServices.addUser(4, "Club Owner", "owner3@example.com")
+        val user = UserServices.CreateUser(4, "Club Owner", "owner3@example.com")
         val club = ClubServices.addClub(4, "Tennis Club", user.userId)
 
         val longName = "X".repeat(101)
@@ -70,7 +70,7 @@ class CourtTests {
 
     @Test
     fun `create multiple courts for the same club`() {
-        val user = UserServices.addUser(5, "Club Owner", "owner4@example.com")
+        val user = UserServices.CreateUser(5, "Club Owner", "owner4@example.com")
         val club = ClubServices.addClub(5, "Tennis Club", user.userId)
 
         val court1 = CourtServices.addCourt(5, "Court A", club.clubID)

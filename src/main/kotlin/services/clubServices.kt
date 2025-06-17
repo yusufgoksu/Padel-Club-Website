@@ -3,6 +3,7 @@ package services
 import models.Club
 import data.database.ClubsDataDb
 import data.database.UserDataDb
+import models.ClubInput
 
 object ClubServices {
 
@@ -39,6 +40,15 @@ object ClubServices {
         println("🔍 Running SQL with: %$partialName%")
         require(partialName.isNotBlank()) { "Partial name cannot be empty" }
         return ClubsDataDb.searchClubsByName(partialName)
+    }
+    fun addClub(clubInput: ClubInput): Club {
+        require(clubInput.name.isNotBlank()) { "Club name is required." }
+        require(clubInput.email.isNotBlank()) { "Owner email is required." }
+
+        return ClubsDataDb.addClub(
+            email = clubInput.email,
+            clubName = clubInput.name
+        )
     }
 
 }
