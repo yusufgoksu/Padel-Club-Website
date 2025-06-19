@@ -9,21 +9,30 @@ object ClubsDataDb : IclubServices {
     /**
      * Inserts a new club and returns the generated clubId.
      */
-    override fun createClub(clubId: Int, name: String, userID: Int): Int {
+    override fun createClub(name: String, userID: Int): Club {
         val sql = """
-        INSERT INTO clubs (clubId, name, userId)
-        VALUES (?, ?, ?);
+        INSERT INTO clubs (name, userID)
+        VALUES (?, ?)
+        RETURNING clubID, name, userID;
     """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
-                    stmt.setInt(1, clubId)     // Manuel ID gönderiliyor
-                    stmt.setString(2, name)
-                    stmt.setInt(3, userID)
-                    val rowsInserted = stmt.executeUpdate()
-                    if (rowsInserted == 0) throw SQLException("No rows inserted")
-                    clubId  // Manuel verdiğin ID'yi döndür
+                    stmt.setString(1, name)
+                    stmt.setInt(2, userID)
+
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            Club(
+                                clubID = rs.getInt("clubID"),
+                                name = rs.getString("name"),
+                                userID = rs.getInt("userID")
+                            )
+                        } else {
+                            throw IllegalStateException("Club creation failed.")
+                        }
+                    }
                 }
             }
         } catch (e: SQLException) {

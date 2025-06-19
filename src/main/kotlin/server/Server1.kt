@@ -52,24 +52,29 @@ fun addTestData() {
     val u2 = UsersDataMem.addUser("Mert",  "mert@example.com")
     val u3 = UsersDataMem.addUser("Ali",   "ali@example.com")
 
-    val c1 = ClubsDataMem.addClub("Padel Club A", u1.userId)
-    val c2 = ClubsDataMem.addClub("Padel Club B", u2.userId)
-    val c3 = ClubsDataMem.addClub("Padel Club C", u3.userId)
+    val c1 = ClubsDataMem.addClub("Padel Club A", u1.userId!!)
+    val c2 = ClubsDataMem.addClub("Padel Club B", u2.userId!!)
+    val c3 = ClubsDataMem.addClub("Padel Club C", u3.userId!!)
 
     listOf(c1 to u1.userId, c2 to u2.userId, c3 to u3.userId).forEach { (club, owner) ->
         val courts = listOf(
-            CourtsDataMem.addCourt("Court 1", club.clubID),
+            CourtsDataMem.addCourt("Court 1", club.clubID!!),
             CourtsDataMem.addCourt("Court 2", club.clubID),
             CourtsDataMem.addCourt("Court 3", club.clubID)
         )
         courts.forEachIndexed { idx, court ->
-            RentalsDataMem.addRental(clubId = club.clubID, courtId = court.courtID, userId = owner, startTime = "2025-03-27T1${4 + idx}:00:00", duration = 2)
+            RentalsDataMem.addRental(
+                clubId = club.clubID,
+                courtId = court.courtID,
+                userId = owner!!,
+                startTime = "2025-03-27T1${4 + idx}:00:00",
+                duration = 2
+            )
         }
     }
 
     println("✅ Test data added.")
 }
-
 fun main() {
     val PORT = 9000
     addTestData()

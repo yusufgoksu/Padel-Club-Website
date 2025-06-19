@@ -1,4 +1,4 @@
-// 🏟️ Add Club dropdown'u dahil
+// 🏟️ Add Club dropdown'u düzgün şekilde userId ile doldurur
 async function loadUserEmailsForDropdown() {
     const select = document.getElementById("clubOwnerSelect");
     try {
@@ -6,9 +6,12 @@ async function loadUserEmailsForDropdown() {
         if (!res.ok) throw new Error("Failed to fetch users");
 
         const users = await res.json();
-        select.innerHTML = users.map(user =>
-            `<option value="${user.email}">${user.name} (${user.email})</option>`
-        ).join("");
+
+        select.innerHTML =
+            `<option value="" disabled selected>Choose owner</option>` +
+            users.map(user =>
+                `<option value="${user.userId}">${user.name} (${user.email})</option>`
+            ).join("");
 
     } catch (err) {
         select.innerHTML = `<option disabled>Error loading users</option>`;
@@ -47,14 +50,14 @@ export function homeHandler(app) {
         <h4>Add New Club</h4>
         <input type="text" id="clubName" class="form-control mb-2" placeholder="Club Name">
         <select id="clubOwnerSelect" class="form-select mb-2">
-          <option disabled selected>Choose owner email</option>
+          <option value="" disabled selected>Choose owner</option>
         </select>
         <button class="btn btn-primary" id="addClubBtn">Add Club</button>
         <div id="clubAddStatus" class="mt-2"></div>
     </div>
   `;
 
-    // 📦 Search handler
+    // 🔍 Search Club handler
     document.getElementById("searchForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const name = document.getElementById("searchInput").value.trim();
@@ -75,10 +78,10 @@ export function homeHandler(app) {
             }
 
             const listHtml = `
-            <ul class="list-group">
-              ${clubs.map(club => `<li class="list-group-item"><a href="/clubs/${club.clubID}" data-link>${club.name}</a></li>`).join("")}
-            </ul>
-          `;
+                <ul class="list-group">
+                  ${clubs.map(club => `<li class="list-group-item"><a href="/clubs/${club.clubID}" data-link>${club.name}</a></li>`).join("")}
+                </ul>
+            `;
 
             document.getElementById("searchResults").innerHTML = listHtml;
 
@@ -87,7 +90,7 @@ export function homeHandler(app) {
         }
     });
 
-    // 👤 Add user handler
+    // 👤 Add User handler
     document.getElementById("addUserBtn").addEventListener("click", async () => {
         const name = document.getElementById("userName").value.trim();
         const email = document.getElementById("userEmail").value.trim();
@@ -109,7 +112,7 @@ export function homeHandler(app) {
                 statusDiv.innerHTML = `<span class="text-success">User created successfully!</span>`;
                 document.getElementById("userName").value = "";
                 document.getElementById("userEmail").value = "";
-                await loadUserEmailsForDropdown(); // 👈 yeni kullanıcıyı dropdown'a da ekle
+                await loadUserEmailsForDropdown(); // 🔄 Yeni kullanıcı dropdown'a eklensin
             } else {
                 const errText = await res.text();
                 statusDiv.innerHTML = `<span class="text-danger">Error: ${errText}</span>`;
@@ -119,13 +122,14 @@ export function homeHandler(app) {
         }
     });
 
-    // 🏟️ Add club handler
+    // 🏟️ Add Club handler
     document.getElementById("addClubBtn").addEventListener("click", async () => {
         const name = document.getElementById("clubName").value.trim();
-        const userName = document.getElementById("clubOwnerSelect").value;
+        const select = document.getElementById("clubOwnerSelect");
+        const userID = parseInt(select.value, 10);
         const statusDiv = document.getElementById("clubAddStatus");
 
-        if (!name || !userName) {
+        if (!name || isNaN(userID)) {
             statusDiv.innerHTML = `<span class="text-danger">Please fill all fields.</span>`;
             return;
         }
@@ -134,13 +138,14 @@ export function homeHandler(app) {
             const res = await fetch("/api/clubs", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, userName })
+                body: JSON.stringify({ name, userID })
             });
 
             if (res.ok) {
                 const newClub = await res.json();
                 statusDiv.innerHTML = `<span class="text-success">Club "${newClub.name}" created successfully!</span>`;
                 document.getElementById("clubName").value = "";
+                select.selectedIndex = 0;
             } else {
                 const errText = await res.text();
                 statusDiv.innerHTML = `<span class="text-danger">Error: ${errText}</span>`;
@@ -150,9 +155,10 @@ export function homeHandler(app) {
         }
     });
 
-    // 🔄 dropdown'u yükle
+    // 🔄 Load dropdown initially
     loadUserEmailsForDropdown();
 }
+
 
 export async function clubsListHandler(app) {
     app.innerHTML = `

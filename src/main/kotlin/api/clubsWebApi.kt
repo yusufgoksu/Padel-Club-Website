@@ -1,7 +1,6 @@
 package api
 
 import models.Club
-import models.ClubInput
 import services.ClubServices
 import org.http4k.core.*
 import org.http4k.core.Method.*
@@ -10,13 +9,12 @@ import org.http4k.lens.*
 import org.http4k.routing.*
 
 fun clubsWebApi(): RoutingHttpHandler {
-    val clubLens = Body.auto<Club>().toLens()
+    val clubLens  = Body.auto<Club>().toLens()
     val clubsLens = Body.auto<List<Club>>().toLens()
-    val clubInputLens = Body.auto<ClubInput>().toLens()
     val clubIdPath = Path.int().of("clubId")
 
     return routes(
-        // 📌 Search clubs by name → ÖNCE tanımlanmalı
+        /* 🔍 Search clubs by name */
         "/api/clubs/search" bind GET to { req ->
             val name = req.query("name")
 
@@ -26,14 +24,13 @@ fun clubsWebApi(): RoutingHttpHandler {
                     .header("Content-Type", "application/json")
             } else {
                 val results = ClubServices.searchClubsByName(name)
-                println("🔍 Searching clubs with: $name")
                 Response(Status.OK)
                     .with(clubsLens of results)
                     .header("Content-Type", "application/json")
             }
         },
 
-        // 📌 List all clubs
+        /* 📋 List all clubs */
         "/api/clubs" bind GET to {
             val allClubs = ClubServices.getAllClubs()
             Response(Status.OK)
@@ -41,15 +38,16 @@ fun clubsWebApi(): RoutingHttpHandler {
                 .header("Content-Type", "application/json")
         },
 
-        // 📌 Create a new club
+        /* ➕ Create a new club */
         "/api/clubs" bind POST to { req ->
             try {
                 val clubReq = clubLens(req)
+
                 val created = ClubServices.addClub(
-                    clubId = clubReq.clubID,
-                    name = clubReq.name,
+                    name   = clubReq.name,
                     userID = clubReq.userID
                 )
+
                 Response(Status.CREATED)
                     .with(clubLens of created)
                     .header("Content-Type", "application/json")
@@ -60,28 +58,17 @@ fun clubsWebApi(): RoutingHttpHandler {
             }
         },
 
-        // 📌 Get one club by ID
+        /* 🔗 Get one club by ID */
         "/api/clubs/{clubId}" bind GET to { req ->
             val id = clubIdPath(req)
             val club = ClubServices.getClubById(id)
                 ?: return@to Response(Status.NOT_FOUND)
                     .body("Club not found")
                     .header("Content-Type", "application/json")
+
             Response(Status.OK)
                 .with(clubLens of club)
                 .header("Content-Type", "application/json")
-        },
-        // 🆕 Add new club using ClubInput (email -> userID eşleştirme içerir)
-        "/api/clubs" bind POST to { req ->
-            try {
-                val input = clubInputLens(req)
-                val created = ClubServices.addClub(input)
-                Response(Status.CREATED).with(clubLens of created)
-            } catch (e: IllegalArgumentException) {
-                Response(Status.BAD_REQUEST).body(e.message ?: "Invalid input")
-            }
-
         }
     )
 }
-

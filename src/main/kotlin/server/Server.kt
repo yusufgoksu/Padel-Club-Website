@@ -24,14 +24,14 @@ fun addTestDataToDatabase() {
     val u2Id = UserDataDb.createUser(2, "Mert",  "mert@example.com")
     val u3Id = UserDataDb.createUser(3, "Ali",   "ali@example.com")
 
-    val c1Id = 1
-    val c2Id = 2
-    val c3Id = 3
-    ClubsDataDb.createClub(c1Id, "Padel Club A", u1Id)
-    ClubsDataDb.createClub(c2Id, "Padel Club B", u2Id)
-    ClubsDataDb.createClub(c3Id, "Padel Club C", u3Id)
 
-    var courtIdCounter = 1
+    /* ---------- CLUBS ---------- */
+    val c1Id = ClubsDataDb.createClub("Padel Club A", u1Id).clubID!!
+    val c2Id = ClubsDataDb.createClub("Padel Club B", u2Id).clubID!!
+    val c3Id = ClubsDataDb.createClub("Padel Club C", u3Id).clubID!!
+
+    /* ---------- COURTS & RENTALS ---------- */
+    var courtIdCounter  = 1   // hâlâ manuel numaralandırma
     var rentalIdCounter = 1
 
     listOf(c1Id to u1Id, c2Id to u2Id, c3Id to u3Id).forEach { (clubId, ownerId) ->

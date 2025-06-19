@@ -3,22 +3,19 @@ package services
 import models.Club
 import data.database.ClubsDataDb
 import data.database.UserDataDb
-import models.ClubInput
 
 object ClubServices {
 
-    // Yeni bir kulüp ekleme (manuel clubId ile)
-    fun addClub(clubId: Int, name: String, userID: Int): Club {
+    fun addClub(name: String, userID: Int): Club {
         require(name.isNotBlank()) { "Club name cannot be empty" }
         require(name.length <= 100) { "Club name cannot exceed 100 characters" }
         require(userID > 0) { "User ID must be greater than 0" }
         require(UserDataDb.getUserDetails(userID) != null) { "User ID '$userID' not found" }
 
-        ClubsDataDb.createClub(clubId, name, userID)
-
-        return ClubsDataDb.getClubDetails(clubId)
-            ?: throw IllegalStateException("Club creation failed")
+        // Veritabanı otomatik clubID oluşturacak ve Club nesnesi dönecek
+        return ClubsDataDb.createClub(name, userID)
     }
+
 
 
     // Tüm kulüpleri listeleme
@@ -41,14 +38,6 @@ object ClubServices {
         require(partialName.isNotBlank()) { "Partial name cannot be empty" }
         return ClubsDataDb.searchClubsByName(partialName)
     }
-    fun addClub(clubInput: ClubInput): Club {
-        require(clubInput.name.isNotBlank()) { "Club name is required." }
-        require(clubInput.email.isNotBlank()) { "Owner email is required." }
 
-        return ClubsDataDb.addClub(
-            email = clubInput.email,
-            clubName = clubInput.name
-        )
-    }
 
 }

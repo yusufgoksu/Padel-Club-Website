@@ -28,7 +28,7 @@ fun usersWebApi(): RoutingHttpHandler {
         "/api/users" bind POST to { req ->
             try {
                 val userInput = userInputLens(req)
-                val created = UserServices.addUser(userInput.name, userInput.email) // ✅ düzeltildi
+                val created = UserServices.addUser(userInput.name, userInput.email)
                 Response(Status.CREATED).with(userLens of created)
             } catch (e: IllegalArgumentException) {
                 Response(Status.BAD_REQUEST).body(e.message ?: "Invalid input")
