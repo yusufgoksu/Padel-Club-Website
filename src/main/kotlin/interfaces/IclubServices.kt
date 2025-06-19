@@ -8,6 +8,4 @@ interface IclubServices {
     fun getAllClubs(): List<Club>
     fun searchClubsByName(partialName: String): List<Club>
 
-    // ✅ Yeni fonksiyon: email ile club ekle
-    fun addClub(userEmail: String, clubName: String): Club
 }

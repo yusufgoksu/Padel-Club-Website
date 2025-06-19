@@ -5,20 +5,9 @@ import data.database.UserDataDb
 
 object UserServices {
 
-    // ✅ Yeni kullanıcı ekler, ID otomatik atanır
-    fun addUser(name: String, email: String): User {
-        require(name.isNotBlank()) { "Name must not be empty." }
-        require(email.isNotBlank()) { "Email must not be empty." }
-        require("@" in email) { "Email must be valid." }
 
-        val existing = getUserByEmail(email)
-        require(existing == null) { "Email already exists." }
 
-        return UserDataDb.addUser(name, email)
-    }
-
-    // 🔴 Eski manuel ID ile kullanıcı oluşturma (artık kullanılmıyor gibi, istersen sil)
-    fun CreateUser(userID: Int, name: String, email: String): User {
+    fun createUser(name: String, email: String): User {
         require(name.isNotBlank()) { "Name cannot be empty" }
         require(email.isNotBlank()) { "Email cannot be empty" }
         require("@" in email) { "Email must be valid" }
@@ -26,10 +15,7 @@ object UserServices {
         val existing = getUserByEmail(email)
         require(existing == null) { "Email already exists" }
 
-        UserDataDb.createUser(userID, name, email)
-
-        return UserDataDb.getUserDetails(userID)
-            ?: throw IllegalStateException("User creation failed")
+        return UserDataDb.createUser(name, email)
     }
 
     fun getAllUsers(): List<User> =

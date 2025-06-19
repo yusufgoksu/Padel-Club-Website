@@ -16,40 +16,41 @@ import org.http4k.routing.*
 import org.http4k.routing.ResourceLoader.Companion.Classpath
 
 
-
 fun addTestDataToDatabase() {
     println("✅ Adding test data to PostgreSQL...")
 
-    val u1Id = UserDataDb.createUser(1, "Yusuf", "yusuf@example.com")
-    val u2Id = UserDataDb.createUser(2, "Mert",  "mert@example.com")
-    val u3Id = UserDataDb.createUser(3, "Ali",   "ali@example.com")
+    // Kullanıcılar oluşturuluyor (veritabanı ID atıyor)
+    val u1 = UserDataDb.createUser("Yusuf", "yusuf@example.com")
+    val u2 = UserDataDb.createUser("Mert",  "mert@example.com")
+    val u3 = UserDataDb.createUser("Ali",   "ali@example.com")
 
+    // Kulüpler oluşturuluyor (veritabanı ID atıyor)
+    val c1 = ClubsDataDb.createClub("Padel Club A", u1.userId!!)
+    val c2 = ClubsDataDb.createClub("Padel Club B", u2.userId!!)
+    val c3 = ClubsDataDb.createClub("Padel Club C", u3.userId!!)
 
-    /* ---------- CLUBS ---------- */
-    val c1Id = ClubsDataDb.createClub("Padel Club A", u1Id).clubID!!
-    val c2Id = ClubsDataDb.createClub("Padel Club B", u2Id).clubID!!
-    val c3Id = ClubsDataDb.createClub("Padel Club C", u3Id).clubID!!
-
-    /* ---------- COURTS & RENTALS ---------- */
-    var courtIdCounter  = 1   // hâlâ manuel numaralandırma
+    // Manuel ID atamaları
+    var courtIdCounter = 1
     var rentalIdCounter = 1
 
-    listOf(c1Id to u1Id, c2Id to u2Id, c3Id to u3Id).forEach { (clubId, ownerId) ->
-        val court1Id = courtIdCounter++
-        val court2Id = courtIdCounter++
-        val court3Id = courtIdCounter++
+    listOf(c1 to u1, c2 to u2, c3 to u3).forEach { (club, owner) ->
+        val clubId = club.clubID!!
+        val userId = owner.userId!!
 
-        CourtsDataDb.createCourt(court1Id, "Court 1", clubId)
-        CourtsDataDb.createCourt(court2Id, "Court 2", clubId)
-        CourtsDataDb.createCourt(court3Id, "Court 3", clubId)
+        // Sahalar manuel ID ile ekleniyor
+        CourtsDataDb.createCourt(courtIdCounter++, "Court 1", clubId)
+        CourtsDataDb.createCourt(courtIdCounter++, "Court 2", clubId)
+        CourtsDataDb.createCourt(courtIdCounter++, "Court 3", clubId)
 
-        RentalDataDb.createRental(rentalIdCounter++, clubId, court1Id, ownerId, "2025-03-27T14:00:00", 2)
-        RentalDataDb.createRental(rentalIdCounter++, clubId, court2Id, ownerId, "2025-03-27T15:00:00", 2)
-        RentalDataDb.createRental(rentalIdCounter++, clubId, court3Id, ownerId, "2025-03-27T16:00:00", 2)
+        // Kiralamalar manuel ID ile ekleniyor
+        RentalDataDb.createRental(rentalIdCounter++, clubId, courtIdCounter - 3, userId, "2025-03-27T14:00:00", 2)
+        RentalDataDb.createRental(rentalIdCounter++, clubId, courtIdCounter - 2, userId, "2025-03-27T15:00:00", 2)
+        RentalDataDb.createRental(rentalIdCounter++, clubId, courtIdCounter - 1, userId, "2025-03-27T16:00:00", 2)
     }
 
     println("✅ Test data added to PostgreSQL.")
 }
+
 
 
 fun main() {

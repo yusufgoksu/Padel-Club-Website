@@ -4,19 +4,22 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class User(
-    val userId: Int,  // userId artık integer olacak ve kullanıcı tarafından sağlanacak
+    val userId: Int , // sadece veritabanı tarafından atanır, kullanıcıdan gelmemeli
     val name: String,
     val email: String,
-    val token: String = java.util.UUID.randomUUID().toString() // Token hala UUID ile oluşturulacak
+    val token: String = java.util.UUID.randomUUID().toString()
 ) {
     init {
-        // userId'nin geçerli bir değer olup olmadığını kontrol et
-        require(userId > 0) { "userId must be greater than 0" }
+        require(userId > 0) { "userId must be greater than 0 (assigned by DB)" }
 
-        // Name boş olamaz
-        require(name.isNotBlank()) { "Name cannot be blank" }
+        // ✅ İsim boş olmamalı
+        require(name.isNotBlank()) {
+            "Name cannot be blank"
+        }
 
-        // E-posta geçerli formatta olmalı
-        require(email.isNotBlank() && email.contains("@")) { "Invalid email format" }
+        // ✅ E-posta @ içermeli ve boş olmamalı
+        require(email.isNotBlank() && email.contains("@")) {
+            "Invalid email format"
+        }
     }
 }

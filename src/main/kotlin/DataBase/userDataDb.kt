@@ -6,40 +6,13 @@ import java.sql.SQLException
 
 object UserDataDb : IuserServices {
 
-    /**
-     * ✅ Kullanıcıyı manuel ID ile ekler
-     */
-    override fun createUser(userId: Int, name: String, email: String): Int {
-        val sql = """
-            INSERT INTO users (userId, name, email)
-            VALUES (?, ?, ?);
-        """.trimIndent()
 
-        return try {
-            Database.getConnection().use { conn ->
-                conn.prepareStatement(sql).use { stmt ->
-                    stmt.setInt(1, userId)
-                    stmt.setString(2, name)
-                    stmt.setString(3, email)
-                    val updatedRows = stmt.executeUpdate()
-                    if (updatedRows == 0) throw SQLException("No rows inserted")
-                    userId
-                }
-            }
-        } catch (e: SQLException) {
-            throw RuntimeException("Error creating user: ${e.message}", e)
-        }
-    }
-
-    /**
-     * ✅ Kullanıcıyı otomatik ID ile ekler (UserInput kullanımı için uygun)
-     */
-    override fun addUser(name: String, email: String): User {
+    override fun createUser(name: String, email: String): User {
         val sql = """
-            INSERT INTO users (name, email)
-            VALUES (?, ?)
-            RETURNING userId, name, email;
-        """.trimIndent()
+        INSERT INTO users (name, email)
+        VALUES (?, ?)
+        RETURNING userId, name, email;
+    """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
@@ -61,9 +34,15 @@ object UserDataDb : IuserServices {
                 }
             }
         } catch (e: SQLException) {
-            throw RuntimeException("Error adding user: ${e.message}", e)
+            throw RuntimeException("Error creating user: ${e.message}", e)
         }
     }
+
+
+    /**
+     * ✅ Kullanıcıyı otomatik ID ile ekler (UserInput kullanımı için uygun)
+     */
+
 
     /**
      * Kullanıcıyı ID ile getirir

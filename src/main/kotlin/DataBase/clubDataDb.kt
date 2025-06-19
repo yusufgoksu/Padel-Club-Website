@@ -126,32 +126,6 @@ object ClubsDataDb : IclubServices {
             throw RuntimeException("Error searching clubs: ${e.message}", e)
         }
     }
-    override fun addClub(email: String, clubName: String): Club {
-        require(email.isNotBlank()) { "Email cannot be empty." }
-        require(clubName.isNotBlank()) { "Club name cannot be empty." }
-
-        val user = UserDataDb.getAllUsers().find { it.email == email }
-            ?: throw IllegalArgumentException("No user found with email: $email")
-
-        // Club oluştur
-        val stmt = Database.getConnection().prepareStatement(
-            "INSERT INTO clubs (name, userId) VALUES (?, ?) RETURNING clubId, name, userId"
-        )
-        stmt.setString(1, clubName)
-        stmt.setInt(2, user.userId)
-
-        val rs = stmt.executeQuery()
-        return if (rs.next()) {
-            Club(
-                clubID = rs.getInt("clubId"),
-                name = rs.getString("name"),
-                userID = rs.getInt("userId")
-            )
-        } else {
-            throw IllegalStateException("Club creation failed.")
-        }
-    }
-
 
 
 
