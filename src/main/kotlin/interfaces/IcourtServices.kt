@@ -1,8 +1,9 @@
 package interfaces
+
 import models.Court
 
 interface IcourtServices {
-        fun createCourt(courtId: Int, name: String, clubId: Int): Int
+        fun createCourt(name: String, clubId: Int): Court
 
         fun getCourt(courtId: Int): Court?
 

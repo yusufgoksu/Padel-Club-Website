@@ -5,126 +5,126 @@ import services.RentalServices
 import org.http4k.core.*
 import org.http4k.core.Method.*
 import org.http4k.format.KotlinxSerialization.auto
-import org.http4k.lens.Path
-import org.http4k.lens.Query
-import org.http4k.lens.int
-import org.http4k.lens.string
-import org.http4k.routing.RoutingHttpHandler
-import org.http4k.routing.bind
-import org.http4k.routing.routes
+import org.http4k.lens.*
+import org.http4k.routing.*
 
 fun rentalsWebApi(): RoutingHttpHandler {
-    val rentalLens  = Body.auto<Rental>().toLens()
-    val rentalsLens = Body.auto<List<Rental>>().toLens()
 
+    /* ---- JSON lens’leri ---- */
+    val rentalLens   = Body.auto<Rental>().toLens()
+    val rentalsLens  = Body.auto<List<Rental>>().toLens()
+    val hoursLens    = Body.auto<List<Int>>().toLens()          // yeni
+
+    /* ---- Path parçaları ---- */
     val rentalIdPath = Path.int().of("rentalId")
     val userIdPath   = Path.int().of("userId")
     val clubIdPath   = Path.int().of("clubId")
     val courtIdPath  = Path.int().of("courtId")
 
     return routes(
-        // 1) Tüm kiralamaları listele
+
+        /* ----------------- GET /api/rentals ----------------- */
         "/api/rentals" bind GET to {
             Response(Status.OK).with(rentalsLens of RentalServices.getAllRentals())
         },
 
-        // 2) Yeni kiralama oluştur
+        /* ----------------- POST /api/rentals ---------------- */
         "/api/rentals" bind POST to { req ->
-            val rentalReq = rentalLens(req)
-            val created = RentalServices.addRental(
-                rentalReq.rentalID,
-                rentalReq.clubId,
-                rentalReq.courtId,
-                rentalReq.userId,
-                rentalReq.startTime,
-                rentalReq.duration,
-
-            )
-            Response(Status.CREATED).with(rentalLens of created)
+            val r = rentalLens(req)
+            try {
+                val created = RentalServices.addRental(
+                    clubId    = r.clubId,
+                    courtId   = r.courtId,
+                    userId    = r.userId,
+                    startTime = r.startTime,
+                    duration  = r.duration
+                )
+                Response(Status.CREATED).with(rentalLens of created)
+            } catch (e: Exception) {
+                Response(Status.BAD_REQUEST).body("Error: ${e.message}")
+            }
         },
 
-        // 3) Tek kiralamayı getir
+        /* ---------------- GET /api/rentals/{id} ------------- */
         "/api/rentals/{rentalId}" bind GET to { req ->
             val id = rentalIdPath(req)
-            val rental = RentalServices.getRentalById(id)
-                ?: return@to Response(Status.NOT_FOUND).body("Rental not found")
-            Response(Status.OK).with(rentalLens of rental)
+            RentalServices.getRentalById(id)
+                ?.let { Response(Status.OK).with(rentalLens of it) }
+                ?:   Response(Status.NOT_FOUND).body("Rental not found")
         },
 
-        // 4) Kullanıcıya ait kiralamaları listele
+        /* ------------- GET /api/users/{uid}/rentals --------- */
         "/api/users/{userId}/rentals" bind GET to { req ->
-            val uId = userIdPath(req)
-            Response(Status.OK).with(rentalsLens of RentalServices.getRentalsForUser(uId))
+            val uid = userIdPath(req)
+            Response(Status.OK)
+                .with(rentalsLens of RentalServices.getRentalsForUser(uid))
         },
 
-        // 5) Kiralamayı sil
+        /* ------- GET /api/clubs/{cid}/courts/{coid}/rentals - */
+        "/api/clubs/{clubId}/courts/{courtId}/rentals" bind GET to { req ->
+            val cId  = clubIdPath(req)
+            val coId = courtIdPath(req)
+            val date = Query.string().optional("date")(req)
+            val list = RentalServices.getRentalsForCourt(cId, coId, date)
+            Response(Status.OK).with(rentalsLens of list)
+        },
+
+        /* ---- GET /api/clubs/{cid}/courts/{coid}/available --- */
+        "/api/clubs/{clubId}/courts/{courtId}/available" bind GET to { req ->
+            val cId  = clubIdPath(req)
+            val coId = courtIdPath(req)
+            val date = Query.string().required("date")(req)
+            val hrs  = RentalServices.getAvailableHours(cId, coId, date)
+            Response(Status.OK).with(hoursLens of hrs)
+        },
+
+        /* ----------------- PUT /api/rentals/{id} ------------ */
+        "/api/rentals/{rentalId}" bind PUT to { req ->
+            val id = rentalIdPath(req)
+            val r  = rentalLens(req)
+            try {
+                val upd = RentalServices.updateRental(
+                    id            = id,
+                    newStartTime  = r.startTime,
+                    newDuration   = r.duration
+                )
+                Response(Status.OK).with(rentalLens of upd)
+            } catch (e: Exception) {
+                Response(Status.BAD_REQUEST).body("Update failed: ${e.message}")
+            }
+        },
+
+        /* ---------------- DELETE /api/rentals/{id} ---------- */
         "/api/rentals/{rentalId}" bind DELETE to { req ->
             val id = rentalIdPath(req)
             if (RentalServices.deleteRental(id)) Response(Status.NO_CONTENT)
             else Response(Status.NOT_FOUND)
         },
 
-        // 6) Kiralamayı güncelle
-        "/api/rentals/{rentalId}" bind PUT to { req ->
-            val id = rentalIdPath(req)
-            val upd = rentalLens(req)
-            try {
-                // Burada parametre sırasına dikkat
-                val updated = RentalServices.updateRental(
-                    id,
-                    upd.startTime,
-                    upd.duration,
-                    upd.courtId
-                )
-                Response(Status.OK).with(rentalLens of updated)
-            } catch (e: IllegalArgumentException) {
-                Response(Status.NOT_FOUND)
-            }
-        },
-
-        // 7) Belirli tarih ve korte ait müsait saatleri getir
-        "/api/rentals/available" bind GET to { req ->
-            val cId     = Query.int().required("clubId")(req)
-            val coId    = Query.int().required("courtId")(req)
-            val dateStr = Query.string().required("date")(req)
-            val hours   = RentalServices.getAvailableHours(cId, coId, dateStr)
-            Response(Status.OK).body(hours.joinToString(","))
-        },
-
-        // 8) Kulüp ve korte ait kiralamaları getir
-        "/api/clubs/{clubId}/courts/{courtId}/rentals" bind GET to { req ->
-            val cId  = clubIdPath(req)
+        /* ------- GET /api/courts/{coid}/users (istatistik) --- */
+        "/api/courts/{courtId}/users" bind GET to { req ->
             val coId = courtIdPath(req)
-            Response(Status.OK).with(
-                rentalsLens of RentalServices.getRentalsForClubAndCourt(cId, coId)
-            )
-        },
-
-        // 9) Korte kiralama yapmış kullanıcılar ve kiralama sayıları
-        "api/courts/{courtId}/users" bind GET to { req ->
-            val cId = courtIdPath(req)
-            val usersWithCounts: List<Pair<Int, Int>> = RentalServices.getUsersWithRentalCountsByCourt(cId)
-
-            val json = usersWithCounts.joinToString(separator = ",", prefix = "[", postfix = "]") {
+            val stats = RentalServices.usersWithCountsByCourt(coId)
+            val json = stats.joinToString(",", "[", "]") {
                 """{"userId":${it.first},"rentalCount":${it.second}}"""
             }
-
             Response(Status.OK)
-                .body(json)
                 .header("Content-Type", "application/json")
+                .body(json)
         },
 
-        "api/users/{userId}/courts" bind Method.GET to { req ->
-            val uId = userIdPath(req)
-            val courtsWithCounts = RentalServices.getCourtsWithRentalCountsByUser(uId)
-
-            val json = courtsWithCounts.joinToString(
-                separator = ",", prefix = "[", postfix = "]"
-            ) { """{"courtId":${it.first},"rentalCount":${it.second}}""" }
-
+        /* ----- GET /api/users/{uid}/courts (istatistik) ------ */
+        "/api/users/{userId}/courts" bind GET to { req: Request ->
+            val uid  = userIdPath(req)
+            val stats = RentalServices.courtsWithCountsByUser(uid)
+            val json = stats.joinToString(",", "[", "]") {
+                """{"courtId":${it.first},"rentalCount":${it.second}}"""
+            }
             Response(Status.OK)
-                .body(json)
                 .header("Content-Type", "application/json")
+                .body(json)
+
+
         }
     )
 }

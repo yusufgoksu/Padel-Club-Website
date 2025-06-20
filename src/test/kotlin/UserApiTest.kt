@@ -19,37 +19,40 @@ class UserTests {
         }
     }
 
-    @Test
-    fun `should create user with manual userId`() {
-        val userId = 10
-        val user = UserServices.CreateUser(userId, "John Doe", "john.doe@example.com")
+    /* ---------- 1. OLUŞTURMA TESTİ ---------- */
 
-        assertEquals(userId, user.userId)
+    @Test
+    fun `should create user and auto-generate ID`() {
+        val user = UserServices.createUser("John Doe", "john.doe@example.com")
+
+        assertNotNull(user.userId)                 // ID veritabanı tarafından atandı mı?
         assertEquals("John Doe", user.name)
         assertEquals("john.doe@example.com", user.email)
     }
 
+    /* ---------- 2. E-POSTA TEKFARLAMA ---------- */
+
     @Test
     fun `should not allow duplicate email`() {
-        UserServices.CreateUser(11, "John Doe", "john.doe@example.com")
+        UserServices.createUser("John Doe", "john.doe@example.com")
 
         val exception = assertThrows<IllegalArgumentException> {
-            UserServices.CreateUser(12, "Jane Doe", "john.doe@example.com")
+            UserServices.createUser("Jane Doe", "john.doe@example.com")
         }
-
         assertEquals("Email already exists", exception.message)
     }
 
+    /* ---------- 3-4. ID İLE GETİRME ---------- */
+
     @Test
     fun `should get user by valid ID`() {
-        val userId = 13
-        val user = UserServices.CreateUser(userId, "John Doe", "john.doe@example.com")
-        val retrieved = UserServices.getUserById(user.userId)
+        val user = UserServices.createUser("John Doe", "john.doe@example.com")
+        val retrieved = UserServices.getUserById(user.userId!!)
 
         assertNotNull(retrieved)
         assertEquals(user.userId, retrieved?.userId)
-        assertEquals(user.name, retrieved?.name)
-        assertEquals(user.email, retrieved?.email)
+        assertEquals(user.name,   retrieved?.name)
+        assertEquals(user.email,  retrieved?.email)
     }
 
     @Test
@@ -58,19 +61,22 @@ class UserTests {
         assertNull(retrieved)
     }
 
+    /* ---------- 5. LİSTELEME ---------- */
+
     @Test
     fun `should list all users`() {
-        UserServices.CreateUser(14, "User 1", "user1@example.com")
-        UserServices.CreateUser(15, "User 2", "user2@example.com")
+        UserServices.createUser("User 1", "user1@example.com")
+        UserServices.createUser("User 2", "user2@example.com")
 
         val list = UserServices.getAllUsers()
         assertEquals(2, list.size)
     }
 
+    /* ---------- 6-7. E-POSTA İLE GETİRME ---------- */
+
     @Test
     fun `should get user by email`() {
-        val userId = 16
-        val user = UserServices.CreateUser(userId, "Alice", "alice@example.com")
+        val user = UserServices.createUser("Alice", "alice@example.com")
         val found = UserServices.getUserByEmail("alice@example.com")
 
         assertNotNull(found)
@@ -83,14 +89,15 @@ class UserTests {
         assertNull(found)
     }
 
+    /* ---------- 8-9. TOKEN ÜRETİMİ ---------- */
+
     @Test
     fun `should generate token for valid user`() {
-        val userId = 17
-        val user = UserServices.CreateUser(userId, "Bob", "bob@example.com")
-        val tokenPair = UserServices.generateUserToken(user.userId)
+        val user = UserServices.createUser("Bob", "bob@example.com")
+        val tokenPair = UserServices.generateUserToken(user.userId!!)
 
         assertNotNull(tokenPair)
-        assertEquals(user.userId, tokenPair?.second)
+        assertEquals(user.userId, tokenPair?.second)  // (token, userId)
         assertTrue(tokenPair?.first?.isNotBlank() == true)
     }
 

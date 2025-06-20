@@ -1,8 +1,16 @@
 package interfaces
+
 import models.Rental
 
 interface IrentalService {
-    fun createRental(rentalId: Int, clubId: Int, courtId: Int, userId: Int, date: String, duration: Int): Int
+
+    fun createRental(
+        clubId: Int,
+        courtId: Int,
+        userId: Int,
+        date: String,
+        duration: Int
+    ): Rental
 
     fun getRentalDetails(rentalId: Int): Rental?
 
@@ -15,5 +23,4 @@ interface IrentalService {
     fun deleteRental(rentalId: Int): Boolean
 
     fun updateRental(rentalId: Int, date: String, duration: Int): Boolean
-
 }

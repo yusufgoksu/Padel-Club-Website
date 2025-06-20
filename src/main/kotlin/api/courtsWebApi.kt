@@ -4,6 +4,7 @@ import models.Court
 import services.CourtServices
 import org.http4k.core.*
 import org.http4k.core.Method.GET
+import org.http4k.core.Method.POST
 import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.lens.Path
 import org.http4k.lens.int
@@ -19,24 +20,29 @@ fun courtsWebApi(): RoutingHttpHandler {
     val clubIdPath   = Path.int().of("clubId")
 
     return routes(
-        // 1) Tüm kortları JSON formatında listele
+        // 1) Tüm kortları JSON formatında listele (henüz impl edilmemiş)
         "/api/courts" bind GET to {
-            val allCourts = CourtServices.getAllCourts()
-            Response(Status.OK).with(courtsLens of allCourts)
+            try {
+                val allCourts = CourtServices.getAllCourts()
+                Response(Status.OK).with(courtsLens of allCourts)
+            } catch (e: NotImplementedError) {
+                Response(Status.NOT_IMPLEMENTED).body("Not implemented yet")
+            }
         },
 
-        // 2) Yeni bir kort ekle (manuel courtID bekleniyorsa)
-        "/api/courts" bind Method.POST to { req ->
+        // ✅ 2) Yeni bir kort ekle (artık courtID istemiyor)
+        "/api/courts" bind POST to { req ->
             try {
-                val courtReq = courtLens(req)  // courtReq.courtID, courtReq.name, courtReq.clubId olmalı
+                val courtReq = courtLens(req)
                 val created = CourtServices.addCourt(
-                    courtId = courtReq.courtID,  // manuel ID ise
                     name = courtReq.name,
                     clubId = courtReq.clubId
                 )
                 Response(Status.CREATED).with(courtLens of created)
             } catch (e: IllegalArgumentException) {
                 Response(Status.BAD_REQUEST).body(e.message ?: "Invalid input")
+            } catch (e: Exception) {
+                Response(Status.INTERNAL_SERVER_ERROR).body("Unexpected error: ${e.message}")
             }
         },
 

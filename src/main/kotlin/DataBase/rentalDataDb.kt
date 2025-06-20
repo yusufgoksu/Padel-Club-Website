@@ -9,47 +9,44 @@ import java.time.format.DateTimeFormatter
 object RentalDataDb : IrentalService {
 
     override fun createRental(
-        rentalId: Int,   // manuel ID parametresi eklendi
         clubId: Int,
         courtId: Int,
         userId: Int,
         date: String,
         duration: Int
-    ): Int {
+    ): Rental {
         val sql = """
-        INSERT INTO rentals (rentalId, clubId, courtId, userId, date, duration)
-        VALUES (?, ?, ?, ?, ?, ?);
-    """.trimIndent()
+            INSERT INTO rentals (clubId, courtId, userId, date, duration)
+            VALUES (?, ?, ?, ?, ?)
+            RETURNING rentalId;
+        """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
-                    val ts = try {
-                        java.sql.Timestamp.valueOf(
-                            LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                        )
-                    } catch (e: java.time.format.DateTimeParseException) {
-                        throw IllegalArgumentException("Invalid startTime format; must be ISO-8601 ", e)
+                    val ts = java.sql.Timestamp.valueOf(
+                        LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    )
+                    stmt.setInt(1, clubId)
+                    stmt.setInt(2, courtId)
+                    stmt.setInt(3, userId)
+                    stmt.setTimestamp(4, ts)
+                    stmt.setInt(5, duration)
+
+                    stmt.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            val rentalId = rs.getInt("rentalId")
+                            Rental(rentalId, clubId, courtId, userId, date, duration)
+                        } else {
+                            throw SQLException("Failed to create rental.")
+                        }
                     }
-
-                    stmt.setInt(1, rentalId)  // manuel id
-                    stmt.setInt(2, clubId)
-                    stmt.setInt(3, courtId)
-                    stmt.setInt(4, userId)
-                    stmt.setTimestamp(5, ts)
-                    stmt.setInt(6, duration)
-
-                    val rowsInserted = stmt.executeUpdate()
-                    if (rowsInserted == 0) throw SQLException("Failed to create rental")
-                    rentalId
                 }
             }
         } catch (e: SQLException) {
             throw RuntimeException("Error creating rental: ${e.message}", e)
         }
     }
-
-
 
     override fun getRentalDetails(rentalId: Int): Rental? {
         val sql = """
@@ -65,14 +62,13 @@ object RentalDataDb : IrentalService {
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) {
                             Rental(
-                                rentalID = rs.getInt("rentalId"),
-                                clubId = rs.getInt("clubId"),
-                                courtId = rs.getInt("courtId"),
-                                userId = rs.getInt("userId"),
-                                startTime = rs.getTimestamp("date")
-                                    .toLocalDateTime()
+                                rs.getInt("rentalId"),
+                                rs.getInt("clubId"),
+                                rs.getInt("courtId"),
+                                rs.getInt("userId"),
+                                rs.getTimestamp("date").toLocalDateTime()
                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                duration = rs.getInt("duration")
+                                rs.getInt("duration")
                             )
                         } else null
                     }
@@ -102,14 +98,13 @@ object RentalDataDb : IrentalService {
                         val list = mutableListOf<Rental>()
                         while (rs.next()) {
                             list += Rental(
-                                rentalID = rs.getInt("rentalId"),
-                                clubId = rs.getInt("clubId"),
-                                courtId = rs.getInt("courtId"),
-                                userId = rs.getInt("userId"),
-                                startTime = rs.getTimestamp("date")
-                                    .toLocalDateTime()
+                                rs.getInt("rentalId"),
+                                rs.getInt("clubId"),
+                                rs.getInt("courtId"),
+                                rs.getInt("userId"),
+                                rs.getTimestamp("date").toLocalDateTime()
                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                duration = rs.getInt("duration")
+                                rs.getInt("duration")
                             )
                         }
                         list
@@ -136,14 +131,13 @@ object RentalDataDb : IrentalService {
                         val list = mutableListOf<Rental>()
                         while (rs.next()) {
                             list += Rental(
-                                rentalID = rs.getInt("rentalId"),
-                                clubId = rs.getInt("clubId"),
-                                courtId = rs.getInt("courtId"),
-                                userId = rs.getInt("userId"),
-                                startTime = rs.getTimestamp("date")
-                                    .toLocalDateTime()
+                                rs.getInt("rentalId"),
+                                rs.getInt("clubId"),
+                                rs.getInt("courtId"),
+                                rs.getInt("userId"),
+                                rs.getTimestamp("date").toLocalDateTime()
                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                duration = rs.getInt("duration")
+                                rs.getInt("duration")
                             )
                         }
                         list
@@ -186,7 +180,7 @@ object RentalDataDb : IrentalService {
             throw RuntimeException("Error computing booked hours: ${e.message}", e)
         }
 
-        return (0..23).map { "$date ${it}:00" } - booked
+        return (8..17).map { "$date ${it}:00" } - booked
     }
 
     override fun updateRental(rentalId: Int, date: String, duration: Int): Boolean {
@@ -230,13 +224,14 @@ object RentalDataDb : IrentalService {
             throw RuntimeException("Error deleting rental: ${e.message}", e)
         }
     }
+
     fun getUsersWithRentalCountsByCourt(courtID: Int): List<Pair<Int, Int>> {
         val sql = """
-        SELECT userId, COUNT(*) as rental_count
-        FROM rentals
-        WHERE courtId = ?
-        GROUP BY userId;
-    """.trimIndent()
+            SELECT userId, COUNT(*) as rental_count
+            FROM rentals
+            WHERE courtId = ?
+            GROUP BY userId;
+        """.trimIndent()
 
         val list = mutableListOf<Pair<Int, Int>>()
 
@@ -258,11 +253,11 @@ object RentalDataDb : IrentalService {
 
     fun getCourtsWithRentalCountsByUser(userId: Int): List<Pair<Int, Int>> {
         val sql = """
-        SELECT courtId, COUNT(*) as rental_count
-        FROM rentals
-        WHERE userId = ?
-        GROUP BY courtId;
-    """.trimIndent()
+            SELECT courtId, COUNT(*) as rental_count
+            FROM rentals
+            WHERE userId = ?
+            GROUP BY courtId;
+        """.trimIndent()
 
         val list = mutableListOf<Pair<Int, Int>>()
 
@@ -281,7 +276,5 @@ object RentalDataDb : IrentalService {
         }
         return list
     }
-
-
 
 }

@@ -23,8 +23,10 @@ object CourtsDataMem {
     }
 
     /** ID ile kortu getirir; bulunamazsa hata fırlatır. */
-    fun getCourtById(courtID: Int): Court? {
-        require(courtID > 0) { "Court ID must be greater than 0" }
+    fun getCourtById(courtID: Int?): Court? {
+        if (courtID != null) {
+            require(courtID > 0) { "Court ID must be greater than 0" }
+        }
         require(courts.containsKey(courtID)) { "Court ID '$courtID' not found" }
         return courts[courtID]
     }

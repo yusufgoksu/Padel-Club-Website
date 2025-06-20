@@ -1,22 +1,99 @@
-// 🏟️ Add Club dropdown'u düzgün şekilde userId ile doldurur
+/* Kullanıcı dropdown’unu doldurur */
 async function loadUserEmailsForDropdown() {
-    const select = document.getElementById("clubOwnerSelect");
     try {
         const res = await fetch("/api/users");
-        if (!res.ok) throw new Error("Failed to fetch users");
-
+        if (!res.ok) throw new Error();
         const users = await res.json();
+        const options = `<option disabled selected value="">Choose user</option>` +
+            users.map(u => `<option value="${u.userId}">${u.name} (${u.email})</option>`).join("");
 
-        select.innerHTML =
-            `<option value="" disabled selected>Choose owner</option>` +
-            users.map(user =>
-                `<option value="${user.userId}">${user.name} (${user.email})</option>`
-            ).join("");
+        const sel1 = document.getElementById("clubOwnerSelect");
+        if (sel1) sel1.innerHTML = options;
 
-    } catch (err) {
-        select.innerHTML = `<option disabled>Error loading users</option>`;
+        const sel2 = document.getElementById("rentalUserSelect");
+        if (sel2) sel2.innerHTML = options;
+
+    } catch {
+        const err = `<option disabled>Error loading users</option>`;
+        const sel1 = document.getElementById("clubOwnerSelect");
+        if (sel1) sel1.innerHTML = err;
+
+        const sel2 = document.getElementById("rentalUserSelect");
+        if (sel2) sel2.innerHTML = err;
     }
 }
+
+/* Kulüp dropdown’unu doldurur */
+async function loadClubDropdown() {
+    const courtSel = document.getElementById("courtClubSelect");
+    const rentalSel = document.getElementById("rentalClubSelect");
+    try {
+        const res = await fetch("/api/clubs");
+        if (!res.ok) throw new Error();
+        const clubs = await res.json();
+        const options = `<option disabled selected value="">Choose club</option>` +
+            clubs.map(c => `<option value="${c.clubID}">${c.name}</option>`).join("");
+        if (courtSel) courtSel.innerHTML = options;
+        if (rentalSel) rentalSel.innerHTML = options;
+    } catch {
+        if (courtSel) courtSel.innerHTML = `<option disabled>Error loading clubs</option>`;
+        if (rentalSel) rentalSel.innerHTML = `<option disabled>Error loading clubs</option>`;
+    }
+}
+
+/* Kort dropdown’unu kulübe göre doldurur */
+async function loadCourtDropdown(clubId) {
+    const sel = document.getElementById("rentalCourtSelect");
+    if (!sel || !clubId) return;
+    try {
+        const res = await fetch(`/api/clubs/${clubId}/courts`);
+        if (!res.ok) throw new Error();
+        const courts = await res.json();
+        sel.innerHTML = `<option disabled selected value="">Choose court</option>` +
+            courts.map(c => `<option value="${c.courtID}">${c.name}</option>`).join("");
+    } catch {
+        sel.innerHTML = `<option disabled>Error loading courts</option>`;
+    }
+}
+
+
+/* Check Availability Dropdownları Doldurur */
+async function loadAvailabilityDropdowns() {
+    const clubSelect = document.getElementById("availabilityClubSelect");
+    const courtSelect = document.getElementById("availabilityCourtSelect");
+
+    try {
+        const res = await fetch("/api/clubs");
+        if (!res.ok) throw new Error("Clubs fetch failed");
+
+        const clubs = await res.json();
+
+        clubSelect.innerHTML =
+            `<option disabled selected value="">Choose club</option>` +
+            clubs.map(c => `<option value="${c.clubID}">${c.name}</option>`).join("");
+
+        clubSelect.addEventListener("change", async () => {
+            const clubId = clubSelect.value;
+            try {
+                const resCourts = await fetch(`/api/clubs/${clubId}/courts`);
+                if (!resCourts.ok) throw new Error("Courts fetch failed");
+
+                const courts = await resCourts.json();
+                courtSelect.innerHTML =
+                    `<option disabled selected value="">Choose court</option>` +
+                    courts.map(c => `<option value="${c.courtID}">${c.name}</option>`).join("");
+            } catch {
+                courtSelect.innerHTML = `<option disabled>Error loading courts</option>`;
+            }
+        });
+
+    } catch {
+        clubSelect.innerHTML = `<option disabled>Error loading clubs</option>`;
+        courtSelect.innerHTML = `<option disabled>Select club first</option>`;
+    }
+}
+
+
 
 export function homeHandler(app) {
     app.innerHTML = `
@@ -26,138 +103,260 @@ export function homeHandler(app) {
       <a href="/clubs" data-link>All Clubs</a>
     </nav>
 
-    <!-- 🔍 Search Club -->
-    <form id="searchForm" class="mt-4">
-      <div class="input-group mb-3" style="max-width: 400px;">
+    <!-- Search Club -->
+    <form id="searchForm" class="mt-4" style="max-width:400px;">
+      <div class="input-group mb-3">
         <input type="text" id="searchInput" class="form-control" placeholder="Search club by name">
         <button class="btn btn-primary" type="submit">Search</button>
       </div>
     </form>
-
     <div id="searchResults"></div>
 
-    <!-- 👤 Add User -->
-    <div class="card p-3 my-4" style="max-width: 400px;">
-        <h4>Add New User</h4>
-        <input type="text" id="userName" class="form-control mb-2" placeholder="Name">
-        <input type="email" id="userEmail" class="form-control mb-2" placeholder="Email">
-        <button class="btn btn-success" id="addUserBtn">Add User</button>
-        <div id="userAddStatus" class="mt-2"></div>
+    <div class="d-flex gap-4 my-4">
+
+  <!-- 👤 Add User -->
+  <div class="card p-3" style="width:400px;">
+    <h4>Add New User</h4>
+    <input id="userName" class="form-control mb-2" placeholder="Name">
+    <input id="userEmail" class="form-control mb-2" placeholder="Email" type="email">
+    <button id="addUserBtn" class="btn btn-success">Add User</button>
+    <div id="userAddStatus" class="mt-2"></div>
+  </div>
+
+  <!-- 📅 Check Court Availability -->
+  <div class="card p-3" style="width:400px;">
+    <h4>Check Court Availability</h4>
+    <select id="availabilityClubSelect" class="form-select mb-2"></select>
+    <select id="availabilityCourtSelect" class="form-select mb-2"></select>
+    <input id="availabilityDate" class="form-control mb-2" type="date">
+    <button id="checkAvailabilityBtn" class="btn btn-info">Check Availability</button>
+    <div id="availabilityResults" class="mt-3"></div>
+  </div>
+
+</div>
+
+
+
+    <!-- Add Club -->
+    <div class="card p-3 my-4" style="max-width:400px;">
+      <h4>Add New Club</h4>
+      <input id="clubName" class="form-control mb-2" placeholder="Club Name">
+      <select id="clubOwnerSelect" class="form-select mb-2"></select>
+      <button id="addClubBtn" class="btn btn-primary">Add Club</button>
+      <div id="clubAddStatus" class="mt-2"></div>
     </div>
 
-    <!-- 🏟️ Add Club -->
-    <div class="card p-3 my-4" style="max-width: 400px;">
-        <h4>Add New Club</h4>
-        <input type="text" id="clubName" class="form-control mb-2" placeholder="Club Name">
-        <select id="clubOwnerSelect" class="form-select mb-2">
-          <option value="" disabled selected>Choose owner</option>
-        </select>
-        <button class="btn btn-primary" id="addClubBtn">Add Club</button>
-        <div id="clubAddStatus" class="mt-2"></div>
+    <!-- Add Court -->
+    <div class="card p-3 my-4" style="max-width:400px;">
+      <h4>Add New Court</h4>
+      <select id="courtClubSelect" class="form-select mb-2"></select>
+      <input id="courtName" class="form-control mb-2" placeholder="Court Name">
+      <button id="addCourtBtn" class="btn btn-primary">Add Court</button>
+      <div id="courtAddStatus" class="mt-2"></div>
     </div>
-  `;
 
-    // 🔍 Search Club handler
-    document.getElementById("searchForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const name = document.getElementById("searchInput").value.trim();
+    <!-- Add Rental -->
+    <div class="card p-3 my-4" style="max-width:400px;">
+      <h4>Add New Rental</h4>
+      <select id="rentalUserSelect" class="form-select mb-2"></select>
+      <select id="rentalClubSelect" class="form-select mb-2"></select>
+      <select id="rentalCourtSelect" class="form-select mb-2"></select>
+      <input id="rentalDate" class="form-control mb-2" type="date">
+      <input id="rentalHour" class="form-control mb-2" type="number" placeholder="Start hour (8-17)">
+      <input id="rentalDuration" class="form-control mb-2" type="number" placeholder="Duration (1-10)">
+      <button id="addRentalBtn" class="btn btn-primary">Add Rental</button>
+      <div id="rentalAddStatus" class="mt-2"></div>
+    </div>
 
-        if (!name) {
-            document.getElementById("searchResults").innerHTML = `<p class="text-danger">Please enter a club name.</p>`;
-            return;
-        }
+   
+    `;
+
+    // Event Listeners
+    document.getElementById("availabilityClubSelect").addEventListener("change", e => {
+        loadCourtDropdown(parseInt(e.target.value), "availabilityCourtSelect");
+    });
+
+    document.getElementById("rentalClubSelect").addEventListener("change", e => {
+        loadCourtDropdown(parseInt(e.target.value), "rentalCourtSelect");
+    });
+
+    document.getElementById("checkAvailabilityBtn").addEventListener("click", async () => {
+        const clubId = parseInt(document.getElementById("availabilityClubSelect").value);
+        const courtId = parseInt(document.getElementById("availabilityCourtSelect").value);
+        const date = document.getElementById("availabilityDate").value;
+        const resultsDiv = document.getElementById("availabilityResults");
 
         try {
-            const response = await fetch(`/api/clubs/search?name=${encodeURIComponent(name)}`);
-            if (!response.ok) throw new Error("Search failed");
-            const clubs = await response.json();
-
-            if (clubs.length === 0) {
-                document.getElementById("searchResults").innerHTML = `<p>No clubs found for "<strong>${name}</strong>".</p>`;
-                return;
-            }
-
-            const listHtml = `
-                <ul class="list-group">
-                  ${clubs.map(club => `<li class="list-group-item"><a href="/clubs/${club.clubID}" data-link>${club.name}</a></li>`).join("")}
-                </ul>
-            `;
-
-            document.getElementById("searchResults").innerHTML = listHtml;
-
-        } catch (error) {
-            document.getElementById("searchResults").innerHTML = `<p class="text-danger">Error fetching clubs.</p>`;
+            const res = await fetch(`/api/rentals/available?clubId=${clubId}&courtId=${courtId}&date=${date}`);
+            if (!res.ok) throw new Error();
+            const availableHours = (await res.text()).split(",").filter(Boolean);
+            resultsDiv.innerHTML = availableHours.length
+                ? `Available Hours: ${availableHours.join(", ")}`
+                : "No hours available.";
+        } catch {
+            resultsDiv.textContent = "Error loading availability.";
         }
     });
 
-    // 👤 Add User handler
+    document.getElementById("searchForm").addEventListener("submit", async e => {
+        e.preventDefault();
+        const name = document.getElementById("searchInput").value.trim();
+        const out = document.getElementById("searchResults");
+        if (!name) return (out.innerHTML = `<p class="text-danger">Please enter a club name.</p>`);
+        try {
+            const res = await fetch(`/api/clubs/search?name=${encodeURIComponent(name)}`);
+            if (!res.ok) throw new Error();
+            const clubs = await res.json();
+            out.innerHTML = clubs.length
+                ? `<ul class="list-group">${clubs.map(c => `<li class="list-group-item"><a data-link href="/clubs/${c.clubID}">${c.name}</a></li>`).join("")}</ul>`
+                : `<p>No clubs found for "<strong>${name}</strong>".</p>`;
+        } catch {
+            out.innerHTML = `<p class="text-danger">Error fetching clubs.</p>`;
+        }
+    });
+
     document.getElementById("addUserBtn").addEventListener("click", async () => {
         const name = document.getElementById("userName").value.trim();
         const email = document.getElementById("userEmail").value.trim();
-        const statusDiv = document.getElementById("userAddStatus");
+        const msg = document.getElementById("userAddStatus");
+        if (!name || !email) return (msg.textContent = "Name and email cannot be empty.");
 
-        if (!name || !email) {
-            statusDiv.innerHTML = `<span class="text-danger">Name and email must not be empty.</span>`;
-            return;
-        }
+        const res = await fetch("/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email })
+        });
 
-        try {
-            const res = await fetch("/api/users", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email })
-            });
-
-            if (res.ok) {
-                statusDiv.innerHTML = `<span class="text-success">User created successfully!</span>`;
-                document.getElementById("userName").value = "";
-                document.getElementById("userEmail").value = "";
-                await loadUserEmailsForDropdown(); // 🔄 Yeni kullanıcı dropdown'a eklensin
-            } else {
-                const errText = await res.text();
-                statusDiv.innerHTML = `<span class="text-danger">Error: ${errText}</span>`;
-            }
-        } catch (e) {
-            statusDiv.innerHTML = `<span class="text-danger">Failed to connect to server.</span>`;
+        if (res.ok) {
+            msg.textContent = "User created!";
+            document.getElementById("userName").value = "";
+            document.getElementById("userEmail").value = "";
+            loadUserEmailsForDropdown();
+        } else {
+            msg.textContent = "Error: " + (await res.text());
         }
     });
 
-    // 🏟️ Add Club handler
     document.getElementById("addClubBtn").addEventListener("click", async () => {
         const name = document.getElementById("clubName").value.trim();
-        const select = document.getElementById("clubOwnerSelect");
-        const userID = parseInt(select.value, 10);
-        const statusDiv = document.getElementById("clubAddStatus");
+        const owner = parseInt(document.getElementById("clubOwnerSelect").value, 10);
+        const msg = document.getElementById("clubAddStatus");
 
-        if (!name || isNaN(userID)) {
-            statusDiv.innerHTML = `<span class="text-danger">Please fill all fields.</span>`;
-            return;
-        }
+        if (!name || Number.isNaN(owner)) return (msg.textContent = "Fill all fields.");
 
-        try {
-            const res = await fetch("/api/clubs", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, userID })
-            });
+        const res = await fetch("/api/clubs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, userID: owner })
+        });
 
-            if (res.ok) {
-                const newClub = await res.json();
-                statusDiv.innerHTML = `<span class="text-success">Club "${newClub.name}" created successfully!</span>`;
-                document.getElementById("clubName").value = "";
-                select.selectedIndex = 0;
-            } else {
-                const errText = await res.text();
-                statusDiv.innerHTML = `<span class="text-danger">Error: ${errText}</span>`;
-            }
-        } catch (e) {
-            statusDiv.innerHTML = `<span class="text-danger">Failed to connect to server.</span>`;
+        if (res.ok) {
+            msg.textContent = "Club created!";
+            document.getElementById("clubName").value = "";
+            document.getElementById("clubOwnerSelect").selectedIndex = 0;
+            loadClubDropdown();
+        } else {
+            msg.textContent = "Error: " + (await res.text());
         }
     });
 
-    // 🔄 Load dropdown initially
+    document.getElementById("addCourtBtn").addEventListener("click", async () => {
+        const clubSel = document.getElementById("courtClubSelect");
+        const clubId = parseInt(clubSel.value, 10);
+        const courtName = document.getElementById("courtName").value.trim();
+        const msg = document.getElementById("courtAddStatus");
+
+        if (!courtName || Number.isNaN(clubId))
+            return (msg.textContent = "Please fill all fields.");
+
+        const res = await fetch("/api/courts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: courtName, clubId })
+        });
+
+        if (res.ok) {
+            msg.textContent = `Court "${courtName}" created!`;
+            document.getElementById("courtName").value = "";
+            clubSel.selectedIndex = 0;
+        } else {
+            msg.textContent = "Error: " + (await res.text());
+        }
+    });
+
+    document.getElementById("rentalClubSelect").addEventListener("change", async (e) => {
+        const clubId = parseInt(e.target.value, 10);
+        if (!Number.isNaN(clubId)) await loadCourtDropdown(clubId);
+    });
+    document.getElementById("addRentalBtn").addEventListener("click", async () => {
+        const userId = parseInt(document.getElementById("rentalUserSelect").value, 10);
+        const clubId = parseInt(document.getElementById("rentalClubSelect").value, 10);
+        const courtId = parseInt(document.getElementById("rentalCourtSelect").value, 10);
+        let rawDate = document.getElementById("rentalDate").value;
+        const hour = parseInt(document.getElementById("rentalHour").value, 10);
+        const duration = parseInt(document.getElementById("rentalDuration").value, 10);
+        const msg = document.getElementById("rentalAddStatus");
+
+        if ([userId, clubId, courtId, hour, duration].some(isNaN) || !rawDate)
+            return (msg.textContent = "Fill all fields correctly.");
+
+        if (hour < 8 || hour > 17) {
+            msg.textContent = "Start hour must be between 08 and 17.";
+            return;
+        }
+
+        // 📌 Tarihi ISO-8601 formatına çevir (yyyy-MM-dd)
+        if (rawDate.includes(".")) {
+            const [day, month, year] = rawDate.split(".");
+            rawDate = `${year}-${month}-${day}`;
+        }
+
+        const date = rawDate;
+        const startTime = `${date}T${hour.toString().padStart(2, '0')}:00:00`;
+
+        try {
+            const availableHoursRes = await fetch(
+                `/api/rentals/available?clubId=${clubId}&courtId=${courtId}&date=${date}`
+            );
+            if (!availableHoursRes.ok) throw new Error("Failed to fetch available hours");
+
+            const availableHoursText = await availableHoursRes.text();
+            const availableHours = availableHoursText
+                .split(',')
+                .map(h => parseInt(h))
+                .filter(h => !isNaN(h)); // sadece sayı olan saatleri al
+
+            const requiredHours = Array.from({ length: duration }, (_, i) => hour + i);
+            const isAvailable = requiredHours.every(h => availableHours.includes(h));
+
+            if (!isAvailable) {
+                msg.textContent = "Selected time is not available. Please choose another slot.";
+                return;
+            }
+
+            const res = await fetch("/api/rentals", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, clubId, courtId, startTime, duration })
+            });
+
+            if (res.ok) {
+                msg.textContent = "Rental created!";
+            } else {
+                const errText = await res.text();
+                msg.textContent = "Error: " + errText;
+            }
+        } catch (e) {
+            msg.textContent = "Unexpected error: " + e.message;
+        }
+    });
+
+
     loadUserEmailsForDropdown();
+    loadClubDropdown();
+    loadAvailabilityDropdowns();
 }
+
 
 
 export async function clubsListHandler(app) {

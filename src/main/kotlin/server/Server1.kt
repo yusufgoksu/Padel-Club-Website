@@ -15,7 +15,6 @@ import org.http4k.server.asServer
 import org.http4k.routing.*
 import org.http4k.routing.ResourceLoader.Companion.Classpath
 
-
 fun spaAndStatic(): RoutingHttpHandler {
     val indexHtml = Thread.currentThread().contextClassLoader
         .getResource("static-content/index.html")!!
@@ -23,15 +22,11 @@ fun spaAndStatic(): RoutingHttpHandler {
 
     return routes(
         "/static-content" bind static(Classpath("static-content")),
-
-        // ⛔️ /api ile başlayan istekleri dışlıyoruz
         "/" bind GET to { _: Request ->
             Response(Status.OK)
                 .header("Content-Type", "text/html; charset=UTF-8")
                 .body(indexHtml)
         },
-
-        // ✅ sadece /api dışındaki yollar için fallback
         "/{any:.*}" bind GET to { req: Request ->
             if (req.uri.path.startsWith("/api")) {
                 Response(Status.NOT_FOUND)
@@ -44,29 +39,33 @@ fun spaAndStatic(): RoutingHttpHandler {
     )
 }
 
-
 fun addTestData() {
     println("✅ Adding test data...")
 
     val u1 = UsersDataMem.addUser("Yusuf", "yusuf@example.com")
-    val u2 = UsersDataMem.addUser("Mert",  "mert@example.com")
-    val u3 = UsersDataMem.addUser("Ali",   "ali@example.com")
+    val u2 = UsersDataMem.addUser("Mert", "mert@example.com")
+    val u3 = UsersDataMem.addUser("Ali", "ali@example.com")
 
-    val c1 = ClubsDataMem.addClub("Padel Club A", u1.userId!!)
-    val c2 = ClubsDataMem.addClub("Padel Club B", u2.userId!!)
-    val c3 = ClubsDataMem.addClub("Padel Club C", u3.userId!!)
+    val c1 = ClubsDataMem.addClub("Padel Club A", u1.userId)
+    val c2 = ClubsDataMem.addClub("Padel Club B", u2.userId)
+    val c3 = ClubsDataMem.addClub("Padel Club C", u3.userId)
 
-    listOf(c1 to u1.userId, c2 to u2.userId, c3 to u3.userId).forEach { (club, owner) ->
+    listOf(c1 to u1, c2 to u2, c3 to u3).forEach { (club, user) ->
+        val clubId = requireNotNull(club.clubID) { "Club ID must not be null" }
+
         val courts = listOf(
-            CourtsDataMem.addCourt("Court 1", club.clubID!!),
-            CourtsDataMem.addCourt("Court 2", club.clubID),
-            CourtsDataMem.addCourt("Court 3", club.clubID)
+            CourtsDataMem.addCourt("Court 1", clubId),
+            CourtsDataMem.addCourt("Court 2", clubId),
+            CourtsDataMem.addCourt("Court 3", clubId)
         )
+
         courts.forEachIndexed { idx, court ->
+            val courtId = requireNotNull(court.courtID) { "Court ID must not be null" }
+
             RentalsDataMem.addRental(
-                clubId = club.clubID,
-                courtId = court.courtID,
-                userId = owner!!,
+                clubId = clubId,
+                courtId = courtId,
+                userId = user.userId,
                 startTime = "2025-03-27T1${4 + idx}:00:00",
                 duration = 2
             )
@@ -75,6 +74,7 @@ fun addTestData() {
 
     println("✅ Test data added.")
 }
+
 fun main() {
     val PORT = 9000
     addTestData()
@@ -88,6 +88,6 @@ fun main() {
     )
 
     app.asServer(SunHttp(PORT)).start().also {
-        println("Server running on http://localhost:$PORT")
+        println("🚀 Server running on http://localhost:$PORT")
     }
 }
