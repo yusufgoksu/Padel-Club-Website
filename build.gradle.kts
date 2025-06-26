@@ -21,6 +21,9 @@ dependencies {
     implementation("org.http4k:http4k-client-okhttp:4.41.1.0")
     implementation("org.http4k:http4k-format-kotlinx-serialization:4.41.1.0")
     implementation("org.http4k:http4k-client-apache:4.41.0.0") // örnek son sürüm
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
+    implementation("org.http4k:http4k-core:4.x.x") // versiyonuna göre değiştir
+
 
     // ✅ Eksik Bağımlılık: Routing Desteği
 

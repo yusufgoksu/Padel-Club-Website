@@ -12,7 +12,12 @@ object CourtServices {
         require(clubId > 0) { "Club ID must be greater than 0" }
         require(ClubsDataDb.getClubDetails(clubId) != null) { "Club ID '$clubId' not found" }
 
-        return CourtsDataDb.createCourt(name, clubId)  // Fonksiyon Court döndürüyor
+        // Aynı kulüp altında aynı isimde kort var mı?
+        val existingCourt = CourtsDataDb.getCourtsByClub(clubId)
+            .any { it.name.equals(name, ignoreCase = true) }
+        require(!existingCourt) { "A court with the same name already exists in this club." }
+
+        return CourtsDataDb.createCourt(name, clubId)
     }
 
 

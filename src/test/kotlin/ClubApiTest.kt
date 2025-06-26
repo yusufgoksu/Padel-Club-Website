@@ -7,11 +7,10 @@ import org.junit.jupiter.api.assertThrows
 import services.ClubServices
 import services.UserServices
 
-class ClubTest {
+class ClubTests {
 
     @BeforeEach
     fun setup() {
-        // Veritabanını sıfırla
         Database.getConnection().use { conn ->
             conn.prepareStatement("DELETE FROM rentals;").executeUpdate()
             conn.prepareStatement("DELETE FROM courts;").executeUpdate()
@@ -20,72 +19,72 @@ class ClubTest {
         }
     }
 
-    @Test
-    fun `create club with manual userId`() {
-        val userId = 10
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner@example.com")
-        assertEquals(userId, user.userId)
+    /* ---------- 1. OLUŞTURMA ---------- */
 
-        val clubId = 20
-        val club = ClubServices.addClub(clubId, "Tennis Club", user.userId)
-        assertEquals(clubId, club.clubID)
+    @Test
+    fun `create club and auto-generate IDs`() {
+        val owner = UserServices.createUser("Club Owner", "owner@example.com")
+        val club  = ClubServices.addClub("Tennis Club", owner.userId!!)
+
+        assertNotNull(owner.userId)
+        assertNotNull(club.clubID)
         assertEquals("Tennis Club", club.name)
-        assertEquals(user.userId, club.userID)
+        assertEquals(owner.userId, club.userID)
     }
+
+    /* ---------- 2. GEÇERSİZ KULLANICI ---------- */
 
     @Test
     fun `cannot create club with non-existent user`() {
-        val clubId = 5
-        val userID = 999
-        val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.addClub(clubId, "Phantom Club", userID)
+        val ex = assertThrows<IllegalArgumentException> {
+            ClubServices.addClub("Phantom Club", 999)
         }
-        assertEquals("User ID '999' not found", exception.message)
+        assertEquals("User ID '999' not found", ex.message)
     }
 
-    @Test
-    fun `create multiple clubs with the same user and manual IDs`() {
-        val userId = 30
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner2@example.com")
+    /* ---------- 3. AYNI KULLANICI İLE BİRDEN FAZLA KULÜP ---------- */
 
-        val club1Id = 101
-        val club2Id = 102
-        val club1 = ClubServices.addClub(club1Id, "Tennis Club", user.userId)
-        val club2 = ClubServices.addClub(club2Id, "Football Club", user.userId)
+    @Test
+    fun `create multiple clubs with the same user`() {
+        val owner = UserServices.createUser("Club Owner", "owner2@example.com")
+
+        val club1 = ClubServices.addClub("Tennis Club",   owner.userId!!)
+        val club2 = ClubServices.addClub("Football Club", owner.userId!!)
 
         val clubs = ClubServices.getAllClubs()
         assertEquals(2, clubs.size)
-        assertTrue(clubs.any { it.name == "Tennis Club" && it.clubID == club1Id })
-        assertTrue(clubs.any { it.name == "Football Club" && it.clubID == club2Id })
+        assertTrue(clubs.any { it.name == "Tennis Club"   && it.clubID == club1.clubID })
+        assertTrue(clubs.any { it.name == "Football Club" && it.clubID == club2.clubID })
     }
+
+    /* ---------- 4-5. BOŞ VE ÇOK UZUN İSİM ---------- */
 
     @Test
     fun `cannot create club with empty name`() {
-        val userId = 40
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner3@example.com")
-        val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.addClub(55, "", user.userId)
+        val owner = UserServices.createUser("Club Owner", "owner3@example.com")
+        val ex = assertThrows<IllegalArgumentException> {
+            ClubServices.addClub("", owner.userId!!)
         }
-        assertEquals("Club name cannot be empty", exception.message)
+        assertEquals("Club name cannot be empty", ex.message)
     }
 
     @Test
     fun `cannot create club with name exceeding max length`() {
-        val userId = 50
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner4@example.com")
+        val owner = UserServices.createUser("Club Owner", "owner4@example.com")
         val longName = "A".repeat(101)
-        val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.addClub(56, longName, user.userId)
+        val ex = assertThrows<IllegalArgumentException> {
+            ClubServices.addClub(longName, owner.userId!!)
         }
-        assertEquals("Club name cannot exceed 100 characters", exception.message)
+        assertEquals("Club name cannot exceed 100 characters", ex.message)
     }
+
+    /* ---------- 6. TÜM KULÜPLERİ LİSTELE ---------- */
 
     @Test
     fun `list all clubs`() {
-        val userId = 60
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner5@example.com")
-        ClubServices.addClub(200, "Tennis Club", user.userId)
-        ClubServices.addClub(201, "Football Club", user.userId)
+        val owner = UserServices.createUser("Club Owner", "owner5@example.com")
+        ClubServices.addClub("Tennis Club",   owner.userId!!)
+        ClubServices.addClub("Football Club", owner.userId!!)
 
         val clubs = ClubServices.getAllClubs()
         assertEquals(2, clubs.size)
@@ -93,69 +92,70 @@ class ClubTest {
         assertTrue(clubs.any { it.name == "Football Club" })
     }
 
+    /* ---------- 7. SAHİPLİK DOĞRULAMA ---------- */
+
     @Test
     fun `verify club owner`() {
-        val userId = 70
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner6@example.com")
-        val clubId = 300
-        val club = ClubServices.addClub(clubId, "Tennis Club", user.userId)
-        assertEquals(user.userId, club.userID)
+        val owner = UserServices.createUser("Club Owner", "owner6@example.com")
+        val club  = ClubServices.addClub("Tennis Club", owner.userId!!)
+        assertEquals(owner.userId, club.userID)
     }
+
+    /* ---------- 8-9. ID İLE GETİRME ---------- */
 
     @Test
     fun `get club by valid id`() {
-        val userId = 80
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner7@example.com")
-        val clubId = 400
-        val created = ClubServices.addClub(clubId, "Basketball Club", user.userId)
-        val foundClub = ClubServices.getClubById(clubId)
+        val owner = UserServices.createUser("Club Owner", "owner7@example.com")
+        val created = ClubServices.addClub("Basketball Club", owner.userId!!)
+        val found   = ClubServices.getClubById(created.clubID!!)
 
-        assertNotNull(foundClub)
-        assertEquals(created.clubID, foundClub?.clubID)
-        assertEquals("Basketball Club", foundClub?.name)
+        assertNotNull(found)
+        assertEquals(created.clubID, found?.clubID)
+        assertEquals("Basketball Club", found?.name)
     }
 
     @Test
     fun `should throw when getting club with invalid id`() {
-        val invalidID = 9999
-        val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.getClubById(invalidID)
+        val ex = assertThrows<IllegalArgumentException> {
+            ClubServices.getClubById(9999)
         }
-        assertEquals("Club ID '9999' not found", exception.message)
+        assertEquals("Club ID '9999' not found", ex.message)
     }
+
+    /* ---------- 10-11. DETAY GETİRME ---------- */
 
     @Test
     fun `get club details by valid id`() {
-        val userId = 90
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner8@example.com")
-        val clubId = 500
-        val created = ClubServices.addClub(clubId, "Chess Club", user.userId)
-        val details = ClubServices.getClubDetails(clubId)
+        val owner = UserServices.createUser("Club Owner", "owner8@example.com")
+        val created = ClubServices.addClub("Chess Club", owner.userId!!)
+        val details = ClubServices.getClubDetails(created.clubID!!)
 
         assertNotNull(details)
         assertEquals(created.clubID, details?.clubID)
-        assertEquals("Chess Club", details?.name)
-        assertEquals(user.userId, details?.userID)
+        assertEquals("Chess Club",   details?.name)
+        assertEquals(owner.userId,   details?.userID)
     }
 
     @Test
     fun `should throw when getting club details with invalid id`() {
-        val invalidID = 9999
-        val exception = assertThrows<IllegalArgumentException> {
-            ClubServices.getClubDetails(invalidID)
+        val ex = assertThrows<IllegalArgumentException> {
+            ClubServices.getClubDetails(9999)
         }
-        assertEquals("Club ID '9999' not found", exception.message)
+        assertEquals("Club ID '9999' not found", ex.message)
     }
+
+    /* ---------- 12. AYNI İSİMLE FARKLI KULÜPLER ---------- */
 
     @Test
     fun `can create clubs with duplicate names`() {
-        val userId = 100
-        val user = UserServices.CreateUser(userId, "Club Owner", "owner9@example.com")
-        val club1 = ClubServices.addClub(600, "Duplicate Club", user.userId)
-        val club2 = ClubServices.addClub(601, "Duplicate Club", user.userId)
+        val owner = UserServices.createUser("Club Owner", "owner9@example.com")
+        val club1 = ClubServices.addClub("Duplicate Club", owner.userId!!)
+        val club2 = ClubServices.addClub("Duplicate Club", owner.userId!!)
 
         assertNotEquals(club1.clubID, club2.clubID)
     }
+
+    /* ---------- 13. BOŞ TABLO ---------- */
 
     @Test
     fun `getClubs returns empty list when no clubs exist`() {
