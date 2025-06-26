@@ -22,7 +22,7 @@ object CourtsDataDb : IcourtServices {
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) {
                             val id = rs.getInt("courtId")
-                            Court(courtID = id, name = name, clubId = clubId)
+                            Court(courtId = id, name = name, clubId = clubId)
                         } else {
                             throw SQLException("Court ID not returned")
                         }
@@ -48,7 +48,7 @@ object CourtsDataDb : IcourtServices {
                     stmt.setInt(1, courtId)
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) Court(
-                            courtID = rs.getInt("courtId"),
+                            courtId = rs.getInt("courtId"),
                             name    = rs.getString("name"),
                             clubId  = rs.getInt("clubId")
                         ) else null
@@ -70,7 +70,7 @@ object CourtsDataDb : IcourtServices {
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             list += Court(
-                                courtID = rs.getInt("courtId"),
+                                courtId = rs.getInt("courtId"),
                                 name    = rs.getString("name"),
                                 clubId  = rs.getInt("clubId")
                             )

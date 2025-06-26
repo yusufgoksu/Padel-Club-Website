@@ -1,7 +1,6 @@
 package storage
 
 import models.Club
-import storage.UsersDataMem
 import java.util.concurrent.atomic.AtomicInteger
 
 object ClubsDataMem {
@@ -20,7 +19,7 @@ object ClubsDataMem {
         require(UsersDataMem.users.containsKey(userID)) { "User ID '$userID' not found" }
 
         val clubID = idCounter.getAndIncrement()
-        val club = Club(clubID = clubID, name = name, userID = userID)
+        val club = Club(clubId = clubID, name = name, userID = userID)
         clubs[clubID] = club
         return club
     }

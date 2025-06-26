@@ -12,9 +12,13 @@ object ClubServices {
         require(userID > 0) { "User ID must be greater than 0" }
         require(UserDataDb.getUserDetails(userID) != null) { "User ID '$userID' not found" }
 
-        // Veritabanı otomatik clubID oluşturacak ve Club nesnesi dönecek
+        // Aynı isimde kulüp var mı kontrolü
+        val existing = ClubsDataDb.getAllClubs().any { it.name.equals(name, ignoreCase = true) }
+        require(!existing) { "A club with the same name already exists." }
+
         return ClubsDataDb.createClub(name, userID)
     }
+
 
 
 
@@ -23,10 +27,12 @@ object ClubServices {
         ClubsDataDb.getAllClubs()
 
     // ID'ye göre kulüp getirme
-    fun getClubById(clubID: Int): Club? {
+    fun getClubById(clubID: Int): Club {
         require(clubID > 0) { "Club ID must be greater than 0" }
         return ClubsDataDb.getClubDetails(clubID)
+            ?: throw IllegalArgumentException("Club ID '$clubID' not found")
     }
+
 
     // Kulüp detaylarını alma
     fun getClubDetails(clubID: Int): Club? =

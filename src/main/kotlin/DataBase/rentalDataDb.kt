@@ -151,10 +151,10 @@ object RentalDataDb : IrentalService {
 
     override fun getAvailableRentalHours(clubId: Int, courtId: Int, date: String): List<String> {
         val sql = """
-            SELECT date, duration
-            FROM rentals
-            WHERE clubId = ? AND courtId = ? AND date::text LIKE ?;
-        """.trimIndent()
+        SELECT date, duration
+        FROM rentals
+        WHERE clubId = ? AND courtId = ? AND date::text LIKE ?;
+    """.trimIndent()
 
         val booked = mutableSetOf<String>()
         try {
@@ -169,7 +169,7 @@ object RentalDataDb : IrentalService {
                             val end = start.plusHours(rs.getInt("duration").toLong())
                             var h = start.hour
                             while (h < end.hour) {
-                                booked += "$date ${h}:00"
+                                booked += "$date ${String.format("%02d", h)}:00"
                                 h++
                             }
                         }
@@ -180,8 +180,9 @@ object RentalDataDb : IrentalService {
             throw RuntimeException("Error computing booked hours: ${e.message}", e)
         }
 
-        return (8..17).map { "$date ${it}:00" } - booked
+        return (8..17).map { "$date ${String.format("%02d", it)}:00" } - booked
     }
+
 
     override fun updateRental(rentalId: Int, date: String, duration: Int): Boolean {
         val sql = """
