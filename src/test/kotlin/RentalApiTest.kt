@@ -32,11 +32,11 @@ class RentalTests {
     fun `get rental by id returns correct rentalId`() {
         val user  = UserServices.createUser("Test", "test@example.com")
         val club  = ClubServices.addClub("Test Club", user.userId!!)
-        val court = CourtServices.addCourt("Test Court", club.clubId!!)
+        val court = CourtServices.addCourt("Test Court", club.clubID!!)
 
         val created = RentalServices.addRental(
-            clubId    = club.clubId!!,
-            courtId   = court.courtId!!,
+            clubId    = club.clubID!!,
+            courtId   = court.courtID!!,
             userId    = user.userId!!,
             startTime = "2025-01-01T10:00:00",
             duration  = 1
@@ -55,19 +55,19 @@ class RentalTests {
     fun `create rental with valid data`() {
         val user  = UserServices.createUser("Renter", "renter@example.com")
         val club  = ClubServices.addClub("Tennis Club", user.userId!!)
-        val court = CourtServices.addCourt("Court 1", club.clubId!!)
+        val court = CourtServices.addCourt("Court 1", club.clubID!!)
         val start = "2025-03-27T14:00:00"
 
         val rental = RentalServices.addRental(
-            clubId = club.clubId!!,
-            courtId = court.courtId!!,
+            clubId = club.clubID!!,
+            courtId = court.courtID!!,
             userId = user.userId!!,
             startTime = start,
             duration = 1
         )
 
-        assertEquals(club.clubId,   rental.clubId)
-        assertEquals(court.courtId, rental.courtId)
+        assertEquals(club.clubID,   rental.clubId)
+        assertEquals(court.courtID, rental.courtId)
         assertEquals(user.userId,   rental.userId)
         assertEquals(start,         rental.startTime)
         assertEquals(1,             rental.duration)
@@ -79,12 +79,12 @@ class RentalTests {
     fun `cannot create overlapping rental on same court`() {
         val user  = UserServices.createUser("OverlapUser", "ov@example.com")
         val club  = ClubServices.addClub("Overlap Club", user.userId!!)
-        val court = CourtServices.addCourt("Center", club.clubId!!)
+        val court = CourtServices.addCourt("Center", club.clubID!!)
 
         // İlk kiralama 10-12
         RentalServices.addRental(
-            clubId = club.clubId!!,
-            courtId = court.courtId!!,
+            clubId = club.clubID!!,
+            courtId = court.courtID!!,
             userId = user.userId!!,
             startTime = "2025-05-01T10:00:00",
             duration = 2
@@ -93,8 +93,8 @@ class RentalTests {
         // 11-12 arasında çakışır
         val ex = assertThrows<IllegalArgumentException> {
             RentalServices.addRental(
-                clubId = club.clubId!!,
-                courtId = court.courtId!!,
+                clubId = club.clubID!!,
+                courtId = court.courtID!!,
                 userId = user.userId!!,
                 startTime = "2025-05-01T11:00:00",
                 duration = 1
@@ -109,10 +109,10 @@ class RentalTests {
     fun `cannot create rental with invalid club`() {
         val user = UserServices.createUser("X", "x@e.com")
         val club = ClubServices.addClub("Valid", user.userId!!)
-        val ct   = CourtServices.addCourt("Ct", club.clubId!!)
+        val ct   = CourtServices.addCourt("Ct", club.clubID!!)
 
         val ex = assertThrows<IllegalArgumentException> {
-            RentalServices.addRental(9999, ct.courtId!!, user.userId!!, "2025-01-01T10:00:00", 1)
+            RentalServices.addRental(9999, ct.courtID!!, user.userId!!, "2025-01-01T10:00:00", 1)
         }
         assertEquals("Club ID '9999' not found", ex.message)
     }
@@ -123,7 +123,7 @@ class RentalTests {
         val club = ClubServices.addClub("Club", user.userId!!)
 
         val ex = assertThrows<IllegalArgumentException> {
-            RentalServices.addRental(club.clubId!!, 9999, user.userId!!, "2025-01-01T10:00:00", 1)
+            RentalServices.addRental(club.clubID!!, 9999, user.userId!!, "2025-01-01T10:00:00", 1)
         }
         assertEquals("Court ID '9999' not found", ex.message)
     }
@@ -132,10 +132,10 @@ class RentalTests {
     fun `cannot create rental with invalid user`() {
         val owner = UserServices.createUser("Owner", "o@e.com")
         val club  = ClubServices.addClub("Club", owner.userId!!)
-        val court = CourtServices.addCourt("Court", club.clubId!!)
+        val court = CourtServices.addCourt("Court", club.clubID!!)
 
         val ex = assertThrows<IllegalArgumentException> {
-            RentalServices.addRental(club.clubId!!, court.courtId!!, 9999, "2025-01-01T10:00:00", 1)
+            RentalServices.addRental(club.clubID!!, court.courtID!!, 9999, "2025-01-01T10:00:00", 1)
         }
         assertEquals("User ID '9999' not found", ex.message)
     }
@@ -147,10 +147,10 @@ class RentalTests {
         // 1) Veri set-up
         val user  = UserServices.createUser("A", "a@e.com")
         val club  = ClubServices.addClub("C", user.userId!!)
-        val court = CourtServices.addCourt("CO", club.clubId!!)
+        val court = CourtServices.addCourt("CO", club.clubID!!)
         val rent  = RentalServices.addRental(
-            clubId    = club.clubId!!,
-            courtId   = court.courtId!!,
+            clubId    = club.clubID!!,
+            courtId   = court.courtID!!,
             userId    = user.userId!!,
             startTime = "2025-01-01T10:00:00",
             duration  = 1
@@ -160,11 +160,11 @@ class RentalTests {
         assertEquals(user.userId!!,
             UserServices.getUserById(user.userId!!)!!.userId)
 
-        assertEquals(club.clubId!!,
-            ClubServices.getClubById(club.clubId!!)!!.clubId)
+        assertEquals(club.clubID!!,
+            ClubServices.getClubById(club.clubID!!)!!.clubID)
 
-        assertEquals(court.courtId!!,
-            CourtServices.getCourtById(court.courtId!!)!!.courtId)
+        assertEquals(court.courtID!!,
+            CourtServices.getCourtById(court.courtID!!)!!.courtID)
 
         assertEquals(rent.rentalId!!,
             RentalServices.getRentalById(rent.rentalId!!)!!.rentalId)
@@ -176,12 +176,12 @@ class RentalTests {
     fun `get rentals for specific club and court`() {
         val u  = UserServices.createUser("U", "u@e.com")
         val cl = ClubServices.addClub("C", u.userId!!)
-        val ct = CourtServices.addCourt("CO", cl.clubId!!)
+        val ct = CourtServices.addCourt("CO", cl.clubID!!)
 
-        val r1 = RentalServices.addRental(cl.clubId!!, ct.courtId!!, u.userId!!, "2025-01-01T10:00:00", 1)
-        val r2 = RentalServices.addRental(cl.clubId!!, ct.courtId!!, u.userId!!, "2025-01-01T12:00:00", 1)
+        val r1 = RentalServices.addRental(cl.clubID!!, ct.courtID!!, u.userId!!, "2025-01-01T10:00:00", 1)
+        val r2 = RentalServices.addRental(cl.clubID!!, ct.courtID!!, u.userId!!, "2025-01-01T12:00:00", 1)
 
-        val list = RentalServices.getRentalsForCourt(cl.clubId!!, ct.courtId!!)
+        val list = RentalServices.getRentalsForCourt(cl.clubID!!, ct.courtID!!)
         assertEquals(setOf(r1.rentalId, r2.rentalId), list.map { it.rentalId }.toSet())
     }
 
@@ -191,8 +191,8 @@ class RentalTests {
     fun `delete a rental`() {
         val u  = UserServices.createUser("U", "u@e.com")
         val cl = ClubServices.addClub("C", u.userId!!)
-        val ct = CourtServices.addCourt("CO", cl.clubId!!)
-        val r  = RentalServices.addRental(cl.clubId!!, ct.courtId!!, u.userId!!,"2025-04-11T10:00:00",1)
+        val ct = CourtServices.addCourt("CO", cl.clubID!!)
+        val r  = RentalServices.addRental(cl.clubID!!, ct.courtID!!, u.userId!!,"2025-04-11T10:00:00",1)
 
         assertTrue(RentalServices.deleteRental(r.rentalId!!))
         assertNull(RentalServices.getRentalById(r.rentalId!!))
@@ -202,8 +202,8 @@ class RentalTests {
     fun `update a rental`() {
         val u  = UserServices.createUser("U", "u@e.com")
         val cl = ClubServices.addClub("C", u.userId!!)
-        val ct = CourtServices.addCourt("CO", cl.clubId!!)
-        val r  = RentalServices.addRental(cl.clubId!!, ct.courtId!!, u.userId!!,"2025-04-11T10:00:00",1)
+        val ct = CourtServices.addCourt("CO", cl.clubID!!)
+        val r  = RentalServices.addRental(cl.clubID!!, ct.courtID!!, u.userId!!,"2025-04-11T10:00:00",1)
 
         val updated = RentalServices.updateRental(r.rentalId!!, "2025-04-11T11:00:00", 2)
         assertEquals("2025-04-11T11:00:00", updated.startTime)
@@ -213,15 +213,15 @@ class RentalTests {
     fun `getAvailableHours returns correct available hours`() {
         val user  = UserServices.createUser("U", "u@e.com")
         val club  = ClubServices.addClub("Club", user.userId!!)
-        val court = CourtServices.addCourt("Court", club.clubId!!)
+        val court = CourtServices.addCourt("Court", club.clubID!!)
 
         // İki dolu saatlik kiralama: 10:00-11:00 ve 12:00-13:00
-        RentalServices.addRental(club.clubId!!, court.courtId!!, user.userId!!, "2025-04-11T10:00:00", 1)
-        RentalServices.addRental(club.clubId!!, court.courtId!!, user.userId!!, "2025-04-11T12:00:00", 1)
+        RentalServices.addRental(club.clubID!!, court.courtID!!, user.userId!!, "2025-04-11T10:00:00", 1)
+        RentalServices.addRental(club.clubID!!, court.courtID!!, user.userId!!, "2025-04-11T12:00:00", 1)
 
         val available = RentalServices.getAvailableHours(
-            clubId = club.clubId!!,
-            courtId = court.courtId!!,
+            clubId = club.clubID!!,
+            courtId = court.courtID!!,
             date = "2025-04-11"
         )
 

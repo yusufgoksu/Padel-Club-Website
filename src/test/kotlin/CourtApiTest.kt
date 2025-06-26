@@ -29,11 +29,11 @@ class CourtTests {
         val owner = UserServices.createUser("Club Owner", "owner@example.com")
         val club  = ClubServices.addClub("Tennis Club", owner.userId!!)
 
-        val court = CourtServices.addCourt("Court 1", club.clubId!!)
+        val court = CourtServices.addCourt("Court 1", club.clubID!!)
 
-        assertNotNull(court.courtId)
+        assertNotNull(court.courtID)
         assertEquals("Court 1", court.name)
-        assertEquals(club.clubId, court.clubId)
+        assertEquals(club.clubID, court.clubId)
     }
 
     /* ---------- 2. GEÇERSİZ KULÜP ---------- */
@@ -55,7 +55,7 @@ class CourtTests {
         val club  = ClubServices.addClub("Tennis Club", owner.userId!!)
 
         val ex = assertThrows<IllegalArgumentException> {
-            CourtServices.addCourt("", club.clubId!!)
+            CourtServices.addCourt("", club.clubID!!)
         }
         assertEquals("Court name cannot be empty", ex.message)
     }
@@ -67,7 +67,7 @@ class CourtTests {
 
         val longName = "X".repeat(101)
         val ex = assertThrows<IllegalArgumentException> {
-            CourtServices.addCourt(longName, club.clubId!!)
+            CourtServices.addCourt(longName, club.clubID!!)
         }
         assertEquals("Court name cannot exceed 100 characters", ex.message)
     }
@@ -81,15 +81,15 @@ class CourtTests {
         val owner = UserServices.createUser("Club Owner", "owner4@example.com")
         val club  = ClubServices.addClub("Tennis Club", owner.userId!!)
 
-        val court1 = CourtServices.addCourt("Court A", club.clubId!!)
-        val court2 = CourtServices.addCourt("Court B", club.clubId!!)
+        val court1 = CourtServices.addCourt("Court A", club.clubID!!)
+        val court2 = CourtServices.addCourt("Court B", club.clubID!!)
 
         // getCourtsForClub yerine getAllCourts() kullanmıyoruz
-        val courts = CourtServices.getCourtsForClub(club.clubId!!)
+        val courts = CourtServices.getCourtsForClub(club.clubID!!)
         assertEquals(2, courts.size)
-        assertTrue(courts.any { it.courtId == court1.courtId && it.name == "Court A" })
-        assertTrue(courts.any { it.courtId == court2.courtId && it.name == "Court B" })
-        assertNotEquals(court1.courtId, court2.courtId)
+        assertTrue(courts.any { it.courtID == court1.courtID && it.name == "Court A" })
+        assertTrue(courts.any { it.courtID == court2.courtID && it.name == "Court B" })
+        assertNotEquals(court1.courtID, court2.courtID)
     }
 
 
@@ -100,7 +100,7 @@ class CourtTests {
         val owner = UserServices.createUser("Club Owner", "owner5@example.com")
         val club  = ClubServices.addClub("Empty Club", owner.userId!!)
 
-        val courts = CourtServices.getCourtsForClub(club.clubId!!)
+        val courts = CourtServices.getCourtsForClub(club.clubID!!)
         assertTrue(courts.isEmpty())
     }
 

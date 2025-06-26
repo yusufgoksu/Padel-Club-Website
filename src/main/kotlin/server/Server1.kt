@@ -51,7 +51,7 @@ fun addTestData() {
     val c3 = ClubsDataMem.addClub("Padel Club C", u3.userId)
 
     listOf(c1 to u1, c2 to u2, c3 to u3).forEach { (club, user) ->
-        val clubId = requireNotNull(club.clubId) { "Club ID must not be null" }
+        val clubId = requireNotNull(club.clubID) { "Club ID must not be null" }
 
         val courts = listOf(
             CourtsDataMem.addCourt("Court 1", clubId),
@@ -60,7 +60,7 @@ fun addTestData() {
         )
 
         courts.forEachIndexed { idx, court ->
-            val courtId = requireNotNull(court.courtId) { "Court ID must not be null" }
+            val courtId = requireNotNull(court.courtID) { "Court ID must not be null" }
 
             RentalsDataMem.addRental(
                 clubId = clubId,

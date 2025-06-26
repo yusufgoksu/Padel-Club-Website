@@ -19,7 +19,7 @@ object ClubsDataMem {
         require(UsersDataMem.users.containsKey(userID)) { "User ID '$userID' not found" }
 
         val clubID = idCounter.getAndIncrement()
-        val club = Club(clubId = clubID, name = name, userID = userID)
+        val club = Club(clubID = clubID, name = name, userID = userID)
         clubs[clubID] = club
         return club
     }

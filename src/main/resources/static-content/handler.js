@@ -187,7 +187,8 @@ export function homeHandler(app) {
         const resultsDiv = document.getElementById("availabilityResults");
 
         try {
-            const res = await fetch(`/api/rentals/available?clubId=${clubId}&courtId=${courtId}&date=${date}`);
+            const res = await fetch(`/api/clubs/${clubId}/courts/${courtId}/available?date=${date}`);
+
             if (!res.ok) throw new Error();
             const availableHours = (await res.text()).split(",").filter(Boolean);
             resultsDiv.innerHTML = availableHours.length
@@ -316,8 +317,9 @@ export function homeHandler(app) {
 
         try {
             const availableHoursRes = await fetch(
-                `/api/rentals/available?clubId=${clubId}&courtId=${courtId}&date=${date}`
+                `/api/clubs/${clubId}/courts/${courtId}/available?date=${date}`
             );
+
             if (!availableHoursRes.ok) throw new Error("Failed to fetch available hours");
 
             const availableHoursText = await availableHoursRes.text();

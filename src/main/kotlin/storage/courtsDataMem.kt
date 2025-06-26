@@ -17,7 +17,7 @@ object CourtsDataMem {
         require(ClubsDataMem.getClubById(clubId) != null) { "Club ID '$clubId' not found" }
 
         val courtID = idCounter.getAndIncrement()
-        val court = Court(courtId = courtID, name = name, clubId = clubId)
+        val court = Court(courtID = courtID, name = name, clubId = clubId)
         courts[courtID] = court
         return court
     }

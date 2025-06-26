@@ -27,7 +27,7 @@ class ClubTests {
         val club  = ClubServices.addClub("Tennis Club", owner.userId!!)
 
         assertNotNull(owner.userId)
-        assertNotNull(club.clubId)
+        assertNotNull(club.clubID)
         assertEquals("Tennis Club", club.name)
         assertEquals(owner.userId, club.userID)
     }
@@ -53,8 +53,8 @@ class ClubTests {
 
         val clubs = ClubServices.getAllClubs()
         assertEquals(2, clubs.size)
-        assertTrue(clubs.any { it.name == "Tennis Club"   && it.clubId == club1.clubId })
-        assertTrue(clubs.any { it.name == "Football Club" && it.clubId == club2.clubId })
+        assertTrue(clubs.any { it.name == "Tennis Club"   && it.clubID == club1.clubID })
+        assertTrue(clubs.any { it.name == "Football Club" && it.clubID == club2.clubID })
     }
 
     /* ---------- 4-5. BOŞ VE ÇOK UZUN İSİM ---------- */
@@ -107,10 +107,10 @@ class ClubTests {
     fun `get club by valid id`() {
         val owner = UserServices.createUser("Club Owner", "owner7@example.com")
         val created = ClubServices.addClub("Basketball Club", owner.userId!!)
-        val found   = ClubServices.getClubById(created.clubId!!)
+        val found   = ClubServices.getClubById(created.clubID!!)
 
         assertNotNull(found)
-        assertEquals(created.clubId, found?.clubId)
+        assertEquals(created.clubID, found?.clubID)
         assertEquals("Basketball Club", found?.name)
     }
 
@@ -128,10 +128,10 @@ class ClubTests {
     fun `get club details by valid id`() {
         val owner = UserServices.createUser("Club Owner", "owner8@example.com")
         val created = ClubServices.addClub("Chess Club", owner.userId!!)
-        val details = ClubServices.getClubDetails(created.clubId!!)
+        val details = ClubServices.getClubDetails(created.clubID!!)
 
         assertNotNull(details)
-        assertEquals(created.clubId, details?.clubId)
+        assertEquals(created.clubID, details?.clubID)
         assertEquals("Chess Club",   details?.name)
         assertEquals(owner.userId,   details?.userID)
     }

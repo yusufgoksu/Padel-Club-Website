@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Court(
-    val courtId: Int? = null,  // null: henüz DB tarafından atanmadı
+    val courtID: Int? = null,  // null: henüz DB tarafından atanmadı
     val name: String,
     val clubId: Int
 ) {
@@ -13,8 +13,8 @@ data class Court(
         require(clubId > 0) { "Club ID must be greater than 0" }
 
         // Eğer courtID atanmışsa, 0 olmamalı
-        if (courtId != null) {
-            require(courtId > 0) { "Court ID must be greater than 0" }
+        if (courtID != null) {
+            require(courtID > 0) { "Court ID must be greater than 0" }
         }
     }
 }

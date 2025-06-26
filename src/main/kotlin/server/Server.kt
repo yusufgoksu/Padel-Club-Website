@@ -26,7 +26,7 @@ fun addTestDataToDatabase() {
     val c3 = ClubsDataDb.createClub("Padel Club C", u3.userId)
 
     listOf(c1 to u1, c2 to u2, c3 to u3).forEach { (club, owner) ->
-        val clubId = club.clubId!!
+        val clubId = club.clubID!!
         val userId = owner.userId
 
         // Kortlar
@@ -35,9 +35,9 @@ fun addTestDataToDatabase() {
         val court3 = CourtsDataDb.createCourt("Court 3", clubId)
 
         // Kiralamalar (rentalId verilmiyor)
-        RentalDataDb.createRental(clubId, court1.courtId!!, userId, "2025-03-27T14:00:00", 2)
-        RentalDataDb.createRental(clubId, court2.courtId!!, userId, "2025-03-27T15:00:00", 2)
-        RentalDataDb.createRental(clubId, court3.courtId!!, userId, "2025-03-27T16:00:00", 2)
+        RentalDataDb.createRental(clubId, court1.courtID!!, userId, "2025-03-27T14:00:00", 2)
+        RentalDataDb.createRental(clubId, court2.courtID!!, userId, "2025-03-27T15:00:00", 2)
+        RentalDataDb.createRental(clubId, court3.courtID!!, userId, "2025-03-27T16:00:00", 2)
     }
 
     println("✅ Test data added to PostgreSQL.")

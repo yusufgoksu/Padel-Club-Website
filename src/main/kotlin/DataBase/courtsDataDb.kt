@@ -22,7 +22,7 @@ object CourtsDataDb : IcourtServices {
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) {
                             val id = rs.getInt("courtId")
-                            Court(courtId = id, name = name, clubId = clubId)
+                            Court(courtID = id, name = name, clubId = clubId)
                         } else {
                             throw SQLException("Court ID not returned")
                         }
@@ -48,7 +48,7 @@ object CourtsDataDb : IcourtServices {
                     stmt.setInt(1, courtId)
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) Court(
-                            courtId = rs.getInt("courtId"),
+                            courtID = rs.getInt("courtId"),
                             name    = rs.getString("name"),
                             clubId  = rs.getInt("clubId")
                         ) else null
@@ -70,7 +70,7 @@ object CourtsDataDb : IcourtServices {
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             list += Court(
-                                courtId = rs.getInt("courtId"),
+                                courtID = rs.getInt("courtId"),
                                 name    = rs.getString("name"),
                                 clubId  = rs.getInt("clubId")
                             )
@@ -83,4 +83,29 @@ object CourtsDataDb : IcourtServices {
             throw RuntimeException("Error fetching courts: ${e.message}", e)
         }
     }
+
+    override fun getAllCourts(): List<Court> {
+        val sql = "SELECT courtId, name, clubId FROM courts;"
+        val list = mutableListOf<Court>()
+
+        return try {
+            Database.getConnection().use { conn ->
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.executeQuery().use { rs ->
+                        while (rs.next()) {
+                            list += Court(
+                                courtID = rs.getInt("courtId"),
+                                name    = rs.getString("name"),
+                                clubId  = rs.getInt("clubId")
+                            )
+                        }
+                    }
+                }
+            }
+            list
+        } catch (e: SQLException) {
+            throw RuntimeException("Error fetching all courts: ${e.message}", e)
+        }
+    }
+
 }

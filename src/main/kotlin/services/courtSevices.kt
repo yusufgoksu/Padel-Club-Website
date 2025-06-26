@@ -21,9 +21,9 @@ object CourtServices {
     }
 
 
-    fun getAllCourts(): List<Court> {
-        throw NotImplementedError("This method is not implemented in database layer")
-    }
+    fun getAllCourts(): List<Court> =
+        CourtsDataDb.getAllCourts()
+
 
     fun getCourtById(courtID: Int): Court? {
         require(courtID > 0) { "Court ID must be greater than 0" }
@@ -41,7 +41,7 @@ object CourtServices {
         // Geçici çözüm: Tüm kulüpleri alıp her biri için kortları filtrele
         val allClubs = ClubsDataDb.getAllClubs() // Bu metod varsa
         return allClubs.asSequence()
-            .flatMap { CourtsDataDb.getCourtsByClub(it.clubId!!) }
+            .flatMap { CourtsDataDb.getCourtsByClub(it.clubID!!) }
             .find { it.name.equals(name, ignoreCase = true) }
     }
 }

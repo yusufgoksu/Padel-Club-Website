@@ -8,4 +8,6 @@ interface IcourtServices {
         fun getCourt(courtId: Int): Court?
 
         fun getCourtsByClub(clubId: Int): List<Court>
+
+        fun getAllCourts(): List<Court> // ✅ Yeni fonksiyon eklendi
 }

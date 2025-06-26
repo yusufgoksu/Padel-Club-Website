@@ -25,7 +25,7 @@ object ClubsDataDb : IclubServices {
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) {
                             Club(
-                                clubId = rs.getInt("clubID"),
+                                clubID = rs.getInt("clubID"),
                                 name = rs.getString("name"),
                                 userID = rs.getInt("userID")
                             )
@@ -57,7 +57,7 @@ object ClubsDataDb : IclubServices {
                     stmt.setInt(1, clubId)
                     stmt.executeQuery().use { rs ->
                         if (rs.next()) Club(
-                            clubId = rs.getInt("clubId"),
+                            clubID = rs.getInt("clubId"),
                             name   = rs.getString("name"),
                             userID = rs.getInt("userId")
                         ) else null
@@ -81,7 +81,7 @@ object ClubsDataDb : IclubServices {
                         val list = mutableListOf<Club>()
                         while (rs.next()) {
                             list += Club(
-                                clubId = rs.getInt("clubId"),
+                                clubID = rs.getInt("clubId"),
                                 name   = rs.getString("name"),
                                 userID = rs.getInt("userId")
                             )
@@ -111,7 +111,7 @@ object ClubsDataDb : IclubServices {
                         val results = mutableListOf<Club>()
                         while (rs.next()) {
                             results += Club(
-                                clubId = rs.getInt("clubId"),
+                                clubID = rs.getInt("clubId"),
                                 name = rs.getString("name"),
                                 userID = rs.getInt("userId")
                             )
