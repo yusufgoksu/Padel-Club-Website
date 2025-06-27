@@ -2,6 +2,7 @@ package api
 
 import models.Rental
 import services.RentalServices
+import kotlinx.serialization.Serializable
 import org.http4k.core.*
 import org.http4k.core.Method.*
 import org.http4k.format.KotlinxSerialization.auto
@@ -10,19 +11,23 @@ import org.http4k.routing.*
 
 fun rentalsWebApi(): RoutingHttpHandler {
 
-    /* ---- JSON lens’leri ---- */
-    val rentalLens   = Body.auto<Rental>().toLens()
-    val rentalsLens  = Body.auto<List<Rental>>().toLens()
-    val hoursLens    = Body.auto<List<Int>>().toLens()          // yeni
+    /* ---------- JSON lens’leri ---------- */
+    val rentalLens        = Body.auto<Rental>().toLens()
+    val rentalsLens       = Body.auto<List<Rental>>().toLens()
+    val hoursLens         = Body.auto<List<Int>>().toLens()
 
-    /* ---- Path parçaları ---- */
+    /* ---- PUT için DTO & lens ---------- */
+    @Serializable
+    data class RentalUpdateReq(val startTime: String, val duration: Int)
+    val rentalUpdateLens  = Body.auto<RentalUpdateReq>().toLens()
+
+    /* ---------- Path parçaları ---------- */
     val rentalIdPath = Path.int().of("rentalId")
     val userIdPath   = Path.int().of("userId")
     val clubIdPath   = Path.int().of("clubId")
     val courtIdPath  = Path.int().of("courtId")
 
     return routes(
-
         /* ----------------- GET /api/rentals ----------------- */
         "/api/rentals" bind GET to {
             Response(Status.OK).with(rentalsLens of RentalServices.getAllRentals())
@@ -69,6 +74,7 @@ fun rentalsWebApi(): RoutingHttpHandler {
             Response(Status.OK).with(rentalsLens of list)
         },
 
+
         /* ---- GET /api/clubs/{cid}/courts/{coid}/available --- */
         "/api/clubs/{clubId}/courts/{courtId}/available" bind GET to { req ->
             val cId  = clubIdPath(req)
@@ -81,14 +87,23 @@ fun rentalsWebApi(): RoutingHttpHandler {
         /* ----------------- PUT /api/rentals/{id} ------------ */
         "/api/rentals/{rentalId}" bind PUT to { req ->
             val id = rentalIdPath(req)
-            val r  = rentalLens(req)
+            val updReq = try { rentalUpdateLens(req) }
+            catch (e: Exception) {
+                return@to Response(Status.BAD_REQUEST).body("Invalid JSON body")
+            }
+
             try {
-                val upd = RentalServices.updateRental(
-                    id            = id,
-                    newStartTime  = r.startTime,
-                    newDuration   = r.duration
+                val updated = RentalServices.updateRental(
+                    id,
+                    newStartTime = updReq.startTime,
+                    newDuration  = updReq.duration,
                 )
-                Response(Status.OK).with(rentalLens of upd)
+                Response(Status.OK).with(rentalLens of updated)
+
+            } catch (e: IllegalStateException) {
+                // updateRental kendisi “bulunamadı / başarısız” için IllegalStateException atıyor
+                Response(Status.NOT_FOUND).body("Rental not found or update failed")
+
             } catch (e: Exception) {
                 Response(Status.BAD_REQUEST).body("Update failed: ${e.message}")
             }
@@ -114,7 +129,7 @@ fun rentalsWebApi(): RoutingHttpHandler {
         },
 
         /* ----- GET /api/users/{uid}/courts (istatistik) ------ */
-        "/api/users/{userId}/courts" bind GET to { req: Request ->
+        "/api/users/{userId}/courts" bind GET to { req ->
             val uid  = userIdPath(req)
             val stats = RentalServices.courtsWithCountsByUser(uid)
             val json = stats.joinToString(",", "[", "]") {
@@ -123,8 +138,6 @@ fun rentalsWebApi(): RoutingHttpHandler {
             Response(Status.OK)
                 .header("Content-Type", "application/json")
                 .body(json)
-
-
         }
     )
 }

@@ -92,6 +92,56 @@ async function loadAvailabilityDropdowns() {
         courtSelect.innerHTML = `<option disabled>Select club first</option>`;
     }
 }
+async function loadRentalDropdown() {
+    const rentalSel = document.getElementById("rentalSelect");
+    if (!rentalSel) return;
+
+    try {
+        const rentalsRes = await fetch("/api/rentals");
+        if (!rentalsRes.ok) throw new Error();
+        const rentals = await rentalsRes.json();
+
+        // Kulüp ve kort isimlerini paralel çek
+        const clubCache = {};
+        const courtCache = {};
+
+        async function getClubName(id) {
+            if (clubCache[id]) return clubCache[id];
+            try {
+                const r = await fetch(`/api/clubs/${id}`);
+                const c = await r.json();
+                return (clubCache[id] = c.name || id);
+            } catch { return id; }
+        }
+        async function getCourtName(id) {
+            if (courtCache[id]) return courtCache[id];
+            try {
+                const r = await fetch(`/api/courts/${id}`);
+                const c = await r.json();
+                return (courtCache[id] = c.name || id);
+            } catch { return id; }
+        }
+
+        // Her rental için görünüm metni hazırla
+        const enriched = await Promise.all(
+            rentals.map(async r => ({
+                id:       r.rentalId,               // <-- DOĞRU alan adı
+                text:     `Rental #${r.rentalId} — `
+                    + `${await getClubName(r.clubId)} / ${await getCourtName(r.courtId)} — `
+                    + `${r.startTime} (${r.duration}h)`
+            }))
+        );
+
+        rentalSel.innerHTML =
+            `<option disabled selected value="">Select Rental</option>` +
+            enriched.map(e => `<option value="${e.id}">${e.text}</option>`).join("");
+
+    } catch {
+        rentalSel.innerHTML = `<option disabled>Error loading rentals</option>`;
+    }
+}
+
+
 
 
 
@@ -155,18 +205,43 @@ export function homeHandler(app) {
       <div id="courtAddStatus" class="mt-2"></div>
     </div>
 
-    <!-- Add Rental -->
-    <div class="card p-3 my-4" style="max-width:400px;">
-      <h4>Add New Rental</h4>
-      <select id="rentalUserSelect" class="form-select mb-2"></select>
-      <select id="rentalClubSelect" class="form-select mb-2"></select>
-      <select id="rentalCourtSelect" class="form-select mb-2"></select>
-      <input id="rentalDate" class="form-control mb-2" type="date">
-      <input id="rentalHour" class="form-control mb-2" type="number" placeholder="Start hour (8-17)">
-      <input id="rentalDuration" class="form-control mb-2" type="number" placeholder="Duration (1-10)">
-      <button id="addRentalBtn" class="btn btn-primary">Add Rental</button>
-      <div id="rentalAddStatus" class="mt-2"></div>
-    </div>
+   <!-- Rental Operations Row -->
+<div class="d-flex flex-wrap gap-4 my-4">
+  <!-- Add Rental -->
+  <div class="card p-3" style="width:400px;">
+    <h4>Add New Rental</h4>
+    <select id="rentalUserSelect" class="form-select mb-2"></select>
+    <select id="rentalClubSelect" class="form-select mb-2"></select>
+    <select id="rentalCourtSelect" class="form-select mb-2"></select>
+    <input id="rentalDate" class="form-control mb-2" type="date">
+    <input id="rentalHour" class="form-control mb-2" type="number" placeholder="Start hour (8-17)">
+    <input id="rentalDuration" class="form-control mb-2" type="number" placeholder="Duration (1-10)">
+    <button id="addRentalBtn" class="btn btn-primary">Add Rental</button>
+    <div id="rentalAddStatus" class="mt-2"></div>
+  </div>
+
+  <!-- 🔧 Update or Delete Rental -->
+<div class="card p-3" style="width:400px;">
+  <h4>Update or Delete Rental</h4>
+
+  <select id="rentalSelect" class="form-select mb-2">
+    <option disabled selected>Choose rental to update/delete</option>
+  </select>
+
+  <input id="updateRentalDate" class="form-control mb-2" type="date" placeholder="New Date">
+  <input id="updateRentalHour" class="form-control mb-2" type="number" placeholder="New Start Hour (8-17)">
+  <input id="updateRentalDuration" class="form-control mb-2" type="number" placeholder="New Duration (1-10)">
+
+  <div class="d-flex gap-2">
+    <button id="updateRentalBtn" class="btn btn-warning w-100">Update</button>
+    <button id="deleteRentalBtn" class="btn btn-danger w-100">Delete</button>
+  </div>
+
+  <div id="rentalUpdateStatus" class="mt-2"></div>
+</div>
+
+
+
 
    
     `;
@@ -289,6 +364,7 @@ export function homeHandler(app) {
         const clubId = parseInt(e.target.value, 10);
         if (!Number.isNaN(clubId)) await loadCourtDropdown(clubId);
     });
+    // --- Add Rental -------------------------------------------------
     document.getElementById("addRentalBtn").addEventListener("click", async () => {
         const userId = parseInt(document.getElementById("rentalUserSelect").value, 10);
         const clubId = parseInt(document.getElementById("rentalClubSelect").value, 10);
@@ -306,7 +382,6 @@ export function homeHandler(app) {
             return;
         }
 
-        // 📌 Tarihi ISO-8601 formatına çevir (yyyy-MM-dd)
         if (rawDate.includes(".")) {
             const [day, month, year] = rawDate.split(".");
             rawDate = `${year}-${month}-${day}`;
@@ -326,7 +401,7 @@ export function homeHandler(app) {
             const availableHours = availableHoursText
                 .split(',')
                 .map(h => parseInt(h))
-                .filter(h => !isNaN(h)); // sadece sayı olan saatleri al
+                .filter(h => !isNaN(h));
 
             const requiredHours = Array.from({ length: duration }, (_, i) => hour + i);
             const isAvailable = requiredHours.every(h => availableHours.includes(h));
@@ -344,6 +419,7 @@ export function homeHandler(app) {
 
             if (res.ok) {
                 msg.textContent = "Rental created!";
+                loadRentalDropdown(); // 🔄 dropdown güncelle
             } else {
                 const errText = await res.text();
                 msg.textContent = "Error: " + errText;
@@ -353,10 +429,76 @@ export function homeHandler(app) {
         }
     });
 
+// ---------- UPDATE  Rental ----------------------------------------
+    document.getElementById("updateRentalBtn").addEventListener("click", async () => {
+        const rentalId      = Number(document.getElementById("rentalSelect").value);
+        const newDate       = document.getElementById("updateRentalDate").value.trim();
+        const newHour       = Number(document.getElementById("updateRentalHour").value);
+        const newDuration   = Number(document.getElementById("updateRentalDuration").value);
+        const msg           = document.getElementById("rentalUpdateStatus");
 
+        if (isNaN(rentalId) || !newDate || isNaN(newHour) || isNaN(newDuration)) {
+            msg.textContent = "Please fill all fields correctly.";
+            return;
+        }
+
+        const newStartTime = `${newDate}T${String(newHour).padStart(2, "0")}:00:00`;  // ✅ doğru format
+        console.log("📦 Gönderilen startTime:", newStartTime);
+
+        try {
+            const res = await fetch(`/api/rentals/${rentalId}`, {
+                method : "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ startTime: newStartTime, duration: newDuration })
+            });
+
+            if (res.ok) {
+                msg.textContent = "Rental updated successfully.";
+                await loadRentalDropdown();                    // ► liste tazele
+                document.getElementById("rentalSelect").value = ""; // dropdown'u sıfırla
+            } else {
+                msg.textContent = "Error updating rental: " + (await res.text());
+            }
+        } catch (e) {
+            msg.textContent = "Unexpected error: " + e.message;
+        }
+    });
+
+// ---------- DELETE Rental -----------------------------------------
+    document.getElementById("deleteRentalBtn").addEventListener("click", async () => {
+        const rentalId = Number(document.getElementById("rentalSelect").value);
+        const msg      = document.getElementById("rentalUpdateStatus");
+
+        if (isNaN(rentalId)) {
+            msg.textContent = "Please select a rental.";
+            return;
+        }
+
+        if (!confirm("Are you sure you want to delete this rental?")) return;
+
+        try {
+            const res = await fetch(`/api/rentals/${rentalId}`, { method: "DELETE" });
+
+            if (res.ok) {
+                msg.textContent = "Rental deleted successfully.";
+                await loadRentalDropdown();                    // ► liste tazele
+                document.getElementById("rentalSelect").value = ""; // dropdown'u sıfırla
+            } else {
+                msg.textContent = "Error deleting rental: " + (await res.text());
+            }
+        } catch (e) {
+            msg.textContent = "Unexpected error: " + e.message;
+        }
+    });
+
+
+// Sayfa yüklendiğinde dropdown'ları güncelle
     loadUserEmailsForDropdown();
     loadClubDropdown();
     loadAvailabilityDropdowns();
+    loadRentalDropdown();
+
+
 }
 
 
@@ -462,7 +604,6 @@ export async function courtsListHandler(app, clubID) {
     }
 }
 
-
 export async function courtDetailsHandler(app, clubID, courtID) {
     app.innerHTML = `<h1>Loading court details...</h1>`;
 
@@ -493,61 +634,57 @@ export async function courtDetailsHandler(app, clubID, courtID) {
 
 
 
+
 export async function courtRentalsListHandler(app, clubID, courtID) {
     app.innerHTML = `
-    <h1>Rentals for Court</h1>
-    <div class="text-muted">Loading rentals...</div>
-    <a href="/clubs/${clubID}/courts/${courtID}" data-link class="btn btn-outline-secondary btn-sm me-2 mt-3">← Back to Court</a>
-    <a href="/" data-link class="btn btn-outline-secondary btn-sm mt-3">Home</a>
-  `;
+      <h1>Rentals for Court</h1>
+      <div class="text-muted">Loading rentals...</div>
+      <a href="/clubs/${clubID}/courts/${courtID}" data-link class="btn btn-outline-secondary btn-sm">← Back to Court</a>
+      <a href="/" data-link class="btn btn-outline-secondary btn-sm">Home</a>
+    `;
 
     try {
         const response = await fetch(`/api/clubs/${clubID}/courts/${courtID}/rentals`);
-        if (!response.ok) throw new Error();
+        if (!response.ok) throw new Error('API failed');
         const rentals = await response.json();
 
+        if (!rentals.length) {
+            app.innerHTML = `<h3>No rentals found for this court.</h3>`;
+            return;
+        }
+
         const tableRows = rentals.map(rental => `
-      <tr>
-        <td>${rental.startTime}</td>
-        <td>${rental.duration}</td>
-        <td>
-          <a href="/users/${rental.userId}" data-link>${rental.userId}</a>
-        </td>
-        <td>
-          <a href="/clubs/${rental.clubId}/courts/${rental.courtId}/rentals/${rental.rentalID}" data-link class="btn btn-sm btn-primary">Details</a>
-        </td>
-      </tr>
-    `).join('');
+            <tr>
+                <td>${rental.startTime}</td>
+                <td>${rental.duration}</td>
+                <td><a href="/users/${rental.userId}" data-link>${rental.userId}</a></td>
+                <td>
+                    <a href="/clubs/${rental.clubId}/courts/${rental.courtId}/rentals/${rental.rentalId}" data-link class="btn btn-sm btn-primary">Details</a>
+                </td>
+            </tr>
+        `).join('');
 
         app.innerHTML = `
-      <h1 class="mb-4">Rentals for Court: ${courtID}</h1>
-      <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Start Time</th>
-              <th>Duration (hrs)</th>
-              <th>User ID</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-      </div>
-      <a href="/clubs/${clubID}/courts/${courtID}" data-link class="btn btn-outline-secondary btn-sm me-2 mt-3">← Back to Court</a>
-      <a href="/" data-link class="btn btn-outline-secondary btn-sm mt-3">Home</a>
-    `;
+          <h1 class="mb-4">Rentals for Court: ${courtID}</h1>
+          <table class="table table-bordered table-hover table-sm">
+              <thead>
+                  <tr><th>Start Time</th><th>Duration (hrs)</th><th>User ID</th><th>Actions</th></tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+          </table>
+          <a href="/clubs/${clubID}/courts/${courtID}" data-link class="btn btn-outline-secondary btn-sm">← Back to Court</a>
+          <a href="/" data-link class="btn btn-outline-secondary btn-sm">Home</a>
+        `;
     } catch (e) {
         app.innerHTML = `
-      <h1>Rentals for Court</h1>
-      <p style="color:red;">Could not load rentals.</p>
-      <a href="/clubs/${clubID}/courts/${courtID}" data-link class="btn btn-outline-secondary btn-sm me-2 mt-3">← Back to Court</a>
-      <a href="/" data-link class="btn btn-outline-secondary btn-sm mt-3">Home</a>
-    `;
+          <h1>Error loading rentals.</h1>
+          <p class="text-danger">${e.message}</p>
+          <a href="/clubs/${clubID}/courts/${courtID}" data-link class="btn btn-outline-secondary btn-sm">← Back to Court</a>
+          <a href="/" data-link class="btn btn-outline-secondary btn-sm">Home</a>
+        `;
     }
 }
+
 
 
 
@@ -576,7 +713,7 @@ export async function rentalDetailsHandler(app, clubID, courtID, rentalID) {
       <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle" style="max-width:520px;">
           <tbody>
-            <tr><th scope="row">Rental ID</th><td>${rental.rentalID}</td></tr>
+            <tr><th scope="row">Rental ID</th><td>${rental.rentalId}</td></tr>
             <tr><th scope="row">User ID</th><td>
               <a href="/users/${rental.userId}" data-link>${rental.userId}</a>
             </td></tr>
@@ -714,17 +851,17 @@ export async function userRentalsListHandler(app, userID) {
             }))
         );
 
-        // Tablo satırlarını oluştur
         const tableRows = rentalsWithNames.map(rental => `
-      <tr>
-        <td>${rental.rentalID}</td>
-        <td>${rental.clubName}</td>
-        <td>${rental.courtName}</td>
-        <td>${rental.startTime}</td>
-        <td>${rental.duration}</td>
-        <td><a href="/clubs/${rental.clubId}/courts/${rental.courtId}/rentals/${rental.rentalID}" data-link>View</a></td>
-      </tr>
-    `).join('');
+     <tr>
+       <td>${rental.rentalId}</td>
+       <td>${rental.clubName}</td>
+       <td>${rental.courtName}</td>
+       <td>${rental.startTime}</td>
+       <td>${rental.duration}</td>
+       <td><a href="/clubs/${rental.clubId}/courts/${rental.courtId}/rentals/${rental.rentalId}" data-link>View</a></td>
+     </tr>
+   `).join('');
+
 
         app.innerHTML = `
       <h1>Rentals for User: ${userName}</h1>

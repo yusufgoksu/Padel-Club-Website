@@ -2,7 +2,10 @@ package data.database
 
 import interfaces.IrentalService
 import models.Rental
+import services.RentalServices.getRentalById
+import services.RentalServices.getRentalsForCourt
 import java.sql.SQLException
+import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -81,30 +84,35 @@ object RentalDataDb : IrentalService {
 
     override fun getRentals(clubId: Int, courtId: Int, date: String?): List<Rental> {
         val baseSql = """
-            SELECT rentalId, clubId, courtId, userId, date, duration
-            FROM rentals
-            WHERE clubId = ? AND courtId = ?
-        """.trimIndent()
-        val sql = if (date != null) "$baseSql AND date::text LIKE ?;" else "$baseSql;"
+        SELECT rentalId, clubId, courtId, userId, date, duration
+        FROM rentals
+        WHERE clubId = ? AND courtId = ?
+    """.trimIndent()
+
+        val sql = if (!date.isNullOrEmpty()) {
+            "$baseSql AND date::date = ?::date ORDER BY date;"
+        } else {
+            "$baseSql ORDER BY date;"
+        }
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
                     stmt.setInt(1, clubId)
                     stmt.setInt(2, courtId)
-                    if (date != null) stmt.setString(3, "$date%")
+                    if (!date.isNullOrEmpty()) stmt.setString(3, date)
 
                     stmt.executeQuery().use { rs ->
                         val list = mutableListOf<Rental>()
                         while (rs.next()) {
                             list += Rental(
-                                rs.getInt("rentalId"),
-                                rs.getInt("clubId"),
-                                rs.getInt("courtId"),
-                                rs.getInt("userId"),
-                                rs.getTimestamp("date").toLocalDateTime()
+                                rentalId = rs.getInt("rentalId"),
+                                clubId = rs.getInt("clubId"),
+                                courtId = rs.getInt("courtId"),
+                                userId = rs.getInt("userId"),
+                                startTime = rs.getTimestamp("date").toLocalDateTime()
                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                rs.getInt("duration")
+                                duration = rs.getInt("duration")
                             )
                         }
                         list
@@ -115,6 +123,8 @@ object RentalDataDb : IrentalService {
             throw RuntimeException("Error fetching rentals: ${e.message}", e)
         }
     }
+
+
 
     override fun getUserRentals(userId: Int): List<Rental> {
         val sql = """
@@ -185,28 +195,60 @@ object RentalDataDb : IrentalService {
 
 
     override fun updateRental(rentalId: Int, date: String, duration: Int): Boolean {
+        println("🔧 updateRental() called with id=$rentalId, date=$date, duration=$duration")
+
+        // Tarihi parse et
+        val newStart = try {
+            LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        } catch (e: Exception) {
+            println("❌ Invalid date format: $date")
+            throw IllegalArgumentException("Invalid date format", e)
+        }
+
+        val newEnd = newStart.plusHours(duration.toLong())
+
+        // Güncellenen kiralamayı bul
+        val existing = getRentalById(rentalId)
+            ?: throw IllegalArgumentException("Rental with id=$rentalId not found")
+
+        // Aynı korttaki aynı gün kiralamalarını getir (kendisi hariç)
+        val rentals = getRentalsForCourt(existing.clubId, existing.courtId, newStart.toLocalDate().toString())
+            .filter { it.rentalId != rentalId }
+
+        // Çakışma kontrolü
+        val conflict = rentals.any {
+            val start = LocalDateTime.parse(it.startTime)
+            val end = start.plusHours(it.duration.toLong())
+            newStart < end && newEnd > start
+        }
+
+        if (conflict) {
+            println("❌ Conflict detected with existing rental")
+            throw IllegalStateException("Selected time slot is not available")
+        }
+
+        // Güncelleme işlemi
         val sql = """
-            UPDATE rentals
-            SET date = ?, duration = ?
-            WHERE rentalId = ?;
-        """.trimIndent()
+        UPDATE rentals
+        SET date = ?, duration = ?
+        WHERE rentalId = ?;
+    """.trimIndent()
 
         return try {
             Database.getConnection().use { conn ->
                 conn.prepareStatement(sql).use { stmt ->
-                    val ts = java.sql.Timestamp.valueOf(
-                        LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                    )
-                    stmt.setTimestamp(1, ts)
+                    stmt.setTimestamp(1, Timestamp.valueOf(newStart))
                     stmt.setInt(2, duration)
                     stmt.setInt(3, rentalId)
                     stmt.executeUpdate() > 0
                 }
             }
         } catch (e: SQLException) {
-            throw RuntimeException("Error updating rental: ${e.message}", e)
+            println("❌ SQL Error during update: ${e.message}")
+            throw RuntimeException("Error updating rental", e)
         }
     }
+
 
     override fun deleteRental(rentalId: Int): Boolean {
         val sql = """
