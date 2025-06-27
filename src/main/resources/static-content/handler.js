@@ -603,25 +603,62 @@ export async function courtsListHandler(app, clubID) {
     `;
     }
 }
-
 export async function courtDetailsHandler(app, clubID, courtID) {
     app.innerHTML = `<h1>Loading court details...</h1>`;
 
     try {
         const response = await fetch(`/api/courts/${courtID}`);
-        if (!response.ok) throw new Error("Not found");
+        if (!response.ok) throw new Error("Court not found");
         const court = await response.json();
 
         app.innerHTML = `
       <h1>Court: ${court.name}</h1>
       <p><strong>Court ID:</strong> ${court.courtID}</p>
       <p><strong>Club ID:</strong> ${court.clubId}</p>
-      <br>
+
+      <hr>
+      <form id="rental-search-form">
+        <label for="search-date">📅 Search rentals by date:</label><br>
+        <input type="date" id="search-date" required>
+        <button type="submit">Search</button>
+      </form>
+      <div id="rental-results"></div>
+      <hr>
+
       <a href="/clubs/${court.clubId}/courts" data-link>← Back to Courts List</a><br>
       <a href="/clubs/${court.clubId}" data-link>← Back to Club Details</a><br>
       <a href="/" data-link>Home</a><br>
-      <a href="/clubs/${court.clubId}/courts/${court.courtID}/rentals" data-link>View Rentals</a>
+      <a href="/clubs/${court.clubId}/courts/${court.courtID}/rentals" data-link>View All Rentals</a>
     `;
+
+        const form = document.getElementById("rental-search-form");
+        const resultsDiv = document.getElementById("rental-results");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const date = document.getElementById("search-date").value;
+            resultsDiv.innerHTML = `<p>🔄 Loading rentals for <b>${date}</b>...</p>`;
+
+            try {
+                const res = await fetch(`/api/clubs/${clubID}/courts/${courtID}/rentals?date=${date}`);
+                if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+                const rentals = await res.json();
+
+                if (rentals.length === 0) {
+                    resultsDiv.innerHTML = `<p>✅ No rentals found for ${date}.</p>`;
+                } else {
+                    const rentalsHtml = rentals.map(r =>
+                        `<li>🟠 ${r.startTime} (${r.duration} hour)</li>`).join("");
+                    resultsDiv.innerHTML = `
+                      <h3>🔍 Rentals on ${date}</h3>
+                      <ul>${rentalsHtml}</ul>
+                    `;
+                }
+            } catch (err) {
+                resultsDiv.innerHTML = `<p style="color:red">❌ Error: ${err.message}</p>`;
+            }
+        });
+
     } catch (e) {
         app.innerHTML = `
       <h1>Court not found</h1>
@@ -631,6 +668,7 @@ export async function courtDetailsHandler(app, clubID, courtID) {
     `;
     }
 }
+
 
 
 
